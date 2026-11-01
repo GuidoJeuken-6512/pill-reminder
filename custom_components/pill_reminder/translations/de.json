@@ -119,7 +119,7 @@
     },
     "user": {
       "options": {
-        "__none__": "Kein Benutzer"
+        "none": "Kein Benutzer"
       }
     },
     "status": {
@@ -260,7 +260,7 @@
       "message": "Unbekanntes Medikament."
     },
     "not_a_medication": {
-      "message": "{entity_id} gehört zu keinem Tabletten-Warner-Medikament."
+      "message": "{entity_id} gehört zu keinem Pill Reminder-Medikament."
     },
     "entry_not_loaded": {
       "message": "Die gewählte Person ist nicht geladen."
@@ -351,7 +351,7 @@
     },
     "export_history": {
       "name": "Historie exportieren (CSV)",
-      "description": "Schreibt die Historie als CSV nach /config/tabletten_warner/.",
+      "description": "Schreibt die Historie als CSV nach /config/pill_reminder/.",
       "fields": {
         "config_entry_id": {
           "name": "Person",

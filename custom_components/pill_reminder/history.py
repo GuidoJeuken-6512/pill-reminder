@@ -1,4 +1,4 @@
-"""Persistent dose history and statistics for the Tabletten-Warner integration."""
+"""Persistent dose history and statistics for the Pill Reminder integration."""
 
 from __future__ import annotations
 
@@ -218,7 +218,7 @@ class DoseHistory:
         return buffer.getvalue()
 
     async def async_export_csv(self, filename: str, records: list[DoseRecord]) -> str:
-        """Write records as CSV into <config>/tabletten_warner/ and return the path."""
+        """Write records as CSV into <config>/pill_reminder/ and return the path."""
         content = self.to_csv(records)
         path = Path(self.hass.config.path(EXPORT_DIR, filename))
 

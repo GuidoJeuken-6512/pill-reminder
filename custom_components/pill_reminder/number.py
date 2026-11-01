@@ -9,7 +9,7 @@ from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import TablettenWarnerConfigEntry
+from . import PillReminderConfigEntry
 from .const import CONF_EARLY_MINUTES, CONF_LATE_MINUTES
 from .entity import MedicationEntity
 from .models import Medication
@@ -53,7 +53,7 @@ WINDOW_NUMBERS: tuple[WindowNumberDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: TablettenWarnerConfigEntry,
+    entry: PillReminderConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up number entities."""

@@ -1,1 +1,1 @@
-"""Tests for the Tabletten-Warner integration."""
+"""Tests for the Pill Reminder integration."""

@@ -1,6 +1,6 @@
 {
-  "domain": "tabletten_warner",
-  "name": "Tabletten-Warner",
+  "domain": "pill_reminder",
+  "name": "Pill Reminder",
   "after_dependencies": ["frontend", "lovelace", "mobile_app", "notify"],
   "codeowners": ["@GuidoJeuken-6512"],
   "config_flow": true,

@@ -1,4 +1,4 @@
-"""'Due' binary sensor for the Tabletten-Warner integration."""
+"""'Due' binary sensor for the Pill Reminder integration."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import TablettenWarnerConfigEntry
+from . import PillReminderConfigEntry
 from .entity import MedicationEntity, PersonEntity
 
 PARALLEL_UPDATES = 0
@@ -14,7 +14,7 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: TablettenWarnerConfigEntry,
+    entry: PillReminderConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up binary sensors."""

@@ -4,7 +4,7 @@ mark_taken:
       required: true
       selector:
         entity:
-          integration: tabletten_warner
+          integration: pill_reminder
     taken_at:
       required: false
       selector:
@@ -16,7 +16,7 @@ snooze:
       required: true
       selector:
         entity:
-          integration: tabletten_warner
+          integration: pill_reminder
     minutes:
       required: false
       selector:
@@ -32,7 +32,7 @@ skip:
       required: true
       selector:
         entity:
-          integration: tabletten_warner
+          integration: pill_reminder
 
 get_history:
   fields: &history_fields
@@ -40,12 +40,12 @@ get_history:
       required: false
       selector:
         config_entry:
-          integration: tabletten_warner
+          integration: pill_reminder
     entity_id:
       required: false
       selector:
         entity:
-          integration: tabletten_warner
+          integration: pill_reminder
     start:
       required: false
       selector:

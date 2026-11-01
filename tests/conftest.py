@@ -1,4 +1,4 @@
-"""Fixtures for Tabletten-Warner tests."""
+"""Fixtures for Pill Reminder tests."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pytest_homeassistant_custom_component.common import (
     async_mock_service,
 )
 
-from custom_components.tabletten_warner.const import (
+from custom_components.pill_reminder.const import (
     CONF_CREATED_AT,
     CONF_DOSAGE,
     CONF_EARLY_MINUTES,

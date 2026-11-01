@@ -1,85 +1,88 @@
-# Tabletten-Warner
+# Pill Reminder
 
-Home-Assistant-Integration, die an die Einnahme von Tabletten erinnert, die Einnahme protokolliert und auswertbar macht.
+Home Assistant integration that reminds people to take their medication, logs every intake (or missed intake) and makes adherence visible.
 
-## Funktionen
+## Features
 
-- **Mehrere Personen** (je ein Integrationseintrag), **mehrere Medikamente** pro Person (Untereinträge), **mehrere Einnahmezeiten** pro Medikament, Wochentage wählbar.
-- **Push aufs Handy** (Companion App) mit den Buttons **„Eingenommen“** und **„Später“**. Wiederholte Erinnerungen ersetzen die vorherige Nachricht; nach dem Bestätigen verschwindet sie von allen Handys.
-- **Wiederholen + Eskalation** (einstellbar): Abstand, maximale Anzahl, Eskalation an weitere Personen nach N Erinnerungen, Nachricht bei verpasster Einnahme.
-- **Eigenes Dashboard „Tabletten“** wird automatisch angelegt: je Person eine Ansicht, die **nur diese Person und Administratoren** sehen. Es ist immer aktuell – neue Medikamente erscheinen sofort, nichts muss von Hand gepflegt werden.
-- **Medikamente direkt im Dashboard verwalten**: anlegen, Zeiten/Wochentage/Dosis/Bestätigungsfenster ändern, pausieren, löschen – auch ohne Admin-Rechte.
-- **„Eingenommen“-Button** pro Medikament: bestätigt die aktuelle Einnahme (auch bis zu X Minuten vorher). Außerdem „Später“ und „Überspringen“ (bewusst ausgelassen, zählt nicht als verpasst).
-- **Pausieren** pro Medikament (z. B. Krankenhaus/Urlaub) – wird als „pausiert“ protokolliert.
-- **Tracking**: Jede Einnahme wird mit geplanter Zeit, tatsächlicher Zeit, Anzahl Erinnerungen, Eskalation und Quelle (Button / Push / Service) gespeichert. HA-Neustarts verlieren nichts: Verstrichene Termine werden nachträglich als „verpasst“ erfasst, laufende Erinnerungen werden fortgesetzt.
-- **Auswertung**: Einnahmetreue 7/30 Tage (Langzeitstatistik), Serie, letzte/nächste Einnahme, Kalender (✅ eingenommen / ❌ verpasst), Logbuch, Services `get_history` und `export_history` (CSV).
+- **Several people** (one integration entry each), **several medications** per person, **several intake times** per medication, selectable weekdays.
+- **Phone notifications** (Companion App) with **Taken** and **Later** buttons. Repeated reminders replace the previous one; once confirmed, the notification disappears from all phones.
+- **Repeat + escalation** (configurable): interval, maximum number of reminders, notify another person after N reminders, message when a dose was missed.
+- **Dashboard created automatically** ("Medication" in the sidebar): one view per person that **only this person and administrators** can see, plus a **Manage medication** tab. Always up to date – new medications appear immediately, nothing to maintain by hand.
+- **Manage medication in the dashboard**: add, change times/weekdays/dosage/confirmation window, pause, delete – no admin rights needed.
+- **Taken button** per medication: confirms the current dose (also up to X minutes early). Plus **Later** and **Skip** (skipped on purpose, not counted as missed).
+- **Pause** per medication (e.g. hospital stay, holiday) – logged as "paused".
+- **Tracking**: every dose is stored with scheduled time, actual time, number of reminders, escalation and source (button / notification / service). Restarts lose nothing: doses that passed while Home Assistant was down are logged as missed, running reminders continue.
+- **Evaluation**: adherence over 7/30 days (long-term statistics), streak, daily counters, last/next dose, calendar (✅ taken / ❌ missed with delay and details), logbook, `get_history` and `export_history` (CSV) actions.
+- Translations: English, German.
 
 ## Installation
 
-**HACS**: HACS → ⋮ → Benutzerdefinierte Repositories → `https://github.com/GuidoJeuken-6512/pill-reminder` (Typ „Integration“) hinzufügen, „Tabletten-Warner“ installieren, HA neu starten.
-**Manuell**: `custom_components/tabletten_warner` nach `/config/custom_components/` kopieren, HA neu starten.
+**HACS**: HACS → ⋮ → Custom repositories → add `https://github.com/GuidoJeuken-6512/pill-reminder` (type "Integration"), install "Pill Reminder", restart Home Assistant.
+**Manual**: copy `custom_components/pill_reminder` to `/config/custom_components/`, restart Home Assistant.
 
-Mindestversion: Home Assistant 2026.8.
+Requires Home Assistant 2026.8 or newer.
 
-## Einrichtung
+## Setup
 
-1. **Einstellungen → Geräte & Dienste → Integration hinzufügen → „Tabletten-Warner“**
-   Name, HA-Benutzer (wer die Ansicht im Dashboard sieht) und die Handys (`notify.mobile_app_…`) wählen.
-2. Beim Eintrag der Person **„Medikament hinzufügen“**: Name, Dosis, Einnahmezeiten (z. B. 08:00, 20:00), Wochentage, wie früh bestätigt werden darf und nach wie vielen Minuten die Einnahme als verpasst gilt.
-3. **Konfigurieren** (Zahnrad) für Wiederholung, „Später“-Dauer, Eskalation, Aufbewahrung der Historie.
-4. Fertig: Im Seitenmenü erscheint **„Tabletten“** (`/tabletten-warner`). Medikamente lassen sich dort im Bereich **„Medikamente verwalten“** anlegen und ändern – oder wie gewohnt über den Integrationseintrag.
+1. **Settings → Devices & services → Add integration → "Pill Reminder"**
+   Enter the name, the Home Assistant user (who sees the view in the dashboard) and the phones (`notify.mobile_app_…`).
+2. Add medications – either in the dashboard (**Manage medication** tab) or via **Add medication** on the person's integration entry: name, dosage, intake times (e.g. 08:00, 20:00), weekdays, how early a dose may be confirmed and after how many minutes it counts as missed.
+3. **Configure** (gear icon) for repeat interval, snooze duration, escalation and history retention.
+4. Done: **Medication** appears in the sidebar (`/pill-reminder`).
 
-Eingabeformate im Dashboard: Zeiten `08:00, 20:00` · Wochentage `täglich`, `Mo-Fr` oder `Mo, Mi, Fr` (auch Englisch: `daily`, `Mon-Fri`).
+Input formats in the dashboard: times `08:00, 20:00` · weekdays `daily`, `Mon-Fri` or `Mon, Wed, Fri` (German also works: `täglich`, `Mo-Fr`).
 
-Das Dashboard wird von der Integration erzeugt und kann daher nicht im Editor bearbeitet werden. Wer ein eigenes Dashboard bauen möchte, findet Vorlagen in [dashboards/](dashboards/) (nur Standard-Karten bzw. mit Mushroom/ApexCharts).
+The dashboard is generated by the integration and therefore cannot be edited in the dashboard editor. To build your own, start from the examples in [dashboards/](dashboards/) (standard cards only, or with Mushroom/ApexCharts).
 
-## Entitäten
+## Entities
 
-| Entität (Beispiel, HA auf Deutsch) | Bedeutung |
+Examples for a person "Anna" with the medication "Ramipril" (Home Assistant language English):
+
+| Entity | Meaning |
 |---|---|
-| `button.ramipril_eingenommen` | Aktuelle Einnahme bestätigen |
-| `button.ramipril_spater` | Erinnerung verschieben |
-| `button.ramipril_uberspringen` | Bewusst auslassen |
-| `binary_sensor.ramipril_fallig` | An, solange eine Einnahme offen ist |
-| `sensor.ramipril_status` | geplant / fällig / verschoben / eingenommen / verpasst / übersprungen / pausiert |
-| `sensor.ramipril_nachste_einnahme`, `sensor.ramipril_letzte_einnahme` | Zeitstempel |
-| `sensor.ramipril_einnahmetreue_7_tage`, `…_30_tage` | Anteil eingenommen / (eingenommen + verpasst) in % |
-| `sensor.ramipril_serie` | Tage in Folge ohne verpasste Einnahme |
-| `switch.ramipril_erinnerungen` | Erinnerungen pausieren |
-| `binary_sensor.anna_medikament_fallig` | Irgendein Medikament der Person fällig |
-| `sensor.anna_offen_heute`, `sensor.anna_einnahmetreue_7_tage`, … | Zusammenfassung pro Person |
-| `sensor.anna_heute_eingenommen` / `_heute_verpasst` / `_heute_ubersprungen` | Tageszähler (springen um Mitternacht auf 0) |
-| `calendar.anna_medikamente` | Alle Einnahmen als Kalender; Beschreibung mit Dosis, Einnahmezeit, Verspätung, Erinnerungen und Quelle |
+| `button.ramipril_taken` | Confirm the current dose |
+| `button.ramipril_snooze` | Postpone the reminder |
+| `button.ramipril_skip` | Skip the dose on purpose |
+| `binary_sensor.ramipril_due` | On while a dose waits for confirmation |
+| `sensor.ramipril_status` | scheduled / due / snoozed / taken / missed / skipped / paused |
+| `sensor.ramipril_next_dose`, `sensor.ramipril_last_taken` | Timestamps |
+| `sensor.ramipril_adherence_7_days`, `…_30_days` | taken / (taken + missed) in % |
+| `sensor.ramipril_streak` | Days in a row without a missed dose |
+| `switch.ramipril_reminders` | Pause reminders |
+| `binary_sensor.anna_medication_due` | Any medication of the person is due |
+| `sensor.anna_open_today`, `_taken_today`, `_missed_today`, `_skipped_today` | Daily counters (reset at midnight) |
+| `sensor.anna_adherence_7_days`, `_30_days`, `sensor.anna_streak` | Summary per person |
+| `calendar.anna_medication` | All doses as calendar events (dosage, time taken, delay, reminders, source) |
 
-Die Medikament-Entitäten tragen die Attribute `person` und `medication`, der Button „Eingenommen“ zusätzlich `due` (gerade fällig) und `actionable` (darf jetzt bestätigt werden). Damit lassen sich eigene Dashboards sprachunabhängig filtern (z. B. mit auto-entities).
+Settings per medication (used by the **Manage medication** tab): `text.ramipril_name`, `text.ramipril_intake_times`, `text.ramipril_weekdays`, `text.ramipril_dosage`, `number.ramipril_confirm_early_minutes_before`, `number.ramipril_missed_after_minutes`, `button.ramipril_delete_medication`. Per person: `text.anna_new_medication_name` / `_times` / `_dosage` and `button.anna_add_medication`.
 
-Zusätzlich gibt es pro Medikament Einstellungs-Entitäten (`text.<med>_einnahmezeiten`, `_wochentage`, `_dosis`, `_name`, `number.<med>_fruher_bestatigen_…`, `_verpasst_nach_…`, `button.<med>_medikament_loschen`) und pro Person die Eingabefelder „Neues Medikament: …“ mit `button.<person>_medikament_hinzufugen`.
+Medication entities carry the attributes `person` and `medication`; the **Taken** button additionally has `due` (due right now) and `actionable` (may be confirmed now). Use them to filter in your own dashboards independent of language and entity ids (e.g. with auto-entities).
 
-## Events (für eigene Automationen)
+## Events (for your own automations)
 
-`tabletten_warner_dose_due`, `…_reminder_sent`, `…_dose_snoozed`, `…_escalated`, `…_dose_taken`, `…_dose_missed`, `…_dose_skipped` – jeweils mit `person`, `medication`, `scheduled`, `status`, `source`, `reminders_sent`.
+`pill_reminder_dose_due`, `…_reminder_sent`, `…_dose_snoozed`, `…_escalated`, `…_dose_taken`, `…_dose_missed`, `…_dose_skipped` – each with `person`, `medication`, `scheduled`, `status`, `source`, `reminders_sent`.
 
-## Services
+## Actions
 
-| Service | Zweck |
+| Action | Purpose |
 |---|---|
-| `tabletten_warner.mark_taken` | Einnahme bestätigen; mit `taken_at` auch nachträglich (korrigiert „verpasst“) |
-| `tabletten_warner.snooze` | Erinnerung verschieben (`minutes` optional) |
-| `tabletten_warner.skip` | Einnahme auslassen |
-| `tabletten_warner.get_history` | Historie als Antwortdaten (Filter: Person, Medikament, Zeitraum, Status) |
-| `tabletten_warner.export_history` | Historie als CSV nach `/config/tabletten_warner/` |
+| `pill_reminder.mark_taken` | Confirm a dose; with `taken_at` also afterwards (corrects "missed") |
+| `pill_reminder.snooze` | Postpone the reminder (`minutes` optional) |
+| `pill_reminder.skip` | Skip the dose |
+| `pill_reminder.get_history` | History as response data (filter: person, medication, period, status) |
+| `pill_reminder.export_history` | History as CSV in `/config/pill_reminder/` |
 
-## Entwicklung
+## Development
 
 ```powershell
-# Tests (isolierter Container, berührt die HA-Testinstanz nicht)
+# Tests (isolated container)
 docker run -d --name tw-test -v "${PWD}:/work" -w /work python:3.14-slim sleep infinity
 docker exec tw-test pip install -r requirements_test.txt
 docker exec tw-test python -m pytest -q
 docker exec tw-test ruff check custom_components tests
 
-# In die lokale HA-Testinstanz (Container homeassistant-test) kopieren und neu starten
+# Copy into a local Home Assistant test container and restart it
 powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
 ```
 
-**Hinweis:** Dies ist eine Erinnerungshilfe und kein Medizinprodukt. Sie ersetzt keine ärztliche Anweisung.
+**Note:** This is a reminder aid, not a medical device. It does not replace medical advice.

@@ -1,10 +1,10 @@
-"""Constants for the Tabletten-Warner integration."""
+"""Constants for the Pill Reminder integration."""
 
 from __future__ import annotations
 
 from typing import Final
 
-DOMAIN: Final = "tabletten_warner"
+DOMAIN: Final = "pill_reminder"
 
 # Config entry (person)
 CONF_PERSON_NAME: Final = "person_name"
@@ -48,11 +48,11 @@ DEFAULT_LATE_MINUTES: Final = 120
 ALL_WEEKDAYS: Final = [0, 1, 2, 3, 4, 5, 6]
 
 # Notification actions (Companion App)
-ACTION_TAKEN: Final = "TW_TAKEN"
-ACTION_SNOOZE: Final = "TW_SNOOZE"
+ACTION_TAKEN: Final = "PR_TAKEN"
+ACTION_SNOOZE: Final = "PR_SNOOZE"
 ACTION_SEPARATOR: Final = "::"
 MOBILE_APP_ACTION_EVENT: Final = "mobile_app_notification_action"
-NOTIFICATION_CHANNEL: Final = "Tabletten-Warner"
+NOTIFICATION_CHANNEL: Final = "Pill Reminder"
 
 # Events fired by the integration
 EVENT_DOSE_DUE: Final = f"{DOMAIN}_dose_due"

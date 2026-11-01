@@ -7,8 +7,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$source = Join-Path $root "custom_components\tabletten_warner"
-$target = "/config/custom_components/tabletten_warner"
+$source = Join-Path $root "custom_components\pill_reminder"
+$target = "/config/custom_components/pill_reminder"
 
 Write-Host "Copying $source -> ${Container}:$target"
 docker exec $Container rm -rf $target
@@ -33,6 +33,6 @@ do {
 } until ($up -or (Get-Date) -gt $deadline)
 
 Write-Host ("Home Assistant is " + ($(if ($up) { "up" } else { "NOT reachable" })))
-Write-Host "--- Log lines mentioning tabletten_warner ---"
+Write-Host "--- Log lines mentioning pill_reminder ---"
 $ErrorActionPreference = "Continue"
-cmd /c "docker logs --since $since $Container 2>&1" | Select-String -Pattern "tabletten_warner"
+cmd /c "docker logs --since $since $Container 2>&1" | Select-String -Pattern "pill_reminder"

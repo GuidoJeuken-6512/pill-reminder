@@ -11,7 +11,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import TablettenWarnerConfigEntry
+from . import PillReminderConfigEntry
 from .const import CONF_DOSAGE, CONF_NAME, CONF_TIMES, CONF_WEEKDAYS
 from .entity import MedicationEntity, PersonEntity
 from .models import Medication
@@ -71,7 +71,7 @@ DRAFT_TEXTS = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: TablettenWarnerConfigEntry,
+    entry: PillReminderConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up text entities."""

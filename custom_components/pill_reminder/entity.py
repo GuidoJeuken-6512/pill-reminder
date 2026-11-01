@@ -1,4 +1,4 @@
-"""Base entities for the Tabletten-Warner integration."""
+"""Base entities for the Pill Reminder integration."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from .models import Medication
 from .scheduler import ReminderManager
 
 
-class TablettenWarnerEntity(Entity):
+class PillReminderEntity(Entity):
     """Common behaviour: no polling, refresh on dispatcher signal."""
 
     _attr_has_entity_name = True
@@ -46,7 +46,7 @@ class TablettenWarnerEntity(Entity):
         """Override to compute _attr_* values."""
 
 
-class PersonEntity(TablettenWarnerEntity):
+class PersonEntity(PillReminderEntity):
     """Entity attached to the person device."""
 
     def __init__(self, manager: ReminderManager, key: str) -> None:
@@ -57,13 +57,13 @@ class PersonEntity(TablettenWarnerEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, manager.entry_id)},
             name=manager.person,
-            manufacturer="Tabletten-Warner",
+            manufacturer="Pill Reminder",
             model="Person",
             entry_type=DeviceEntryType.SERVICE,
         )
 
 
-class MedicationEntity(TablettenWarnerEntity):
+class MedicationEntity(PillReminderEntity):
     """Entity attached to a medication device (one per subentry)."""
 
     def __init__(self, manager: ReminderManager, med: Medication, key: str) -> None:
@@ -75,7 +75,7 @@ class MedicationEntity(TablettenWarnerEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, med.id)},
             name=med.name,
-            manufacturer="Tabletten-Warner",
+            manufacturer="Pill Reminder",
             model=med.dosage or None,
             entry_type=DeviceEntryType.SERVICE,
             via_device_id=manager.person_device_id,

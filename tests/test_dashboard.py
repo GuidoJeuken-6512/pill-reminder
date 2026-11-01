@@ -10,10 +10,10 @@ from homeassistant.components.lovelace.const import LOVELACE_DATA
 from homeassistant.core import HomeAssistant
 import pytest
 
-from custom_components.tabletten_warner.const import CONF_USER_ID
-from custom_components.tabletten_warner.dashboard import (
+from custom_components.pill_reminder.const import CONF_USER_ID
+from custom_components.pill_reminder.dashboard import (
     DASHBOARD_URL,
-    TablettenWarnerDashboard,
+    PillReminderDashboard,
     async_build_dashboard,
 )
 
@@ -62,9 +62,9 @@ def lovelace(hass: HomeAssistant):
     hass.config.components.add("frontend")
     with (
         patch(
-            "custom_components.tabletten_warner.dashboard.frontend.async_register_built_in_panel"
+            "custom_components.pill_reminder.dashboard.frontend.async_register_built_in_panel"
         ) as register,
-        patch("custom_components.tabletten_warner.dashboard.frontend.async_remove_panel") as remove,
+        patch("custom_components.pill_reminder.dashboard.frontend.async_remove_panel") as remove,
     ):
         yield SimpleNamespace(data=hass.data[LOVELACE_DATA], register=register, remove=remove)
 
@@ -111,7 +111,7 @@ async def test_view_per_person(
 async def test_no_persons_message(hass: HomeAssistant) -> None:
     """Without persons the dashboard explains how to start."""
     config = await async_build_dashboard(hass)
-    assert "Tabletten-Warner" in config["views"][0]["cards"][0]["content"]
+    assert "Pill Reminder" in config["views"][0]["cards"][0]["content"]
 
 
 async def test_dashboard_registered_and_removed(
@@ -124,7 +124,7 @@ async def test_dashboard_registered_and_removed(
     assert call.kwargs["frontend_url_path"] == DASHBOARD_URL
     assert call.kwargs["require_admin"] is False
     dashboard = lovelace.data.dashboards[DASHBOARD_URL]
-    assert isinstance(dashboard, TablettenWarnerDashboard)
+    assert isinstance(dashboard, PillReminderDashboard)
     assert (await dashboard.async_get_info())["views"] == 2
 
     # Reload (e.g. medication added) refreshes instead of registering again

@@ -68,7 +68,7 @@ from .const import (
 from .notifier import UNSUPPORTED_NOTIFY_SERVICES
 from .validation import validate_medication
 
-NO_USER = "__none__"
+NO_USER = "none"
 
 
 def _minutes(min_value: int, max_value: int, unit: str = "min") -> NumberSelector:
@@ -143,7 +143,7 @@ def _clean_person(user_input: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-class TablettenWarnerConfigFlow(ConfigFlow, domain=DOMAIN):
+class PillReminderConfigFlow(ConfigFlow, domain=DOMAIN):
     """Create one config entry per person."""
 
     VERSION = 1
@@ -195,7 +195,7 @@ class TablettenWarnerConfigFlow(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         """Reminder behaviour."""
-        return TablettenWarnerOptionsFlow()
+        return PillReminderOptionsFlow()
 
     @classmethod
     @callback
@@ -206,7 +206,7 @@ class TablettenWarnerConfigFlow(ConfigFlow, domain=DOMAIN):
         return {SUBENTRY_MEDICATION: MedicationSubentryFlow}
 
 
-class TablettenWarnerOptionsFlow(OptionsFlow):
+class PillReminderOptionsFlow(OptionsFlow):
     """Repeat, snooze, escalation and history settings."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

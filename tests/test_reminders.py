@@ -13,7 +13,7 @@ from pytest_homeassistant_custom_component.common import (
     async_mock_service,
 )
 
-from custom_components.tabletten_warner.const import (
+from custom_components.pill_reminder.const import (
     CONF_ESCALATE_AFTER,
     CONF_ESCALATION_ENABLED,
     CONF_ESCALATION_SERVICES,
@@ -24,7 +24,7 @@ from custom_components.tabletten_warner.const import (
     EVENT_DOSE_TAKEN,
     EVENT_ESCALATED,
 )
-from custom_components.tabletten_warner.models import DoseStatus
+from custom_components.pill_reminder.models import DoseStatus
 
 from .conftest import MED_ID, local, make_entry, setup
 
@@ -76,8 +76,8 @@ async def test_reminder_and_taken_button(
     data = phone_calls[0].data
     assert "Ramipril" in data["title"]
     actions = [a["action"] for a in data["data"]["actions"]]
-    assert actions[0].startswith("TW_TAKEN::")
-    assert actions[1].startswith("TW_SNOOZE::")
+    assert actions[0].startswith("PR_TAKEN::")
+    assert actions[1].startswith("PR_SNOOZE::")
     tag = data["data"]["tag"]
 
     await _tick(hass, berlin, local(8, 10, 2))

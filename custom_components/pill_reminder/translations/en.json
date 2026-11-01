@@ -119,7 +119,7 @@
     },
     "user": {
       "options": {
-        "__none__": "No user"
+        "none": "No user"
       }
     },
     "status": {
@@ -260,7 +260,7 @@
       "message": "Unknown medication."
     },
     "not_a_medication": {
-      "message": "{entity_id} is not an entity of a Tabletten-Warner medication."
+      "message": "{entity_id} is not an entity of a Pill Reminder medication."
     },
     "entry_not_loaded": {
       "message": "The selected person is not loaded."
@@ -351,7 +351,7 @@
     },
     "export_history": {
       "name": "Export history (CSV)",
-      "description": "Writes the history as CSV to /config/tabletten_warner/.",
+      "description": "Writes the history as CSV to /config/pill_reminder/.",
       "fields": {
         "config_entry_id": {
           "name": "Person",

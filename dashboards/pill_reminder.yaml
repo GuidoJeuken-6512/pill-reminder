@@ -1,0 +1,290 @@
+# Pill Reminder - example dashboard
+#
+# You do NOT need this file: the integration creates the dashboard
+# "Medication" (/pill-reminder) automatically and keeps it up to date.
+#
+# Use it as a starting point for your own dashboard. It shows what the
+# generated dashboard looks like for a person "Anna" with the medication
+# "Ramipril" (Home Assistant language: English). Replace the entity ids
+# with yours and add `visible: [{user: <user id>}]` to restrict a view.
+
+title: Medication
+views:
+- title: Anna
+  path: anna
+  icon: mdi:pill
+  type: sections
+  max_columns: 3
+  badges:
+  - type: entity
+    entity: sensor.anna_open_today
+    show_name: true
+  - type: entity
+    entity: sensor.anna_taken_today
+    show_name: true
+  - type: entity
+    entity: sensor.anna_missed_today
+    show_name: true
+  - type: entity
+    entity: sensor.anna_adherence_7_days
+    show_name: true
+  sections:
+  - type: grid
+    visibility:
+    - condition: state
+      entity: binary_sensor.anna_medication_due
+      state: 'on'
+    cards:
+    - type: heading
+      heading: Take now
+      icon: mdi:bell-ring
+    - type: tile
+      entity: button.ramipril_taken
+      name: Ramipril 5 mg taken
+      icon: mdi:check-circle
+      color: green
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.ramipril_taken
+      grid_options:
+        columns: 8
+      visibility:
+      - condition: state
+        entity: binary_sensor.ramipril_due
+        state: 'on'
+    - type: tile
+      entity: button.ramipril_snooze
+      name: Later
+      icon: mdi:alarm-snooze
+      color: amber
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.ramipril_snooze
+      grid_options:
+        columns: 4
+      visibility:
+      - condition: state
+        entity: binary_sensor.ramipril_due
+        state: 'on'
+  - type: grid
+    cards:
+    - type: heading
+      heading: Today
+      icon: mdi:calendar-today
+    - type: markdown
+      content: ✅ Nothing is due right now.
+      visibility:
+      - condition: state
+        entity: binary_sensor.anna_medication_due
+        state: 'off'
+    - type: tile
+      entity: sensor.ramipril_status
+      name: Ramipril 5 mg
+      icon: mdi:pill
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.ramipril_next_dose
+      name: Next
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: button.ramipril_taken
+      name: Taken
+      color: green
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.ramipril_taken
+        confirmation:
+          text: Mark Ramipril as taken?
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: button.ramipril_skip
+      name: Skip
+      color: grey
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.ramipril_skip
+        confirmation:
+          text: Skip Ramipril on purpose?
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: switch.ramipril_reminders
+      name: Remind
+      grid_options:
+        columns: 4
+  - type: grid
+    cards:
+    - type: heading
+      heading: Summary
+      icon: mdi:chart-arc
+    - type: tile
+      entity: sensor.anna_taken_today
+      color: green
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.anna_missed_today
+      color: red
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.anna_skipped_today
+      color: grey
+      grid_options:
+        columns: 4
+    - type: gauge
+      entity: sensor.anna_adherence_7_days
+      name: 7 days
+      min: 0
+      max: 100
+      needle: true
+      severity:
+        green: 90
+        yellow: 70
+        red: 0
+      grid_options:
+        columns: 6
+    - type: gauge
+      entity: sensor.anna_adherence_30_days
+      name: 30 days
+      min: 0
+      max: 100
+      needle: true
+      severity:
+        green: 90
+        yellow: 70
+        red: 0
+      grid_options:
+        columns: 6
+    - type: entities
+      title: Per medication
+      entities:
+      - entity: sensor.ramipril_adherence_7_days
+        name: Ramipril · 7 days
+      - entity: sensor.ramipril_adherence_30_days
+        name: Ramipril · 30 days
+      - entity: sensor.ramipril_streak
+      - entity: sensor.ramipril_last_taken
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: History
+      icon: mdi:chart-line
+    - type: statistics-graph
+      title: Adherence (daily mean, 30 days)
+      chart_type: line
+      period: day
+      days_to_show: 30
+      stat_types:
+      - mean
+      entities:
+      - entity: sensor.anna_adherence_7_days
+        name: Total
+      - entity: sensor.ramipril_adherence_7_days
+      grid_options:
+        columns: full
+    - type: history-graph
+      title: Status (7 days)
+      hours_to_show: 168
+      entities: &id001
+      - sensor.ramipril_status
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 3
+    cards:
+    - type: heading
+      heading: Calendar
+      icon: mdi:calendar-check
+    - type: calendar
+      initial_view: listWeek
+      entities:
+      - calendar.anna_medication
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 3
+    cards:
+    - type: heading
+      heading: Log
+      icon: mdi:format-list-bulleted
+    - type: logbook
+      hours_to_show: 168
+      target:
+        entity_id: *id001
+      grid_options:
+        columns: full
+- title: Manage medication
+  path: anna-manage
+  icon: mdi:pill-multiple
+  type: sections
+  max_columns: 3
+  sections:
+  - type: grid
+    column_span: 3
+    cards:
+    - type: heading
+      heading: Manage medication
+      icon: mdi:cog
+    - type: markdown
+      content: 'Changes apply immediately. Times: `08:00, 20:00` · Weekdays: `daily`, `Mon-Fri` or `Mon,
+        Wed, Fri`.'
+    - type: entities
+      title: Ramipril
+      state_color: true
+      entities:
+      - text.ramipril_name
+      - text.ramipril_intake_times
+      - text.ramipril_weekdays
+      - text.ramipril_dosage
+      - number.ramipril_confirm_early_minutes_before
+      - number.ramipril_missed_after_minutes
+      - switch.ramipril_reminders
+      - type: button
+        name: Delete
+        icon: mdi:delete
+        action_name: Delete
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.ramipril_delete_medication
+          confirmation:
+            text: Really delete Ramipril? Its history is kept.
+      grid_options:
+        columns: 6
+    - type: entities
+      title: New medication
+      entities:
+      - text.anna_new_medication_name
+      - text.anna_new_medication_times
+      - text.anna_new_medication_dosage
+      - type: button
+        name: New medication
+        icon: mdi:plus-circle
+        action_name: Add
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.anna_add_medication
+          confirmation:
+            text: Create a medication with these values?
+      grid_options:
+        columns: 6

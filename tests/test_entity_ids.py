@@ -13,18 +13,20 @@ from .conftest import setup
 DASHBOARDS = Path(__file__).parent.parent / "dashboards"
 
 
-@pytest.mark.parametrize("dashboard", ["tabletten_warner.yaml"])
+@pytest.mark.parametrize(
+    "dashboard", ["pill_reminder.yaml", "pill_reminder_plus.yaml", "../README.md"]
+)
 async def test_dashboard_entity_ids_exist(
     hass: HomeAssistant, berlin, phone_calls, entry, dashboard: str
 ) -> None:
-    """Every entity referenced by a dashboard exists in a German instance."""
-    hass.config.language = "de"
+    """Every entity referenced by an example dashboard exists (English instance)."""
+    hass.config.language = "en"
     await setup(hass, entry)
 
     content = (DASHBOARDS / dashboard).read_text(encoding="utf-8")
     referenced = set(
         re.findall(
-            r"\b((?:sensor|binary_sensor|button|switch|calendar)\.(?:anna|ramipril)_[a-z0-9_]+)",
+            r"\b((?:sensor|binary_sensor|button|switch|calendar|text|number)\.(?:anna|ramipril)_[a-z0-9_]+)",
             content,
         )
     )

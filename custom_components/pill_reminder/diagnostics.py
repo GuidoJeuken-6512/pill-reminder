@@ -1,4 +1,4 @@
-"""Diagnostics for the Tabletten-Warner integration."""
+"""Diagnostics for the Pill Reminder integration."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
-from . import TablettenWarnerConfigEntry
+from . import PillReminderConfigEntry
 from .const import CONF_ESCALATION_SERVICES, CONF_NOTIFY_SERVICES, CONF_USER_ID
 
 TO_REDACT = {CONF_NOTIFY_SERVICES, CONF_ESCALATION_SERVICES, CONF_USER_ID, "user_id"}
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: TablettenWarnerConfigEntry
+    hass: HomeAssistant, entry: PillReminderConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     manager = entry.runtime_data

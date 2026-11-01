@@ -1,4 +1,4 @@
-"""Service actions of the Tabletten-Warner integration."""
+"""Service actions of the Pill Reminder integration."""
 
 from __future__ import annotations
 

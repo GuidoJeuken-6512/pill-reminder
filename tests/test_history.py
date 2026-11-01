@@ -6,8 +6,8 @@ from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
 
-from custom_components.tabletten_warner.history import DoseHistory
-from custom_components.tabletten_warner.models import DoseRecord, DoseStatus, dose_id_for
+from custom_components.pill_reminder.history import DoseHistory
+from custom_components.pill_reminder.models import DoseRecord, DoseStatus, dose_id_for
 
 from .conftest import local
 

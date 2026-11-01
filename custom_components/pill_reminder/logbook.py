@@ -1,4 +1,4 @@
-"""Describe Tabletten-Warner events in the logbook."""
+"""Describe Pill Reminder events in the logbook."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ def async_describe_events(
         data = event.data
         scheduled = dt_util.parse_datetime(data.get(ATTR_SCHEDULED) or "")
         return {
-            LOGBOOK_ENTRY_NAME: data.get(ATTR_PERSON, "Tabletten-Warner"),
+            LOGBOOK_ENTRY_NAME: data.get(ATTR_PERSON, "Pill Reminder"),
             LOGBOOK_ENTRY_ENTITY_ID: data.get("entity_id"),
             LOGBOOK_ENTRY_MESSAGE: messages[event.event_type].format(
                 medication=data.get(ATTR_MEDICATION, "?"),

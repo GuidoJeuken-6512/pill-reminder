@@ -1,64 +1,63 @@
-# Tabletten-Warner – optionale Zusatzkarten (benötigt HACS-Frontend-Karten)
+# Pill Reminder - optional extra cards (needs HACS frontend cards)
 #   - Mushroom          https://github.com/piitaya/lovelace-mushroom
 #   - ApexCharts Card   https://github.com/RomRider/apexcharts-card
 #
-# Diese Sektionen können in die View aus tabletten_warner.yaml (unter "sections:")
-# eingefügt werden. Platzhalter wie dort: anna, ramipril, ANNA_USER_ID.
-# Tipp: tabletten_warner_auto.yaml (auto-entities) findet alle Medikamente
-# automatisch und braucht keine Blöcke pro Medikament.
+# These sections can be pasted under "sections:" of a view in your own
+# dashboard (see pill_reminder.yaml). Entity ids are for a person "Anna" with
+# the medication "Ramipril" (Home Assistant language: English) - replace them
+# with yours. Repeat the blocks marked "per medication" for each medication.
 
 - type: grid
   cards:
     - type: heading
-      heading: Auf einen Blick
+      heading: At a glance
       icon: mdi:pill
     - type: custom:mushroom-chips-card
       alignment: center
       chips:
         - type: entity
-          entity: sensor.anna_offen_heute
+          entity: sensor.anna_open_today
           icon: mdi:pill-multiple
         - type: entity
-          entity: sensor.anna_einnahmetreue_7_tage
+          entity: sensor.anna_adherence_7_days
           icon: mdi:chart-arc
         - type: entity
-          entity: sensor.anna_serie
+          entity: sensor.anna_streak
           icon: mdi:fire
           icon_color: orange
-    # --- je Medikament ---
+    # --- per medication ---
     - type: custom:mushroom-template-card
       entity: sensor.ramipril_status
       primary: Ramipril {{ state_attr('sensor.ramipril_status', 'dosage') }}
       secondary: >-
-        {% set s = states('sensor.ramipril_status') %}
-        {% set n = states('sensor.ramipril_nachste_einnahme') %}
+        {% set n = states('sensor.ramipril_next_dose') %}
         {{ state_translated('sensor.ramipril_status') }}
-        {%- if n not in ['unknown', 'unavailable'] %} · nächste {{ as_timestamp(n) | timestamp_custom('%a %H:%M') }}{% endif %}
+        {%- if n not in ['unknown', 'unavailable'] %} · next {{ as_timestamp(n) | timestamp_custom('%a %H:%M') }}{% endif %}
       icon: mdi:pill
       icon_color: >-
         {{ {'taken':'green','due':'red','snoozed':'amber','missed':'red',
             'skipped':'grey','paused':'grey'}.get(states('sensor.ramipril_status'), 'blue') }}
       badge_icon: >-
-        {{ 'mdi:bell-ring' if is_state('binary_sensor.ramipril_fallig', 'on') else '' }}
+        {{ 'mdi:bell-ring' if is_state('binary_sensor.ramipril_due', 'on') else '' }}
       badge_color: red
       tap_action:
         action: perform-action
         perform_action: button.press
         target:
-          entity_id: button.ramipril_eingenommen
+          entity_id: button.ramipril_taken
         confirmation:
-          text: Ramipril als eingenommen markieren?
+          text: Mark Ramipril as taken?
       hold_action:
         action: perform-action
         perform_action: button.press
         target:
-          entity_id: button.ramipril_spater
+          entity_id: button.ramipril_snooze
 
 - type: grid
   column_span: 2
   cards:
     - type: heading
-      heading: Einnahmetreue pro Tag
+      heading: Adherence per day
       icon: mdi:chart-bar
     - type: custom:apexcharts-card
       graph_span: 30d
@@ -74,15 +73,15 @@
         chart:
           height: 260
       series:
-        - entity: sensor.anna_einnahmetreue_7_tage
-          name: Gesamt (7-Tage-Mittel)
+        - entity: sensor.anna_adherence_7_days
+          name: Total (7-day mean)
           type: column
           color: "#2e7d32"
           statistics:
             type: mean
             period: day
-        # --- je Medikament ---
-        - entity: sensor.ramipril_einnahmetreue_7_tage
+        # --- per medication ---
+        - entity: sensor.ramipril_adherence_7_days
           name: Ramipril
           type: line
           stroke_width: 2

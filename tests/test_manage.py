@@ -7,8 +7,8 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 import pytest
 
-from custom_components.tabletten_warner.const import DOMAIN
-from custom_components.tabletten_warner.validation import (
+from custom_components.pill_reminder.const import DOMAIN
+from custom_components.pill_reminder.validation import (
     MedicationInvalid,
     format_weekdays,
     parse_weekdays,

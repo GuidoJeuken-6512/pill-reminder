@@ -1,4 +1,4 @@
-"""Sending and clearing notifications for the Tabletten-Warner integration."""
+"""Sending and clearing notifications for the Pill Reminder integration."""
 
 from __future__ import annotations
 

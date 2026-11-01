@@ -1,4 +1,4 @@
-"""Tabletten-Warner: medication reminders for Home Assistant."""
+"""Pill Reminder: medication reminders for Home Assistant."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ PLATFORMS: list[Platform] = [
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-type TablettenWarnerConfigEntry = ConfigEntry[ReminderManager]
+type PillReminderConfigEntry = ConfigEntry[ReminderManager]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -35,7 +35,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: PillReminderConfigEntry) -> bool:
     """Set up one person."""
     manager = ReminderManager(hass, entry)
     await manager.async_start()
@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEnt
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, entry.entry_id)},
         name=entry.data[CONF_PERSON_NAME],
-        manufacturer="Tabletten-Warner",
+        manufacturer="Pill Reminder",
         model="Person",
         entry_type=dr.DeviceEntryType.SERVICE,
     )
@@ -59,11 +59,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEnt
     return True
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: TablettenWarnerConfigEntry) -> None:
+async def _async_update_listener(hass: HomeAssistant, entry: PillReminderConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: PillReminderConfigEntry) -> bool:
     """Unload a person."""
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
@@ -73,7 +73,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEn
     return unloaded
 
 
-async def async_remove_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEntry) -> None:
+async def async_remove_entry(hass: HomeAssistant, entry: PillReminderConfigEntry) -> None:
     """Delete stored history when a person is removed."""
     await DoseHistory(hass, entry.entry_id).async_remove()
     # Remove the dashboard together with the last person.

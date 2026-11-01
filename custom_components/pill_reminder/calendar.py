@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from . import TablettenWarnerConfigEntry
+from . import PillReminderConfigEntry
 from .entity import PersonEntity
 from .models import DoseRecord, DoseStatus
 
@@ -81,7 +81,7 @@ TEXTS: dict[str, dict[str, str]] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: TablettenWarnerConfigEntry,
+    entry: PillReminderConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the calendar."""

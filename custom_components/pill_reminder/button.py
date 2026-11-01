@@ -1,4 +1,4 @@
-"""Buttons (taken / snooze / skip) for the Tabletten-Warner integration."""
+"""Buttons (taken / snooze / skip) for the Pill Reminder integration."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from . import TablettenWarnerConfigEntry
+from . import PillReminderConfigEntry
 from .const import SOURCE_BUTTON
 from .entity import MedicationEntity, PersonEntity
 
@@ -17,7 +17,7 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: TablettenWarnerConfigEntry,
+    entry: PillReminderConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up buttons."""
