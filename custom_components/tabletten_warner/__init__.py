@@ -9,6 +9,7 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 
 from .const import CONF_PERSON_NAME, DOMAIN
+from .dashboard import async_update_dashboard
 from .history import DoseHistory
 from .scheduler import ReminderManager
 from .services import async_setup_services
@@ -17,8 +18,10 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.CALENDAR,
+    Platform.NUMBER,
     Platform.SENSOR,
     Platform.SWITCH,
+    Platform.TEXT,
 ]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -51,6 +54,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEnt
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # Medications (subentries) and options changes: reload to rebuild schedule.
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+    # Create the dashboard with the first person / refresh it for the others.
+    async_update_dashboard(hass)
     return True
 
 
@@ -63,9 +68,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEn
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         await entry.runtime_data.async_stop()
+        # Refresh open dashboards (the person's view disappears while unloaded).
+        async_update_dashboard(hass)
     return unloaded
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: TablettenWarnerConfigEntry) -> None:
     """Delete stored history when a person is removed."""
     await DoseHistory(hass, entry.entry_id).async_remove()
+    # Remove the dashboard together with the last person.
+    async_update_dashboard(hass, removed_entry_id=entry.entry_id)

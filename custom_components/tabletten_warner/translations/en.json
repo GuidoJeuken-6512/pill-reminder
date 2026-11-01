@@ -97,7 +97,8 @@
         "invalid_time": "Invalid time. Use HH:MM.",
         "times_required": "Add at least one intake time.",
         "weekdays_required": "Select at least one weekday.",
-        "windows_overlap": "The confirmation windows of two intake times overlap. Reduce \"early\" or \"missed after\", or space the times further apart."
+        "windows_overlap": "The confirmation windows of two intake times overlap. Reduce \"early\" or \"missed after\", or space the times further apart.",
+        "invalid_weekdays": "Unknown weekday."
       },
       "abort": {
         "reconfigure_successful": "Medication saved."
@@ -150,6 +151,12 @@
       },
       "skip": {
         "name": "Skip"
+      },
+      "delete_medication": {
+        "name": "Delete medication"
+      },
+      "add_medication": {
+        "name": "Add medication"
       }
     },
     "calendar": {
@@ -206,6 +213,37 @@
       "reminders": {
         "name": "Reminders"
       }
+    },
+    "text": {
+      "cfg_name": {
+        "name": "Name"
+      },
+      "cfg_times": {
+        "name": "Intake times"
+      },
+      "cfg_dosage": {
+        "name": "Dosage"
+      },
+      "cfg_weekdays": {
+        "name": "Weekdays"
+      },
+      "new_name": {
+        "name": "New medication: name"
+      },
+      "new_times": {
+        "name": "New medication: times"
+      },
+      "new_dosage": {
+        "name": "New medication: dosage"
+      }
+    },
+    "number": {
+      "cfg_early_minutes": {
+        "name": "Confirm early (minutes before)"
+      },
+      "cfg_late_minutes": {
+        "name": "Missed after (minutes)"
+      }
     }
   },
   "exceptions": {
@@ -226,6 +264,24 @@
     },
     "entry_not_loaded": {
       "message": "The selected person is not loaded."
+    },
+    "name_required": {
+      "message": "Please enter a name."
+    },
+    "invalid_time": {
+      "message": "Invalid time. Use HH:MM, several separated by commas (e.g. 08:00, 20:00)."
+    },
+    "times_required": {
+      "message": "Enter at least one intake time."
+    },
+    "weekdays_required": {
+      "message": "Enter at least one weekday."
+    },
+    "invalid_weekdays": {
+      "message": "Unknown weekday. Examples: daily · Mon-Fri · Mon, Wed, Fri."
+    },
+    "windows_overlap": {
+      "message": "The confirmation windows of two intake times overlap. Reduce \"confirm early\" / \"missed after\" or space the times further apart."
     }
   },
   "services": {

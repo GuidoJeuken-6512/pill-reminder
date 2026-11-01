@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import itertools
 from typing import Any
 
 from homeassistant.config_entries import (
@@ -66,8 +65,8 @@ from .const import (
     DOMAIN,
     SUBENTRY_MEDICATION,
 )
-from .models import parse_time
 from .notifier import UNSUPPORTED_NOTIFY_SERVICES
+from .validation import validate_medication
 
 NO_USER = "__none__"
 
@@ -285,55 +284,6 @@ def _medication_schema() -> vol.Schema:
     )
 
 
-def _validate_medication(
-    user_input: dict[str, Any],
-) -> tuple[dict[str, Any], dict[str, str]]:
-    errors: dict[str, str] = {}
-    name = str(user_input.get(CONF_NAME, "")).strip()
-    if not name:
-        errors[CONF_NAME] = "name_required"
-
-    raw_times = user_input.get(CONF_TIMES) or []
-    if isinstance(raw_times, str):
-        raw_times = [t for t in raw_times.replace(";", ",").split(",")]
-    times: set[str] = set()
-    for raw in raw_times:
-        if not str(raw).strip():
-            continue
-        try:
-            times.add(parse_time(str(raw)).strftime("%H:%M"))
-        except ValueError:
-            errors[CONF_TIMES] = "invalid_time"
-    if not times and CONF_TIMES not in errors:
-        errors[CONF_TIMES] = "times_required"
-
-    weekdays = sorted({int(d) for d in user_input.get(CONF_WEEKDAYS, [])})
-    if not weekdays:
-        errors[CONF_WEEKDAYS] = "weekdays_required"
-
-    early = int(user_input.get(CONF_EARLY_MINUTES, DEFAULT_EARLY_MINUTES))
-    late = int(user_input.get(CONF_LATE_MINUTES, DEFAULT_LATE_MINUTES))
-    ordered = sorted(times)
-    if ordered and CONF_TIMES not in errors:
-        # Windows of consecutive slots must not overlap, otherwise a button
-        # press could not be assigned to one dose unambiguously.
-        minutes = [int(t[:2]) * 60 + int(t[3:]) for t in ordered]
-        gaps = [b - a for a, b in itertools.pairwise(minutes)]
-        gaps.append(minutes[0] + 1440 - minutes[-1])
-        if min(gaps) < early + late:
-            errors["base"] = "windows_overlap"
-
-    data = {
-        CONF_NAME: name,
-        CONF_DOSAGE: str(user_input.get(CONF_DOSAGE, "")).strip(),
-        CONF_TIMES: ordered,
-        CONF_WEEKDAYS: weekdays,
-        CONF_EARLY_MINUTES: early,
-        CONF_LATE_MINUTES: late,
-    }
-    return data, errors
-
-
 class MedicationSubentryFlow(ConfigSubentryFlow):
     """Add or edit a medication."""
 
@@ -341,7 +291,7 @@ class MedicationSubentryFlow(ConfigSubentryFlow):
         """Add a medication."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            data, errors = _validate_medication(user_input)
+            data, errors = validate_medication(user_input)
             if not errors:
                 data[CONF_CREATED_AT] = dt_util.utcnow().isoformat()
                 return self.async_create_entry(title=data[CONF_NAME], data=data)
@@ -359,7 +309,7 @@ class MedicationSubentryFlow(ConfigSubentryFlow):
         subentry = self._get_reconfigure_subentry()
         errors: dict[str, str] = {}
         if user_input is not None:
-            data, errors = _validate_medication(user_input)
+            data, errors = validate_medication(user_input)
             if not errors:
                 data[CONF_CREATED_AT] = subentry.data.get(
                     CONF_CREATED_AT, dt_util.utcnow().isoformat()

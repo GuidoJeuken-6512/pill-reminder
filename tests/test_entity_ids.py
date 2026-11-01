@@ -13,7 +13,7 @@ from .conftest import setup
 DASHBOARDS = Path(__file__).parent.parent / "dashboards"
 
 
-@pytest.mark.parametrize("dashboard", ["tabletten_warner.yaml", "tabletten_warner_auto.yaml"])
+@pytest.mark.parametrize("dashboard", ["tabletten_warner.yaml"])
 async def test_dashboard_entity_ids_exist(
     hass: HomeAssistant, berlin, phone_calls, entry, dashboard: str
 ) -> None:
@@ -36,7 +36,7 @@ async def test_dashboard_entity_ids_exist(
 async def test_auto_entities_filter_attributes(
     hass: HomeAssistant, berlin, phone_calls, entry
 ) -> None:
-    """The attribute filters of tabletten_warner_auto.yaml match the right entities."""
+    """Filter attributes (person, medication, due, actionable) are set."""
     hass.config.language = "de"
     await setup(hass, entry)
 

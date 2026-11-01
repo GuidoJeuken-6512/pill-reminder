@@ -7,7 +7,8 @@ Home-Assistant-Integration, die an die Einnahme von Tabletten erinnert, die Einn
 - **Mehrere Personen** (je ein Integrationseintrag), **mehrere Medikamente** pro Person (Untereinträge), **mehrere Einnahmezeiten** pro Medikament, Wochentage wählbar.
 - **Push aufs Handy** (Companion App) mit den Buttons **„Eingenommen“** und **„Später“**. Wiederholte Erinnerungen ersetzen die vorherige Nachricht; nach dem Bestätigen verschwindet sie von allen Handys.
 - **Wiederholen + Eskalation** (einstellbar): Abstand, maximale Anzahl, Eskalation an weitere Personen nach N Erinnerungen, Nachricht bei verpasster Einnahme.
-- **Frontend nur für die betroffene Person**: Das Dashboard zeigt die „Jetzt einnehmen“-Karte nur dem zugeordneten HA-Benutzer.
+- **Eigenes Dashboard „Tabletten“** wird automatisch angelegt: je Person eine Ansicht, die **nur diese Person und Administratoren** sehen. Es ist immer aktuell – neue Medikamente erscheinen sofort, nichts muss von Hand gepflegt werden.
+- **Medikamente direkt im Dashboard verwalten**: anlegen, Zeiten/Wochentage/Dosis/Bestätigungsfenster ändern, pausieren, löschen – auch ohne Admin-Rechte.
 - **„Eingenommen“-Button** pro Medikament: bestätigt die aktuelle Einnahme (auch bis zu X Minuten vorher). Außerdem „Später“ und „Überspringen“ (bewusst ausgelassen, zählt nicht als verpasst).
 - **Pausieren** pro Medikament (z. B. Krankenhaus/Urlaub) – wird als „pausiert“ protokolliert.
 - **Tracking**: Jede Einnahme wird mit geplanter Zeit, tatsächlicher Zeit, Anzahl Erinnerungen, Eskalation und Quelle (Button / Push / Service) gespeichert. HA-Neustarts verlieren nichts: Verstrichene Termine werden nachträglich als „verpasst“ erfasst, laufende Erinnerungen werden fortgesetzt.
@@ -15,7 +16,7 @@ Home-Assistant-Integration, die an die Einnahme von Tabletten erinnert, die Einn
 
 ## Installation
 
-**HACS**: Repository als benutzerdefiniertes Repository (Typ „Integration“) hinzufügen, installieren, HA neu starten.
+**HACS**: HACS → ⋮ → Benutzerdefinierte Repositories → `https://github.com/GuidoJeuken-6512/pill-reminder` (Typ „Integration“) hinzufügen, „Tabletten-Warner“ installieren, HA neu starten.
 **Manuell**: `custom_components/tabletten_warner` nach `/config/custom_components/` kopieren, HA neu starten.
 
 Mindestversion: Home Assistant 2026.8.
@@ -23,13 +24,14 @@ Mindestversion: Home Assistant 2026.8.
 ## Einrichtung
 
 1. **Einstellungen → Geräte & Dienste → Integration hinzufügen → „Tabletten-Warner“**
-   Name, HA-Benutzer (für das Dashboard) und die Handys (`notify.mobile_app_…`) wählen.
+   Name, HA-Benutzer (wer die Ansicht im Dashboard sieht) und die Handys (`notify.mobile_app_…`) wählen.
 2. Beim Eintrag der Person **„Medikament hinzufügen“**: Name, Dosis, Einnahmezeiten (z. B. 08:00, 20:00), Wochentage, wie früh bestätigt werden darf und nach wie vielen Minuten die Einnahme als verpasst gilt.
 3. **Konfigurieren** (Zahnrad) für Wiederholung, „Später“-Dauer, Eskalation, Aufbewahrung der Historie.
-4. Dashboard anlegen (Anleitung jeweils im Dateikopf):
-   - [dashboards/tabletten_warner_auto.yaml](dashboards/tabletten_warner_auto.yaml) – **empfohlen**, findet alle Medikamente automatisch (benötigt HACS-Karte [auto-entities](https://github.com/thomasloven/lovelace-auto-entities)); nur Personenname und Benutzer-ID ersetzen.
-   - [dashboards/tabletten_warner.yaml](dashboards/tabletten_warner.yaml) – nur Standard-Karten, Blöcke pro Medikament kopieren.
-   - [dashboards/tabletten_warner_plus.yaml](dashboards/tabletten_warner_plus.yaml) – optionale Zusatzkarten (Mushroom, ApexCharts).
+4. Fertig: Im Seitenmenü erscheint **„Tabletten“** (`/tabletten-warner`). Medikamente lassen sich dort im Bereich **„Medikamente verwalten“** anlegen und ändern – oder wie gewohnt über den Integrationseintrag.
+
+Eingabeformate im Dashboard: Zeiten `08:00, 20:00` · Wochentage `täglich`, `Mo-Fr` oder `Mo, Mi, Fr` (auch Englisch: `daily`, `Mon-Fri`).
+
+Das Dashboard wird von der Integration erzeugt und kann daher nicht im Editor bearbeitet werden. Wer ein eigenes Dashboard bauen möchte, findet Vorlagen in [dashboards/](dashboards/) (nur Standard-Karten bzw. mit Mushroom/ApexCharts).
 
 ## Entitäten
 
@@ -49,7 +51,9 @@ Mindestversion: Home Assistant 2026.8.
 | `sensor.anna_heute_eingenommen` / `_heute_verpasst` / `_heute_ubersprungen` | Tageszähler (springen um Mitternacht auf 0) |
 | `calendar.anna_medikamente` | Alle Einnahmen als Kalender; Beschreibung mit Dosis, Einnahmezeit, Verspätung, Erinnerungen und Quelle |
 
-Die Medikament-Entitäten tragen die Attribute `person` und `medication`, der Button „Eingenommen“ zusätzlich `due` (gerade fällig) und `actionable` (darf jetzt bestätigt werden). Darüber filtert das Auto-Dashboard – unabhängig von Sprache und Entity-IDs.
+Die Medikament-Entitäten tragen die Attribute `person` und `medication`, der Button „Eingenommen“ zusätzlich `due` (gerade fällig) und `actionable` (darf jetzt bestätigt werden). Damit lassen sich eigene Dashboards sprachunabhängig filtern (z. B. mit auto-entities).
+
+Zusätzlich gibt es pro Medikament Einstellungs-Entitäten (`text.<med>_einnahmezeiten`, `_wochentage`, `_dosis`, `_name`, `number.<med>_fruher_bestatigen_…`, `_verpasst_nach_…`, `button.<med>_medikament_loschen`) und pro Person die Eingabefelder „Neues Medikament: …“ mit `button.<person>_medikament_hinzufugen`.
 
 ## Events (für eigene Automationen)
 

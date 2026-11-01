@@ -97,7 +97,8 @@
         "invalid_time": "Ungültige Uhrzeit. Format HH:MM.",
         "times_required": "Mindestens eine Einnahmezeit angeben.",
         "weekdays_required": "Mindestens einen Wochentag wählen.",
-        "windows_overlap": "Die Bestätigungsfenster zweier Einnahmezeiten überschneiden sich. „Früher bestätigen“ bzw. „verpasst nach“ verkürzen oder die Zeiten weiter auseinanderlegen."
+        "windows_overlap": "Die Bestätigungsfenster zweier Einnahmezeiten überschneiden sich. „Früher bestätigen“ bzw. „verpasst nach“ verkürzen oder die Zeiten weiter auseinanderlegen.",
+        "invalid_weekdays": "Unbekannter Wochentag."
       },
       "abort": {
         "reconfigure_successful": "Medikament gespeichert."
@@ -150,6 +151,12 @@
       },
       "skip": {
         "name": "Überspringen"
+      },
+      "delete_medication": {
+        "name": "Medikament löschen"
+      },
+      "add_medication": {
+        "name": "Medikament hinzufügen"
       }
     },
     "calendar": {
@@ -206,6 +213,37 @@
       "reminders": {
         "name": "Erinnerungen"
       }
+    },
+    "text": {
+      "cfg_name": {
+        "name": "Name"
+      },
+      "cfg_times": {
+        "name": "Einnahmezeiten"
+      },
+      "cfg_dosage": {
+        "name": "Dosis"
+      },
+      "cfg_weekdays": {
+        "name": "Wochentage"
+      },
+      "new_name": {
+        "name": "Neues Medikament: Name"
+      },
+      "new_times": {
+        "name": "Neues Medikament: Zeiten"
+      },
+      "new_dosage": {
+        "name": "Neues Medikament: Dosis"
+      }
+    },
+    "number": {
+      "cfg_early_minutes": {
+        "name": "Früher bestätigen (Minuten vorher)"
+      },
+      "cfg_late_minutes": {
+        "name": "Verpasst nach (Minuten)"
+      }
     }
   },
   "exceptions": {
@@ -226,6 +264,24 @@
     },
     "entry_not_loaded": {
       "message": "Die gewählte Person ist nicht geladen."
+    },
+    "name_required": {
+      "message": "Bitte einen Namen eingeben."
+    },
+    "invalid_time": {
+      "message": "Ungültige Uhrzeit. Format HH:MM, mehrere mit Komma (z. B. 08:00, 20:00)."
+    },
+    "times_required": {
+      "message": "Mindestens eine Einnahmezeit angeben."
+    },
+    "weekdays_required": {
+      "message": "Mindestens einen Wochentag angeben."
+    },
+    "invalid_weekdays": {
+      "message": "Unbekannter Wochentag. Beispiele: täglich · Mo-Fr · Mo, Mi, Fr."
+    },
+    "windows_overlap": {
+      "message": "Die Bestätigungsfenster zweier Einnahmezeiten überschneiden sich. „Früher bestätigen“ bzw. „Verpasst nach“ verkürzen oder die Zeiten weiter auseinanderlegen."
     }
   },
   "services": {

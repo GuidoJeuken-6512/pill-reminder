@@ -23,6 +23,12 @@
       },
       "skip": {
         "default": "mdi:skip-next-circle"
+      },
+      "delete_medication": {
+        "default": "mdi:delete"
+      },
+      "add_medication": {
+        "default": "mdi:plus-circle"
       }
     },
     "calendar": {
@@ -77,6 +83,37 @@
         "state": {
           "off": "mdi:bell-off"
         }
+      }
+    },
+    "text": {
+      "cfg_name": {
+        "default": "mdi:pill"
+      },
+      "cfg_times": {
+        "default": "mdi:clock-outline"
+      },
+      "cfg_dosage": {
+        "default": "mdi:scale-balance"
+      },
+      "cfg_weekdays": {
+        "default": "mdi:calendar-week"
+      },
+      "new_name": {
+        "default": "mdi:pill"
+      },
+      "new_times": {
+        "default": "mdi:clock-plus-outline"
+      },
+      "new_dosage": {
+        "default": "mdi:scale-balance"
+      }
+    },
+    "number": {
+      "cfg_early_minutes": {
+        "default": "mdi:clock-start"
+      },
+      "cfg_late_minutes": {
+        "default": "mdi:clock-end"
       }
     }
   },

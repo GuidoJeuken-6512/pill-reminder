@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable, Coroutine
 from datetime import datetime, timedelta
 import logging
+from types import MappingProxyType
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.exceptions import ServiceValidationError
@@ -23,6 +24,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     ACTION_SNOOZE,
     ACTION_TAKEN,
+    ALL_WEEKDAYS,
     ATTR_DOSE_ID,
     ATTR_MEDICATION,
     ATTR_MEDICATION_ID,
@@ -31,10 +33,13 @@ from .const import (
     ATTR_SCHEDULED,
     ATTR_SOURCE,
     ATTR_STATUS,
+    CONF_CREATED_AT,
+    CONF_DOSAGE,
     CONF_ESCALATE_AFTER,
     CONF_ESCALATION_ENABLED,
     CONF_ESCALATION_SERVICES,
     CONF_MAX_REMINDERS,
+    CONF_NAME,
     CONF_NOTIFY_MISSED,
     CONF_NOTIFY_SERVICES,
     CONF_PERSISTENT_NOTIFICATION,
@@ -43,7 +48,9 @@ from .const import (
     CONF_RETENTION_DAYS,
     CONF_SNOOZE_MINUTES,
     CONF_TIME_SENSITIVE,
+    CONF_TIMES,
     CONF_USER_ID,
+    CONF_WEEKDAYS,
     DEFAULT_ESCALATE_AFTER,
     DEFAULT_ESCALATION_ENABLED,
     DEFAULT_MAX_REMINDERS,
@@ -71,6 +78,7 @@ from .const import (
 from .history import DoseHistory
 from .models import DoseRecord, DoseStatus, Medication, dose_id_for
 from .notifier import Notifier, parse_action
+from .validation import validate_medication
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,6 +129,8 @@ class ReminderManager:
         self.history = DoseHistory(hass, entry.entry_id)
         self.notifier = Notifier(hass, self.person)
         self.person_device_id: str | None = None
+        # Input fields "new medication" in the dashboard (not persisted)
+        self.draft: dict[str, str] = {CONF_NAME: "", CONF_TIMES: "08:00", CONF_DOSAGE: ""}
 
         self._slot_timers: dict[str, CALLBACK_TYPE] = {}
         self._dose_timers: dict[str, dict[str, CALLBACK_TYPE]] = {}
@@ -536,6 +546,62 @@ class ReminderManager:
             self.history.paused_medications.discard(med_id)
         self.history.async_schedule_save()
         self.async_notify_entities()
+
+    # ------------------------------------------- medication setup (dashboard)
+
+    def _raise_invalid(self, errors: dict[str, str]) -> None:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN, translation_key=next(iter(errors.values()))
+        )
+
+    @callback
+    def async_update_medication(self, med_id: str, changes: dict[str, Any]) -> None:
+        """Change a medication's settings; the entry reloads with the new schedule."""
+        subentry = self.entry.subentries.get(med_id)
+        if subentry is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="unknown_medication"
+            )
+        data, errors = validate_medication({**subentry.data, **changes})
+        if errors:
+            self._raise_invalid(errors)
+        data[CONF_CREATED_AT] = subentry.data.get(CONF_CREATED_AT, dt_util.utcnow().isoformat())
+        self.hass.config_entries.async_update_subentry(
+            self.entry, subentry, title=data[CONF_NAME], data=data
+        )
+
+    @callback
+    def async_add_medication(self) -> str:
+        """Create a medication from the 'new medication' input fields."""
+        data, errors = validate_medication(
+            {
+                CONF_NAME: self.draft[CONF_NAME],
+                CONF_TIMES: self.draft[CONF_TIMES],
+                CONF_DOSAGE: self.draft[CONF_DOSAGE],
+                CONF_WEEKDAYS: ALL_WEEKDAYS,
+            }
+        )
+        if errors:
+            self._raise_invalid(errors)
+        data[CONF_CREATED_AT] = dt_util.utcnow().isoformat()
+        subentry = ConfigSubentry(
+            data=MappingProxyType(data),
+            subentry_type=SUBENTRY_MEDICATION,
+            title=data[CONF_NAME],
+            unique_id=None,
+        )
+        self.hass.config_entries.async_add_subentry(self.entry, subentry)
+        return subentry.subentry_id
+
+    @callback
+    def async_delete_medication(self, med_id: str) -> None:
+        """Delete a medication; its history is kept."""
+        if med_id not in self.entry.subentries:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="unknown_medication"
+            )
+        self.history.remove_medication(med_id)
+        self.hass.config_entries.async_remove_subentry(self.entry, med_id)
 
     # ----------------------------------------------------------------- queries
 

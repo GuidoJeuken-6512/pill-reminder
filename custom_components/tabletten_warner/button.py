@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from homeassistant.components.button import ButtonEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import TablettenWarnerConfigEntry
 from .const import SOURCE_BUTTON
-from .entity import MedicationEntity
+from .entity import MedicationEntity, PersonEntity
 
 PARALLEL_UPDATES = 0
 
@@ -21,12 +22,14 @@ async def async_setup_entry(
 ) -> None:
     """Set up buttons."""
     manager = entry.runtime_data
+    async_add_entities([AddMedicationButton(manager, "add_medication")])
     for med in manager.medications.values():
         async_add_entities(
             [
                 TakenButton(manager, med, "taken"),
                 SnoozeButton(manager, med, "snooze"),
                 SkipButton(manager, med, "skip"),
+                DeleteMedicationButton(manager, med, "delete_medication"),
             ],
             config_subentry_id=med.id,
         )
@@ -66,3 +69,23 @@ class SkipButton(MedicationEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Skip the dose."""
         await self.manager.async_skip(self.med.id, source=SOURCE_BUTTON, user_id=self._user_id)
+
+
+class DeleteMedicationButton(MedicationEntity, ButtonEntity):
+    """Delete the medication (its history is kept)."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    async def async_press(self) -> None:
+        """Delete the medication."""
+        self.manager.async_delete_medication(self.med.id)
+
+
+class AddMedicationButton(PersonEntity, ButtonEntity):
+    """Create a medication from the 'new medication' input fields."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    async def async_press(self) -> None:
+        """Add the medication."""
+        self.manager.async_add_medication()

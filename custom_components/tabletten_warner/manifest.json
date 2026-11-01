@@ -1,14 +1,14 @@
 {
   "domain": "tabletten_warner",
   "name": "Tabletten-Warner",
-  "after_dependencies": ["mobile_app", "notify"],
-  "codeowners": [],
+  "after_dependencies": ["frontend", "lovelace", "mobile_app", "notify"],
+  "codeowners": ["@GuidoJeuken-6512"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/your-github/tabletten_warner",
+  "documentation": "https://github.com/GuidoJeuken-6512/pill-reminder",
   "integration_type": "service",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/your-github/tabletten_warner/issues",
+  "issue_tracker": "https://github.com/GuidoJeuken-6512/pill-reminder/issues",
   "requirements": [],
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
