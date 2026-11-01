@@ -1,0 +1,323 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Person hinzufügen",
+        "description": "Wer soll erinnert werden? Die Medikamente fügst du danach über „Medikament hinzufügen“ hinzu.",
+        "data": {
+          "person_name": "Name",
+          "user_id": "Home-Assistant-Benutzer",
+          "notify_services": "Handys (Notify-Dienste)"
+        },
+        "data_description": {
+          "user_id": "Damit wird die Erinnerungskarte im Dashboard nur diesem Benutzer angezeigt.",
+          "notify_services": "Notify-Dienste der Companion App (notify.mobile_app_…), die die Erinnerungen erhalten."
+        }
+      },
+      "reconfigure": {
+        "title": "Person bearbeiten",
+        "data": {
+          "person_name": "Name",
+          "user_id": "Home-Assistant-Benutzer",
+          "notify_services": "Handys (Notify-Dienste)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Bitte einen Namen eingeben."
+    },
+    "abort": {
+      "already_configured": "Diese Person ist bereits eingerichtet.",
+      "reconfigure_successful": "Gespeichert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Erinnerungs-Einstellungen",
+        "data": {
+          "repeat_interval": "Erinnerung wiederholen alle",
+          "max_reminders": "Maximale Anzahl Erinnerungen",
+          "snooze_minutes": "Dauer „Später“",
+          "time_sensitive": "Zeitkritische Benachrichtigung (iOS-Fokus / Android hohe Priorität)",
+          "persistent_notification": "Zusätzlich als Benachrichtigung in Home Assistant anzeigen",
+          "escalation_enabled": "An weitere Person eskalieren",
+          "escalate_after": "Eskalieren nach so vielen Erinnerungen",
+          "escalation_services": "Eskalations-Kontakte (Notify-Dienste)",
+          "notify_missed": "Nachricht senden, wenn eine Einnahme verpasst wurde",
+          "retention_days": "Historie aufbewahren"
+        },
+        "data_description": {
+          "persistent_notification": "Diese Benachrichtigungen sehen alle Benutzer.",
+          "notify_missed": "Geht an die Person und – bei aktiver Eskalation – an die Eskalations-Kontakte."
+        }
+      }
+    },
+    "error": {
+      "escalation_target_required": "Mindestens einen Eskalations-Kontakt wählen oder Eskalation ausschalten."
+    }
+  },
+  "config_subentries": {
+    "medication": {
+      "entry_type": "Medikament",
+      "initiate_flow": {
+        "user": "Medikament hinzufügen",
+        "reconfigure": "Medikament bearbeiten"
+      },
+      "step": {
+        "user": {
+          "title": "Medikament hinzufügen",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosis / Hinweis",
+            "times": "Einnahmezeiten",
+            "weekdays": "Wochentage",
+            "early_minutes": "Darf früher bestätigt werden (Minuten vorher)",
+            "late_minutes": "Gilt als verpasst nach (Minuten)"
+          },
+          "data_description": {
+            "times": "Ein Eintrag pro Einnahmezeit, z. B. 08:00 und 20:00.",
+            "late_minutes": "Bis dahin wird wiederholt erinnert, danach wird die Einnahme als verpasst protokolliert."
+          }
+        },
+        "reconfigure": {
+          "title": "Medikament bearbeiten",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosis / Hinweis",
+            "times": "Einnahmezeiten",
+            "weekdays": "Wochentage",
+            "early_minutes": "Darf früher bestätigt werden (Minuten vorher)",
+            "late_minutes": "Gilt als verpasst nach (Minuten)"
+          }
+        }
+      },
+      "error": {
+        "name_required": "Bitte einen Namen eingeben.",
+        "invalid_time": "Ungültige Uhrzeit. Format HH:MM.",
+        "times_required": "Mindestens eine Einnahmezeit angeben.",
+        "weekdays_required": "Mindestens einen Wochentag wählen.",
+        "windows_overlap": "Die Bestätigungsfenster zweier Einnahmezeiten überschneiden sich. „Früher bestätigen“ bzw. „verpasst nach“ verkürzen oder die Zeiten weiter auseinanderlegen."
+      },
+      "abort": {
+        "reconfigure_successful": "Medikament gespeichert."
+      }
+    }
+  },
+  "selector": {
+    "weekdays": {
+      "options": {
+        "0": "Montag",
+        "1": "Dienstag",
+        "2": "Mittwoch",
+        "3": "Donnerstag",
+        "4": "Freitag",
+        "5": "Samstag",
+        "6": "Sonntag"
+      }
+    },
+    "user": {
+      "options": {
+        "__none__": "Kein Benutzer"
+      }
+    },
+    "status": {
+      "options": {
+        "taken": "Eingenommen",
+        "missed": "Verpasst",
+        "skipped": "Übersprungen",
+        "paused": "Pausiert",
+        "due": "Fällig",
+        "snoozed": "Verschoben"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "due": {
+        "name": "Fällig"
+      },
+      "any_due": {
+        "name": "Medikament fällig"
+      }
+    },
+    "button": {
+      "taken": {
+        "name": "Eingenommen"
+      },
+      "snooze": {
+        "name": "Später"
+      },
+      "skip": {
+        "name": "Überspringen"
+      }
+    },
+    "calendar": {
+      "doses": {
+        "name": "Medikamente"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "scheduled": "Geplant",
+          "due": "Fällig",
+          "snoozed": "Verschoben",
+          "taken": "Eingenommen",
+          "missed": "Verpasst",
+          "skipped": "Übersprungen",
+          "paused": "Pausiert"
+        }
+      },
+      "next_dose": {
+        "name": "Nächste Einnahme"
+      },
+      "last_taken": {
+        "name": "Letzte Einnahme"
+      },
+      "adherence_7d": {
+        "name": "Einnahmetreue 7 Tage"
+      },
+      "adherence_30d": {
+        "name": "Einnahmetreue 30 Tage"
+      },
+      "streak": {
+        "name": "Serie"
+      },
+      "open_today": {
+        "name": "Offen heute",
+        "unit_of_measurement": "Dosen"
+      },
+      "taken_today": {
+        "name": "Heute eingenommen",
+        "unit_of_measurement": "Dosen"
+      },
+      "missed_today": {
+        "name": "Heute verpasst",
+        "unit_of_measurement": "Dosen"
+      },
+      "skipped_today": {
+        "name": "Heute übersprungen",
+        "unit_of_measurement": "Dosen"
+      }
+    },
+    "switch": {
+      "reminders": {
+        "name": "Erinnerungen"
+      }
+    }
+  },
+  "exceptions": {
+    "no_dose_due": {
+      "message": "Für {medication} ist gerade keine Einnahme fällig."
+    },
+    "nothing_to_snooze": {
+      "message": "Für {medication} gibt es keine offene Erinnerung."
+    },
+    "taken_in_future": {
+      "message": "Der Einnahmezeitpunkt darf nicht in der Zukunft liegen."
+    },
+    "unknown_medication": {
+      "message": "Unbekanntes Medikament."
+    },
+    "not_a_medication": {
+      "message": "{entity_id} gehört zu keinem Tabletten-Warner-Medikament."
+    },
+    "entry_not_loaded": {
+      "message": "Die gewählte Person ist nicht geladen."
+    }
+  },
+  "services": {
+    "mark_taken": {
+      "name": "Als eingenommen markieren",
+      "description": "Bestätigt die aktuelle Einnahme eines Medikaments. Mit Zeitpunkt kann eine vergangene Einnahme nachgetragen werden.",
+      "fields": {
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Beliebige Entität des Medikaments, z. B. der Button „Eingenommen“."
+        },
+        "taken_at": {
+          "name": "Eingenommen um",
+          "description": "Optional: Zeitpunkt der Einnahme (zum Nachtragen)."
+        }
+      }
+    },
+    "snooze": {
+      "name": "Später erinnern",
+      "description": "Verschiebt die offene Erinnerung eines Medikaments.",
+      "fields": {
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Beliebige Entität des Medikaments."
+        },
+        "minutes": {
+          "name": "Minuten",
+          "description": "Standard: Dauer aus den Einstellungen."
+        }
+      }
+    },
+    "skip": {
+      "name": "Überspringen",
+      "description": "Lässt die aktuelle Einnahme bewusst aus (zählt nicht als verpasst).",
+      "fields": {
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Beliebige Entität des Medikaments."
+        }
+      }
+    },
+    "get_history": {
+      "name": "Historie abrufen",
+      "description": "Liefert die protokollierten Einnahmen.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Auf eine Person beschränken."
+        },
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Auf ein Medikament beschränken."
+        },
+        "start": {
+          "name": "Von",
+          "description": "Geplant ab."
+        },
+        "end": {
+          "name": "Bis",
+          "description": "Geplant bis."
+        },
+        "status": {
+          "name": "Status",
+          "description": "Auf diese Status beschränken."
+        }
+      }
+    },
+    "export_history": {
+      "name": "Historie exportieren (CSV)",
+      "description": "Schreibt die Historie als CSV nach /config/tabletten_warner/.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Auf eine Person beschränken."
+        },
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Auf ein Medikament beschränken."
+        },
+        "start": {
+          "name": "Von",
+          "description": "Geplant ab."
+        },
+        "end": {
+          "name": "Bis",
+          "description": "Geplant bis."
+        },
+        "status": {
+          "name": "Status",
+          "description": "Auf diese Status beschränken."
+        }
+      }
+    }
+  }
+}

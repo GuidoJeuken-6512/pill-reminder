@@ -1,0 +1,323 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add person",
+        "description": "Who should be reminded? Add the medications afterwards via \"Add medication\".",
+        "data": {
+          "person_name": "Name",
+          "user_id": "Home Assistant user",
+          "notify_services": "Phones (notify services)"
+        },
+        "data_description": {
+          "user_id": "Used to show the reminder card in the dashboard only to this user.",
+          "notify_services": "Companion App notify services (notify.mobile_app_…) that receive the reminders."
+        }
+      },
+      "reconfigure": {
+        "title": "Edit person",
+        "data": {
+          "person_name": "Name",
+          "user_id": "Home Assistant user",
+          "notify_services": "Phones (notify services)"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Please enter a name."
+    },
+    "abort": {
+      "already_configured": "This person is already set up.",
+      "reconfigure_successful": "Saved."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Reminder settings",
+        "data": {
+          "repeat_interval": "Repeat reminder every",
+          "max_reminders": "Maximum number of reminders",
+          "snooze_minutes": "Snooze duration",
+          "time_sensitive": "Time-sensitive notification (iOS Focus / Android high priority)",
+          "persistent_notification": "Also show as persistent notification in Home Assistant",
+          "escalation_enabled": "Escalate to another person",
+          "escalate_after": "Escalate after this many reminders",
+          "escalation_services": "Escalation contacts (notify services)",
+          "notify_missed": "Send a message when a dose was missed",
+          "retention_days": "Keep history for"
+        },
+        "data_description": {
+          "persistent_notification": "Persistent notifications are visible to all users.",
+          "notify_missed": "Sent to the person and, if escalation is on, to the escalation contacts."
+        }
+      }
+    },
+    "error": {
+      "escalation_target_required": "Select at least one escalation contact or turn escalation off."
+    }
+  },
+  "config_subentries": {
+    "medication": {
+      "entry_type": "Medication",
+      "initiate_flow": {
+        "user": "Add medication",
+        "reconfigure": "Edit medication"
+      },
+      "step": {
+        "user": {
+          "title": "Add medication",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosage / note",
+            "times": "Intake times",
+            "weekdays": "Weekdays",
+            "early_minutes": "Can be confirmed early (minutes before)",
+            "late_minutes": "Counts as missed after (minutes)"
+          },
+          "data_description": {
+            "times": "One entry per intake time, e.g. 08:00 and 20:00.",
+            "late_minutes": "Reminders repeat until this time has passed; then the dose is logged as missed."
+          }
+        },
+        "reconfigure": {
+          "title": "Edit medication",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosage / note",
+            "times": "Intake times",
+            "weekdays": "Weekdays",
+            "early_minutes": "Can be confirmed early (minutes before)",
+            "late_minutes": "Counts as missed after (minutes)"
+          }
+        }
+      },
+      "error": {
+        "name_required": "Please enter a name.",
+        "invalid_time": "Invalid time. Use HH:MM.",
+        "times_required": "Add at least one intake time.",
+        "weekdays_required": "Select at least one weekday.",
+        "windows_overlap": "The confirmation windows of two intake times overlap. Reduce \"early\" or \"missed after\", or space the times further apart."
+      },
+      "abort": {
+        "reconfigure_successful": "Medication saved."
+      }
+    }
+  },
+  "selector": {
+    "weekdays": {
+      "options": {
+        "0": "Monday",
+        "1": "Tuesday",
+        "2": "Wednesday",
+        "3": "Thursday",
+        "4": "Friday",
+        "5": "Saturday",
+        "6": "Sunday"
+      }
+    },
+    "user": {
+      "options": {
+        "__none__": "No user"
+      }
+    },
+    "status": {
+      "options": {
+        "taken": "Taken",
+        "missed": "Missed",
+        "skipped": "Skipped",
+        "paused": "Paused",
+        "due": "Due",
+        "snoozed": "Snoozed"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "due": {
+        "name": "Due"
+      },
+      "any_due": {
+        "name": "Medication due"
+      }
+    },
+    "button": {
+      "taken": {
+        "name": "Taken"
+      },
+      "snooze": {
+        "name": "Snooze"
+      },
+      "skip": {
+        "name": "Skip"
+      }
+    },
+    "calendar": {
+      "doses": {
+        "name": "Medication"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "scheduled": "Scheduled",
+          "due": "Due",
+          "snoozed": "Snoozed",
+          "taken": "Taken",
+          "missed": "Missed",
+          "skipped": "Skipped",
+          "paused": "Paused"
+        }
+      },
+      "next_dose": {
+        "name": "Next dose"
+      },
+      "last_taken": {
+        "name": "Last taken"
+      },
+      "adherence_7d": {
+        "name": "Adherence 7 days"
+      },
+      "adherence_30d": {
+        "name": "Adherence 30 days"
+      },
+      "streak": {
+        "name": "Streak"
+      },
+      "open_today": {
+        "name": "Open today",
+        "unit_of_measurement": "doses"
+      },
+      "taken_today": {
+        "name": "Taken today",
+        "unit_of_measurement": "doses"
+      },
+      "missed_today": {
+        "name": "Missed today",
+        "unit_of_measurement": "doses"
+      },
+      "skipped_today": {
+        "name": "Skipped today",
+        "unit_of_measurement": "doses"
+      }
+    },
+    "switch": {
+      "reminders": {
+        "name": "Reminders"
+      }
+    }
+  },
+  "exceptions": {
+    "no_dose_due": {
+      "message": "No dose of {medication} is due right now."
+    },
+    "nothing_to_snooze": {
+      "message": "There is no open reminder for {medication}."
+    },
+    "taken_in_future": {
+      "message": "The intake time cannot be in the future."
+    },
+    "unknown_medication": {
+      "message": "Unknown medication."
+    },
+    "not_a_medication": {
+      "message": "{entity_id} is not an entity of a Tabletten-Warner medication."
+    },
+    "entry_not_loaded": {
+      "message": "The selected person is not loaded."
+    }
+  },
+  "services": {
+    "mark_taken": {
+      "name": "Mark as taken",
+      "description": "Confirms the current dose of a medication. With a time, a past dose can be logged afterwards.",
+      "fields": {
+        "entity_id": {
+          "name": "Medication",
+          "description": "Any entity of the medication, e.g. its 'Taken' button."
+        },
+        "taken_at": {
+          "name": "Taken at",
+          "description": "Optional: when it was taken (to log it afterwards)."
+        }
+      }
+    },
+    "snooze": {
+      "name": "Snooze",
+      "description": "Postpones the open reminder of a medication.",
+      "fields": {
+        "entity_id": {
+          "name": "Medication",
+          "description": "Any entity of the medication."
+        },
+        "minutes": {
+          "name": "Minutes",
+          "description": "Default: snooze duration from the settings."
+        }
+      }
+    },
+    "skip": {
+      "name": "Skip",
+      "description": "Deliberately skips the current dose (not counted as missed).",
+      "fields": {
+        "entity_id": {
+          "name": "Medication",
+          "description": "Any entity of the medication."
+        }
+      }
+    },
+    "get_history": {
+      "name": "Get history",
+      "description": "Returns logged doses.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Limit to one person."
+        },
+        "entity_id": {
+          "name": "Medication",
+          "description": "Limit to one medication."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Scheduled from."
+        },
+        "end": {
+          "name": "End",
+          "description": "Scheduled until."
+        },
+        "status": {
+          "name": "Status",
+          "description": "Limit to these statuses."
+        }
+      }
+    },
+    "export_history": {
+      "name": "Export history (CSV)",
+      "description": "Writes the history as CSV to /config/tabletten_warner/.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Limit to one person."
+        },
+        "entity_id": {
+          "name": "Medication",
+          "description": "Limit to one medication."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Scheduled from."
+        },
+        "end": {
+          "name": "End",
+          "description": "Scheduled until."
+        },
+        "status": {
+          "name": "Status",
+          "description": "Limit to these statuses."
+        }
+      }
+    }
+  }
+}

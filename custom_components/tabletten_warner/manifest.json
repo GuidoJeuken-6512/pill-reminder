@@ -1,0 +1,14 @@
+{
+  "domain": "tabletten_warner",
+  "name": "Tabletten-Warner",
+  "after_dependencies": ["mobile_app", "notify"],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/your-github/tabletten_warner",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/your-github/tabletten_warner/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

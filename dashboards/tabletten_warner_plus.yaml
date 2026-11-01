@@ -1,0 +1,93 @@
+# Tabletten-Warner – optionale Zusatzkarten (benötigt HACS-Frontend-Karten)
+#   - Mushroom          https://github.com/piitaya/lovelace-mushroom
+#   - ApexCharts Card   https://github.com/RomRider/apexcharts-card
+#
+# Diese Sektionen können in die View aus tabletten_warner.yaml (unter "sections:")
+# eingefügt werden. Platzhalter wie dort: anna, ramipril, ANNA_USER_ID.
+# Tipp: tabletten_warner_auto.yaml (auto-entities) findet alle Medikamente
+# automatisch und braucht keine Blöcke pro Medikament.
+
+- type: grid
+  cards:
+    - type: heading
+      heading: Auf einen Blick
+      icon: mdi:pill
+    - type: custom:mushroom-chips-card
+      alignment: center
+      chips:
+        - type: entity
+          entity: sensor.anna_offen_heute
+          icon: mdi:pill-multiple
+        - type: entity
+          entity: sensor.anna_einnahmetreue_7_tage
+          icon: mdi:chart-arc
+        - type: entity
+          entity: sensor.anna_serie
+          icon: mdi:fire
+          icon_color: orange
+    # --- je Medikament ---
+    - type: custom:mushroom-template-card
+      entity: sensor.ramipril_status
+      primary: Ramipril {{ state_attr('sensor.ramipril_status', 'dosage') }}
+      secondary: >-
+        {% set s = states('sensor.ramipril_status') %}
+        {% set n = states('sensor.ramipril_nachste_einnahme') %}
+        {{ state_translated('sensor.ramipril_status') }}
+        {%- if n not in ['unknown', 'unavailable'] %} · nächste {{ as_timestamp(n) | timestamp_custom('%a %H:%M') }}{% endif %}
+      icon: mdi:pill
+      icon_color: >-
+        {{ {'taken':'green','due':'red','snoozed':'amber','missed':'red',
+            'skipped':'grey','paused':'grey'}.get(states('sensor.ramipril_status'), 'blue') }}
+      badge_icon: >-
+        {{ 'mdi:bell-ring' if is_state('binary_sensor.ramipril_fallig', 'on') else '' }}
+      badge_color: red
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.ramipril_eingenommen
+        confirmation:
+          text: Ramipril als eingenommen markieren?
+      hold_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.ramipril_spater
+
+- type: grid
+  column_span: 2
+  cards:
+    - type: heading
+      heading: Einnahmetreue pro Tag
+      icon: mdi:chart-bar
+    - type: custom:apexcharts-card
+      graph_span: 30d
+      span:
+        end: day
+      header:
+        show: false
+      yaxis:
+        - min: 0
+          max: 100
+          decimals: 0
+      apex_config:
+        chart:
+          height: 260
+      series:
+        - entity: sensor.anna_einnahmetreue_7_tage
+          name: Gesamt (7-Tage-Mittel)
+          type: column
+          color: "#2e7d32"
+          statistics:
+            type: mean
+            period: day
+        # --- je Medikament ---
+        - entity: sensor.ramipril_einnahmetreue_7_tage
+          name: Ramipril
+          type: line
+          stroke_width: 2
+          statistics:
+            type: mean
+            period: day
+      grid_options:
+        columns: full

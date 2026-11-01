@@ -1,0 +1,72 @@
+mark_taken:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: tabletten_warner
+    taken_at:
+      required: false
+      selector:
+        datetime:
+
+snooze:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: tabletten_warner
+    minutes:
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 720
+          unit_of_measurement: min
+          mode: box
+
+skip:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: tabletten_warner
+
+get_history:
+  fields: &history_fields
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: tabletten_warner
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: tabletten_warner
+    start:
+      required: false
+      selector:
+        datetime:
+    end:
+      required: false
+      selector:
+        datetime:
+    status:
+      required: false
+      selector:
+        select:
+          multiple: true
+          translation_key: status
+          options:
+            - taken
+            - missed
+            - skipped
+            - paused
+            - due
+            - snoozed
+
+export_history:
+  fields: *history_fields

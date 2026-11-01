@@ -1,0 +1,100 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "due": {
+        "default": "mdi:pill-off",
+        "state": {
+          "on": "mdi:pill"
+        }
+      },
+      "any_due": {
+        "default": "mdi:bell-check",
+        "state": {
+          "on": "mdi:bell-ring"
+        }
+      }
+    },
+    "button": {
+      "taken": {
+        "default": "mdi:check-circle"
+      },
+      "snooze": {
+        "default": "mdi:alarm-snooze"
+      },
+      "skip": {
+        "default": "mdi:skip-next-circle"
+      }
+    },
+    "calendar": {
+      "doses": {
+        "default": "mdi:calendar-check"
+      }
+    },
+    "sensor": {
+      "status": {
+        "default": "mdi:pill",
+        "state": {
+          "scheduled": "mdi:clock-outline",
+          "due": "mdi:bell-ring",
+          "snoozed": "mdi:alarm-snooze",
+          "taken": "mdi:check-circle",
+          "missed": "mdi:close-circle",
+          "skipped": "mdi:skip-next-circle",
+          "paused": "mdi:pause-circle"
+        }
+      },
+      "next_dose": {
+        "default": "mdi:clock-start"
+      },
+      "last_taken": {
+        "default": "mdi:history"
+      },
+      "adherence_7d": {
+        "default": "mdi:chart-arc"
+      },
+      "adherence_30d": {
+        "default": "mdi:chart-arc"
+      },
+      "streak": {
+        "default": "mdi:fire"
+      },
+      "open_today": {
+        "default": "mdi:pill-multiple"
+      },
+      "taken_today": {
+        "default": "mdi:check-all"
+      },
+      "missed_today": {
+        "default": "mdi:close-octagon"
+      },
+      "skipped_today": {
+        "default": "mdi:skip-next"
+      }
+    },
+    "switch": {
+      "reminders": {
+        "default": "mdi:bell",
+        "state": {
+          "off": "mdi:bell-off"
+        }
+      }
+    }
+  },
+  "services": {
+    "mark_taken": {
+      "service": "mdi:check-circle"
+    },
+    "snooze": {
+      "service": "mdi:alarm-snooze"
+    },
+    "skip": {
+      "service": "mdi:skip-next-circle"
+    },
+    "get_history": {
+      "service": "mdi:history"
+    },
+    "export_history": {
+      "service": "mdi:file-delimited"
+    }
+  }
+}
