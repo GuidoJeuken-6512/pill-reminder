@@ -52,6 +52,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "balance": "Bilanz",
         "days_7": "7 Tage",
         "days_30": "30 Tage",
+        "no_data": "Noch keine Daten zur Einnahmetreue – sie erscheinen nach der ersten Einnahme.",
         "per_medication": "Pro Medikament",
         "history": "Verlauf",
         "adherence_chart": "Einnahmetreue (Tagesmittel, 30 Tage)",
@@ -94,6 +95,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "balance": "Summary",
         "days_7": "7 days",
         "days_30": "30 days",
+        "no_data": "No adherence data yet – it appears after the first dose.",
         "per_medication": "Per medication",
         "history": "History",
         "adherence_chart": "Adherence (daily mean, 30 days)",
@@ -156,6 +158,20 @@ def _gauge(entity_id: str, name: str) -> dict[str, Any]:
         "needle": True,
         "severity": {"green": 90, "yellow": 70, "red": 0},
         "grid_options": {"columns": 6},
+        # A gauge shows an error card while the value is unknown (no dose
+        # taken or missed yet), so only show it once there is a number.
+        "visibility": [{"condition": "numeric_state", "entity": entity_id, "above": -1}],
+    }
+
+
+def _no_data(entity_id: str, text: str) -> dict[str, Any]:
+    """Placeholder shown instead of the gauges while there is no data yet."""
+    return {
+        "type": "markdown",
+        "content": text,
+        "visibility": [
+            {"condition": "state", "entity": entity_id, "state": ["unknown", "unavailable"]}
+        ],
     }
 
 
@@ -437,6 +453,7 @@ def _person_view(
                 }
             )
     if adherence_7:
+        summary.append(_no_data(adherence_7, texts["no_data"]))
         summary.append(_gauge(adherence_7, texts["days_7"]))
     if adherence_30:
         summary.append(_gauge(adherence_30, texts["days_30"]))
@@ -464,6 +481,15 @@ def _person_view(
                 "stat_types": ["mean"],
                 "entities": chart_entities,
                 "grid_options": {"columns": "full"},
+                **(
+                    {
+                        "visibility": [
+                            {"condition": "numeric_state", "entity": adherence_7, "above": -1}
+                        ]
+                    }
+                    if adherence_7
+                    else {}
+                ),
             }
         )
     if status_ids:

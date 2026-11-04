@@ -9,8 +9,14 @@ from unittest.mock import patch
 from homeassistant.components.lovelace.const import LOVELACE_DATA
 from homeassistant.core import HomeAssistant
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.pill_reminder.const import CONF_USER_ID
+from custom_components.pill_reminder.const import (
+    CONF_NOTIFY_SERVICES,
+    CONF_PERSON_NAME,
+    CONF_USER_ID,
+    DOMAIN,
+)
 from custom_components.pill_reminder.dashboard import (
     DASHBOARD_URL,
     PillReminderDashboard,
@@ -149,3 +155,40 @@ async def test_existing_dashboard_not_overwritten(
     lovelace.data.dashboards[DASHBOARD_URL] = object()
     await _setup_person(hass, None)
     assert not _dashboard_calls(lovelace.register)
+
+
+def _cards(config: dict) -> list[dict]:
+    """All cards of all views and sections."""
+    return [
+        card
+        for view in config["views"]
+        for section in view.get("sections", [])
+        for card in section["cards"]
+    ]
+
+
+async def test_person_without_medication(hass: HomeAssistant, berlin, phone_calls) -> None:
+    """Without medication (adherence unknown) no card may show an error."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Anna",
+        unique_id="anna",
+        data={CONF_PERSON_NAME: "Anna", CONF_USER_ID: None, CONF_NOTIFY_SERVICES: []},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.anna_adherence_7_days").state == "unknown"
+
+    config = await async_build_dashboard(hass)
+    cards = _cards(config)
+    # Gauges and the statistics graph only appear once there is a number
+    for card in cards:
+        if card["type"] in ("gauge", "statistics-graph"):
+            assert card["visibility"][0]["condition"] == "numeric_state", card
+    # ... a hint is shown instead
+    assert any(c["type"] == "markdown" and "No adherence data yet" in c["content"] for c in cards)
+    assert any(c["type"] == "markdown" and "No medication yet" in c["content"] for c in cards)
+    # no card refers to an entity that does not exist
+    missing = sorted(e for e in _entity_ids(config) if hass.states.get(e) is None)
+    assert not missing, missing

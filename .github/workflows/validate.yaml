@@ -3,6 +3,9 @@ name: Validate
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "0 4 * * 1" # weekly: catch breaking changes in HA / HACS
+  workflow_dispatch:
 
 jobs:
   hassfest:
@@ -17,8 +20,6 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          # Not (yet) listed in home-assistant/brands
-          ignore: brands
 
   tests:
     runs-on: ubuntu-latest

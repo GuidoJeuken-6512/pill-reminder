@@ -2,6 +2,7 @@
   "domain": "pill_reminder",
   "name": "Pill Reminder",
   "after_dependencies": ["frontend", "lovelace", "mobile_app", "notify"],
+  "categories": ["health_wellbeing", "messaging_notifications"],
   "codeowners": ["@GuidoJeuken-6512"],
   "config_flow": true,
   "dependencies": [],
@@ -10,5 +11,5 @@
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/GuidoJeuken-6512/pill-reminder/issues",
   "requirements": [],
-  "version": "0.2.0"
+  "version": "0.3.0"
 }

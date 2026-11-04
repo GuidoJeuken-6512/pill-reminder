@@ -1,4 +1,10 @@
+<img src="custom_components/pill_reminder/brand/icon.png" alt="Pill Reminder" width="96" align="right">
+
 # Pill Reminder
+
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![Validate](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml/badge.svg)](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml)
+[![Release](https://img.shields.io/github/v/release/GuidoJeuken-6512/pill-reminder)](https://github.com/GuidoJeuken-6512/pill-reminder/releases)
 
 Home Assistant integration that reminds people to take their medication, logs every intake (or missed intake) and makes adherence visible.
 
@@ -17,7 +23,11 @@ Home Assistant integration that reminds people to take their medication, logs ev
 
 ## Installation
 
-**HACS**: HACS → ⋮ → Custom repositories → add `https://github.com/GuidoJeuken-6512/pill-reminder` (type "Integration"), install "Pill Reminder", restart Home Assistant.
+**HACS** (recommended):
+
+[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GuidoJeuken-6512&repository=pill-reminder&category=integration)
+
+or manually: HACS → ⋮ → Custom repositories → add `https://github.com/GuidoJeuken-6512/pill-reminder` (type "Integration"), install "Pill Reminder", restart Home Assistant.
 **Manual**: copy `custom_components/pill_reminder` to `/config/custom_components/`, restart Home Assistant.
 
 Requires Home Assistant 2026.8 or newer.
