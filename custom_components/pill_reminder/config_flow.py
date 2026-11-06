@@ -1,4 +1,4 @@
-"""Config flow: person (entry), options, medications (subentries)."""
+"""Config flow: person (entry), options, medications and measurements (subentries)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    ConfigSubentryData,
     ConfigSubentryFlow,
     OptionsFlow,
     SubentryFlowResult,
@@ -25,6 +26,7 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
+    TimeSelector,
 )
 from homeassistant.util import dt as dt_util, slugify
 import voluptuous as vol
@@ -37,18 +39,24 @@ from .const import (
     CONF_ESCALATE_AFTER,
     CONF_ESCALATION_ENABLED,
     CONF_ESCALATION_SERVICES,
+    CONF_HEIGHT,
     CONF_LATE_MINUTES,
     CONF_MAX_REMINDERS,
+    CONF_MEASUREMENT_REPEAT,
+    CONF_METRIC,
     CONF_NAME,
     CONF_NOTIFY_MISSED,
     CONF_NOTIFY_SERVICES,
     CONF_PERSISTENT_NOTIFICATION,
     CONF_PERSON_NAME,
+    CONF_REMINDER_ENABLED,
+    CONF_REMINDER_TIME,
     CONF_REPEAT_INTERVAL,
     CONF_RETENTION_DAYS,
     CONF_SNOOZE_MINUTES,
     CONF_TIME_SENSITIVE,
     CONF_TIMES,
+    CONF_TRACK_BODY,
     CONF_USER_ID,
     CONF_WEEKDAYS,
     DEFAULT_EARLY_MINUTES,
@@ -56,17 +64,23 @@ from .const import (
     DEFAULT_ESCALATION_ENABLED,
     DEFAULT_LATE_MINUTES,
     DEFAULT_MAX_REMINDERS,
+    DEFAULT_MEASUREMENT_REPEAT,
     DEFAULT_NOTIFY_MISSED,
     DEFAULT_PERSISTENT_NOTIFICATION,
+    DEFAULT_REMINDER_TIME,
     DEFAULT_REPEAT_INTERVAL,
     DEFAULT_RETENTION_DAYS,
     DEFAULT_SNOOZE_MINUTES,
     DEFAULT_TIME_SENSITIVE,
     DOMAIN,
+    MAX_HEIGHT,
+    MIN_HEIGHT,
+    SUBENTRY_MEASUREMENT,
     SUBENTRY_MEDICATION,
 )
+from .metrics import METRICS, metric_title
 from .notifier import UNSUPPORTED_NOTIFY_SERVICES
-from .validation import validate_medication
+from .validation import validate_measurement, validate_medication
 
 NO_USER = "none"
 
@@ -122,25 +136,58 @@ async def _async_users(hass: HomeAssistant) -> list[tuple[str, str]]:
     )
 
 
-def _person_schema(hass: HomeAssistant, users: list[tuple[str, str]]) -> vol.Schema:
-    return vol.Schema(
-        {
-            vol.Required(CONF_PERSON_NAME): TextSelector(),
-            vol.Required(CONF_USER_ID, default=NO_USER): _user_selector(hass, users),
-            vol.Optional(CONF_NOTIFY_SERVICES, default=[]): _notify_selector(hass),
-        }
+def _person_schema(
+    hass: HomeAssistant, users: list[tuple[str, str]], *, new: bool = False
+) -> vol.Schema:
+    fields: dict[Any, Any] = {
+        vol.Required(CONF_PERSON_NAME): TextSelector(),
+        vol.Required(CONF_USER_ID, default=NO_USER): _user_selector(hass, users),
+        vol.Optional(CONF_NOTIFY_SERVICES, default=[]): _notify_selector(hass),
+    }
+    if new:
+        fields[vol.Required(CONF_TRACK_BODY, default=True)] = BooleanSelector()
+    fields[vol.Optional(CONF_HEIGHT)] = NumberSelector(
+        NumberSelectorConfig(
+            min=MIN_HEIGHT,
+            max=MAX_HEIGHT,
+            step=0.5,
+            mode=NumberSelectorMode.BOX,
+            unit_of_measurement="cm",
+        )
     )
+    return vol.Schema(fields)
 
 
 def _clean_person(user_input: dict[str, Any]) -> dict[str, Any]:
     user_id = user_input.get(CONF_USER_ID)
-    return {
+    data: dict[str, Any] = {
         CONF_PERSON_NAME: user_input[CONF_PERSON_NAME].strip(),
         CONF_USER_ID: None if user_id in (None, "", NO_USER) else user_id,
         CONF_NOTIFY_SERVICES: [
             s.removeprefix("notify.") for s in user_input.get(CONF_NOTIFY_SERVICES, [])
         ],
     }
+    if height := user_input.get(CONF_HEIGHT):
+        data[CONF_HEIGHT] = round(float(height), 1)
+    return data
+
+
+def default_measurements(language: str) -> list[ConfigSubentryData]:
+    """Weight daily and waist on Mondays, both with a reminder at 07:00."""
+    return [
+        ConfigSubentryData(
+            data={
+                CONF_METRIC: metric.key,
+                CONF_REMINDER_ENABLED: True,
+                CONF_REMINDER_TIME: DEFAULT_REMINDER_TIME,
+                CONF_WEEKDAYS: list(metric.default_weekdays),
+            },
+            subentry_type=SUBENTRY_MEASUREMENT,
+            title=metric_title(metric.key, language),
+            unique_id=metric.key,
+        )
+        for metric in METRICS.values()
+    ]
 
 
 class PillReminderConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -160,9 +207,19 @@ class PillReminderConfigFlow(ConfigFlow, domain=DOMAIN):
                     data[CONF_USER_ID] or slugify(data[CONF_PERSON_NAME])
                 )
                 self._abort_if_unique_id_configured()
-                return self.async_create_entry(title=data[CONF_PERSON_NAME], data=data, options={})
+                track_body = user_input.get(CONF_TRACK_BODY, True)
+                return self.async_create_entry(
+                    title=data[CONF_PERSON_NAME],
+                    data=data,
+                    options={},
+                    subentries=(
+                        default_measurements(self.hass.config.language or "en")
+                        if track_body
+                        else ()
+                    ),
+                )
 
-        schema = _person_schema(self.hass, await _async_users(self.hass))
+        schema = _person_schema(self.hass, await _async_users(self.hass), new=True)
         return self.async_show_form(
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(schema, user_input),
@@ -202,8 +259,11 @@ class PillReminderConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_supported_subentry_types(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
-        """Medications are subentries of a person."""
-        return {SUBENTRY_MEDICATION: MedicationSubentryFlow}
+        """Medications and tracked measurements are subentries of a person."""
+        return {
+            SUBENTRY_MEDICATION: MedicationSubentryFlow,
+            SUBENTRY_MEASUREMENT: MeasurementSubentryFlow,
+        }
 
 
 class PillReminderOptionsFlow(OptionsFlow):
@@ -250,6 +310,9 @@ class PillReminderOptionsFlow(OptionsFlow):
                 vol.Required(CONF_NOTIFY_MISSED, default=DEFAULT_NOTIFY_MISSED): BooleanSelector(),
                 vol.Required(CONF_RETENTION_DAYS, default=DEFAULT_RETENTION_DAYS): _minutes(
                     7, 3650, "d"
+                ),
+                vol.Required(CONF_MEASUREMENT_REPEAT, default=DEFAULT_MEASUREMENT_REPEAT): _minutes(
+                    0, 720
                 ),
             }
         )
@@ -326,4 +389,90 @@ class MedicationSubentryFlow(ConfigSubentryFlow):
                 _medication_schema(), user_input or suggested
             ),
             errors=errors,
+        )
+
+
+def _measurement_reminder_fields() -> dict[Any, Any]:
+    return {
+        vol.Required(CONF_REMINDER_ENABLED, default=True): BooleanSelector(),
+        vol.Required(CONF_REMINDER_TIME, default=DEFAULT_REMINDER_TIME): TimeSelector(),
+        vol.Required(CONF_WEEKDAYS, default=[str(d) for d in ALL_WEEKDAYS]): SelectSelector(
+            SelectSelectorConfig(
+                options=[str(d) for d in ALL_WEEKDAYS],
+                multiple=True,
+                mode=SelectSelectorMode.LIST,
+                translation_key="weekdays",
+            )
+        ),
+    }
+
+
+class MeasurementSubentryFlow(ConfigSubentryFlow):
+    """Track a measurement type (weight, waist) or change its reminder."""
+
+    def _untracked(self) -> list[str]:
+        tracked = {
+            sub.data.get(CONF_METRIC)
+            for sub in self._get_entry().subentries.values()
+            if sub.subentry_type == SUBENTRY_MEASUREMENT
+        }
+        return [key for key in METRICS if key not in tracked]
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        """Track a measurement type."""
+        available = self._untracked()
+        if not available:
+            return self.async_abort(reason="all_tracked")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            data, errors = validate_measurement(user_input)
+            if not errors and data[CONF_METRIC] not in available:
+                errors[CONF_METRIC] = "already_tracked"
+            if not errors:
+                return self.async_create_entry(
+                    title=metric_title(data[CONF_METRIC], self.hass.config.language or "en"),
+                    data=data,
+                    unique_id=data[CONF_METRIC],
+                )
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_METRIC, default=available[0]): SelectSelector(
+                    SelectSelectorConfig(
+                        options=available,
+                        mode=SelectSelectorMode.DROPDOWN,
+                        translation_key="metric",
+                    )
+                ),
+                **_measurement_reminder_fields(),
+            }
+        )
+        return self.async_show_form(
+            step_id="user",
+            data_schema=self.add_suggested_values_to_schema(schema, user_input),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Change the reminder of a measurement type."""
+        subentry = self._get_reconfigure_subentry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            data, errors = validate_measurement(
+                {**user_input, CONF_METRIC: subentry.data.get(CONF_METRIC)}
+            )
+            if not errors:
+                return self.async_update_and_abort(self._get_entry(), subentry, data=data)
+
+        suggested = dict(subentry.data)
+        suggested[CONF_WEEKDAYS] = [str(d) for d in subentry.data.get(CONF_WEEKDAYS, [])]
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(_measurement_reminder_fields()), user_input or suggested
+            ),
+            errors=errors,
+            description_placeholders={"metric": subentry.title},
         )

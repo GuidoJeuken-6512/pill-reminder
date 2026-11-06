@@ -5,28 +5,47 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
+from homeassistant.config_entries import ConfigSubentry
 from homeassistant.core import HomeAssistant
 import pytest
 
+from .body.conftest import metric_subentry
 from .conftest import setup
 
 DASHBOARDS = Path(__file__).parent.parent / "dashboards"
 
 
 @pytest.mark.parametrize(
-    "dashboard", ["pill_reminder.yaml", "pill_reminder_plus.yaml", "../README.md"]
+    "dashboard",
+    ["pill_reminder.yaml", "pill_reminder_plus.yaml", "../README.md", "../docs/user-guide.md"],
 )
 async def test_dashboard_entity_ids_exist(
     hass: HomeAssistant, berlin, phone_calls, entry, dashboard: str
 ) -> None:
-    """Every entity referenced by an example dashboard exists (English instance)."""
+    """Every entity referenced by an example dashboard exists (English instance).
+
+    Anna takes Ramipril and tracks weight and waist.
+    """
     hass.config.language = "en"
-    await setup(hass, entry)
+    entry.add_to_hass(hass)
+    for metric, weekdays in (("weight", [0, 1, 2, 3, 4, 5, 6]), ("waist", [0])):
+        sub = metric_subentry(f"sub_{metric}", metric, weekdays)
+        hass.config_entries.async_add_subentry(
+            entry,
+            ConfigSubentry(
+                data=sub["data"],
+                subentry_type=sub["subentry_type"],
+                title=sub["title"],
+                unique_id=sub["unique_id"],
+            ),
+        )
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
 
     content = (DASHBOARDS / dashboard).read_text(encoding="utf-8")
     referenced = set(
         re.findall(
-            r"\b((?:sensor|binary_sensor|button|switch|calendar|text|number)\.(?:anna|ramipril)_[a-z0-9_]+)",
+            r"\b((?:sensor|binary_sensor|button|switch|calendar|text|number|time)\.(?:anna|ramipril)_[a-z0-9_]+)",
             content,
         )
     )

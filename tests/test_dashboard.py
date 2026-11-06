@@ -83,7 +83,7 @@ async def test_view_per_person(
     await _setup_person(hass, hass_read_only_user.id)
 
     config = await async_build_dashboard(hass)
-    assert config["title"] == "Tabletten"
+    assert config["title"] == "Gesundheit"
     view, manage = config["views"]
     assert view["title"] == "Anna"
     assert view["path"] == "anna"
@@ -92,7 +92,7 @@ async def test_view_per_person(
     assert hass_admin_user.id in visible
 
     # Separate tab to manage medication, same visibility
-    assert manage["title"] == "Medikamente verwalten"
+    assert manage["title"] == "Verwalten"
     assert manage["path"] == "anna-verwalten"
     assert manage["visible"] == view["visible"]
     manage_ids = _entity_ids(manage)

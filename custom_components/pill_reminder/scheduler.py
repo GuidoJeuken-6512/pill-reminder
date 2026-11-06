@@ -21,6 +21,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.util import dt as dt_util
 
+from .body import BodyTracker
 from .const import (
     ACTION_SNOOZE,
     ACTION_TAKEN,
@@ -128,6 +129,10 @@ class ReminderManager:
         }
         self.history = DoseHistory(hass, entry.entry_id)
         self.notifier = Notifier(hass, self.person)
+        # Weight, waist, BMI, ... (config subentries of type "measurement")
+        self.body = BodyTracker(hass, entry)
+        # Config that needs a reload when changed (set by async_setup_entry)
+        self.signature: tuple[Any, ...] = ()
         self.person_device_id: str | None = None
         # Input fields "new medication" in the dashboard (not persisted)
         self.draft: dict[str, str] = {CONF_NAME: "", CONF_TIMES: "08:00", CONF_DOSAGE: ""}
@@ -141,6 +146,7 @@ class ReminderManager:
     async def async_start(self) -> None:
         """Load history, catch up on missed time and start all timers."""
         await self.history.async_load()
+        await self.body.async_start()
         now = dt_util.utcnow()
         self.history.purge(self.retention_days, now)
         self.history.paused_medications &= set(self.medications)
@@ -175,6 +181,7 @@ class ReminderManager:
         for dose_id in list(self._dose_timers):
             self._cancel_dose_timers(dose_id)
         await self.history.async_save_now()
+        await self.body.async_stop()
 
     async def _async_restore(self, med: Medication, now: datetime) -> None:
         """Resolve or resume doses that were due while HA was not running."""
@@ -596,7 +603,7 @@ class ReminderManager:
     @callback
     def async_delete_medication(self, med_id: str) -> None:
         """Delete a medication; its history is kept."""
-        if med_id not in self.entry.subentries:
+        if med_id not in self.medications:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="unknown_medication"
             )

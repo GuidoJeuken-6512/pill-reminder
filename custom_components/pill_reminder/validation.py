@@ -1,7 +1,8 @@
-"""Validation and text formats of a medication, shared by config flow and dashboard."""
+"""Validation and text formats, shared by config flow, dashboard entities and actions."""
 
 from __future__ import annotations
 
+from datetime import time
 import itertools
 import re
 from typing import Any
@@ -11,12 +12,17 @@ from .const import (
     CONF_DOSAGE,
     CONF_EARLY_MINUTES,
     CONF_LATE_MINUTES,
+    CONF_METRIC,
     CONF_NAME,
+    CONF_REMINDER_ENABLED,
+    CONF_REMINDER_TIME,
     CONF_TIMES,
     CONF_WEEKDAYS,
     DEFAULT_EARLY_MINUTES,
     DEFAULT_LATE_MINUTES,
+    DEFAULT_REMINDER_TIME,
 )
+from .metrics import METRICS
 from .models import parse_time
 
 # First two letters of German and English weekday names -> weekday number
@@ -161,5 +167,63 @@ def validate_medication(user_input: dict[str, Any]) -> tuple[dict[str, Any], dic
         CONF_WEEKDAYS: weekdays,
         CONF_EARLY_MINUTES: early,
         CONF_LATE_MINUTES: late,
+    }
+    return data, errors
+
+
+# ---------------------------------------------------------------- measurements
+
+# Same error class, also used for measurement input
+InvalidInput = MedicationInvalid
+
+
+def parse_reminder_time(value: str | time) -> time:
+    """Parse 'HH:MM' (or a time) for a measurement reminder."""
+    if isinstance(value, time):
+        return value.replace(second=0, microsecond=0)
+    try:
+        return parse_time(str(value))
+    except ValueError as err:
+        raise InvalidInput("invalid_time") from err
+
+
+def validate_measurement(user_input: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str]]:
+    """Validate the reminder settings of a tracked measurement type.
+
+    Returns (clean subentry data, errors per field).
+    """
+    errors: dict[str, str] = {}
+    metric = user_input.get(CONF_METRIC)
+    if metric not in METRICS:
+        errors[CONF_METRIC] = "unknown_metric"
+
+    reminder_time = DEFAULT_REMINDER_TIME
+    try:
+        reminder_time = parse_reminder_time(
+            user_input.get(CONF_REMINDER_TIME) or DEFAULT_REMINDER_TIME
+        ).strftime("%H:%M")
+    except InvalidInput as err:
+        errors[CONF_REMINDER_TIME] = err.key
+
+    raw_weekdays = user_input.get(CONF_WEEKDAYS, ALL_WEEKDAYS)
+    weekdays: list[int] = []
+    try:
+        weekdays = (
+            parse_weekdays(raw_weekdays)
+            if isinstance(raw_weekdays, str)
+            else sorted({int(d) for d in raw_weekdays if 0 <= int(d) <= 6})
+        )
+    except InvalidInput as err:
+        errors[CONF_WEEKDAYS] = err.key
+    except ValueError:
+        errors[CONF_WEEKDAYS] = "invalid_weekdays"
+    if not weekdays and CONF_WEEKDAYS not in errors:
+        errors[CONF_WEEKDAYS] = "weekdays_required"
+
+    data = {
+        CONF_METRIC: metric,
+        CONF_REMINDER_ENABLED: bool(user_input.get(CONF_REMINDER_ENABLED, True)),
+        CONF_REMINDER_TIME: reminder_time,
+        CONF_WEEKDAYS: weekdays,
     }
     return data, errors

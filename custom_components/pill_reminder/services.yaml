@@ -70,3 +70,63 @@ get_history:
 
 export_history:
   fields: *history_fields
+
+add_measurement:
+  fields:
+    config_entry_id: &person
+      required: false
+      selector:
+        config_entry:
+          integration: pill_reminder
+    entity_id: &person_entity
+      required: false
+      selector:
+        entity:
+          integration: pill_reminder
+    metric: &metric
+      required: false
+      selector:
+        select:
+          translation_key: metric
+          options:
+            - weight
+            - waist
+    value:
+      required: true
+      selector:
+        number:
+          min: 20
+          max: 400
+          step: 0.1
+          mode: box
+    measured_at:
+      required: false
+      selector:
+        datetime:
+
+delete_measurement:
+  fields:
+    config_entry_id: *person
+    entity_id: *person_entity
+    metric: *metric
+    date:
+      required: false
+      selector:
+        date:
+
+get_measurements:
+  fields: &measurement_fields
+    config_entry_id: *person
+    entity_id: *person_entity
+    metric: *metric
+    start:
+      required: false
+      selector:
+        datetime:
+    end:
+      required: false
+      selector:
+        datetime:
+
+export_measurements:
+  fields: *measurement_fields

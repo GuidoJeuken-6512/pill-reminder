@@ -16,8 +16,11 @@ from .const import (
     ACTION_SNOOZE,
     ACTION_TAKEN,
     DOMAIN,
+    MEASUREMENT_CHANNEL,
     NOTIFICATION_CHANNEL,
 )
+from .measurements import Measurement
+from .metrics import MetricType
 from .models import DoseRecord, Medication
 
 _LOGGER = logging.getLogger(__name__)
@@ -203,3 +206,99 @@ class Notifier:
                 {"tag": f"{self.tag(record)}_escalation"},
             )
         persistent_notification.async_dismiss(self.hass, self.tag(record))
+
+
+# ---------------------------------------------------------------- measurements
+
+MEASUREMENT_TEXTS: dict[str, dict[str, str]] = {
+    "de": {
+        "title_weight": "⚖️ Zeit für die Waage",
+        "title_waist": "📏 Bauchumfang messen",
+        "title": "📋 Zeit zum Messen",
+        "message": "{person}, bitte trage deinen heutigen Wert ein.",
+        "last": " Letzter Wert: {value} {unit} ({date}).",
+        "repeat": " (Erinnerung)",
+    },
+    "en": {
+        "title_weight": "⚖️ Time to step on the scale",
+        "title_waist": "📏 Time to measure your waist",
+        "title": "📋 Time to measure",
+        "message": "{person}, please enter today's value.",
+        "last": " Last value: {value} {unit} ({date}).",
+        "repeat": " (reminder)",
+    },
+}
+
+DATE_FORMATS = {"de": "%d.%m.", "en": "%b %d"}
+
+
+class MeasurementNotifier(Notifier):
+    """Remind a person to enter a measurement; tapping opens the dashboard."""
+
+    def __init__(self, hass: HomeAssistant, person: str, entry_id: str) -> None:
+        """Initialize."""
+        super().__init__(hass, person)
+        self.entry_id = entry_id
+
+    def _language(self) -> str:
+        language = (self.hass.config.language or "en").split("-")[0]
+        return language if language in MEASUREMENT_TEXTS else "en"
+
+    def measurement_tag(self, metric: str) -> str:
+        """Notification tag, so a repeat replaces the first reminder."""
+        return f"{DOMAIN}_{self.entry_id}_{metric}"
+
+    def measurement_texts(
+        self, metric: MetricType, last: Measurement | None, count: int
+    ) -> tuple[str, str]:
+        """Title and message of a measurement reminder."""
+        lang = self._language()
+        texts = MEASUREMENT_TEXTS[lang]
+        title = texts.get(f"title_{metric.key}", texts["title"])
+        message = texts["message"].format(person=self.person)
+        if last is not None:
+            value = f"{last.value:.{metric.decimals}f}"
+            if lang == "de":
+                value = value.replace(".", ",")
+            message += texts["last"].format(
+                value=value,
+                unit=metric.unit,
+                date=dt_util.as_local(last.measured_at).strftime(DATE_FORMATS[lang]),
+            )
+        if count > 1:
+            title += texts["repeat"]
+        return title, message
+
+    async def async_send_measurement_reminder(
+        self,
+        services: list[str],
+        metric: MetricType,
+        *,
+        last: Measurement | None,
+        count: int,
+        url: str,
+        persistent: bool,
+    ) -> None:
+        """Send the reminder to the person's phones."""
+        title, message = self.measurement_texts(metric, last, count)
+        data: dict[str, Any] = {
+            "tag": self.measurement_tag(metric.key),
+            "group": f"{DOMAIN}_measurements",
+            "url": url,  # iOS
+            "clickAction": url,  # Android
+            "channel": MEASUREMENT_CHANNEL,
+        }
+        await self._async_notify(services, title, message, data)
+        if persistent:
+            persistent_notification.async_create(
+                self.hass,
+                f"{message}\n\n[→ Dashboard]({url})",
+                title=title,
+                notification_id=self.measurement_tag(metric.key),
+            )
+
+    async def async_clear_measurement(self, services: list[str], metric: str) -> None:
+        """Remove the reminder from all phones and the frontend."""
+        tag = self.measurement_tag(metric)
+        await self._async_notify(services, "", "clear_notification", {"tag": tag})
+        persistent_notification.async_dismiss(self.hass, tag)

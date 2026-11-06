@@ -7,7 +7,10 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
+from .body import BodyTracker
 from .const import DOMAIN, signal_update
+from .measurement_reminders import TrackedMetric
+from .metrics import MetricType
 from .models import Medication
 from .scheduler import ReminderManager
 
@@ -80,3 +83,40 @@ class MedicationEntity(PillReminderEntity):
             entry_type=DeviceEntryType.SERVICE,
             via_device_id=manager.person_device_id,
         )
+
+
+class BodyEntity(PersonEntity):
+    """Person entity of the body measurements (height, BMI, ...)."""
+
+    def __init__(self, manager: ReminderManager, key: str) -> None:
+        """Initialize."""
+        super().__init__(manager, key)
+        self.body: BodyTracker = manager.body
+
+
+class MeasurementEntity(PillReminderEntity):
+    """Entity of one tracked measurement type (one device per subentry)."""
+
+    def __init__(self, manager: ReminderManager, tracked: TrackedMetric, key: str) -> None:
+        """Initialize; translation key and unique id are '<metric>_<key>'."""
+        super().__init__(manager)
+        self.body: BodyTracker = manager.body
+        self.subentry_id = tracked.subentry_id
+        self.metric: MetricType = tracked.metric
+        full_key = f"{tracked.metric.key}_{key}"
+        self._attr_translation_key = full_key
+        self._attr_unique_id = f"{manager.entry_id}_{full_key}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"{manager.entry_id}_{tracked.metric.key}")},
+            translation_key=tracked.metric.key,
+            translation_placeholders={"person": manager.person},
+            manufacturer="Pill Reminder",
+            model="Measurement",
+            entry_type=DeviceEntryType.SERVICE,
+            via_device_id=manager.person_device_id,
+        )
+
+    @property
+    def tracked(self) -> TrackedMetric | None:
+        """Current settings (they change without a reload)."""
+        return self.body.tracked.get(self.subentry_id)

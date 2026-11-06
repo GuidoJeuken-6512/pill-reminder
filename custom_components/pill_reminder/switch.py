@@ -10,7 +10,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import PillReminderConfigEntry
-from .entity import MedicationEntity
+from .const import CONF_REMINDER_ENABLED
+from .entity import MeasurementEntity, MedicationEntity
 
 PARALLEL_UPDATES = 0
 
@@ -24,6 +25,11 @@ async def async_setup_entry(
     manager = entry.runtime_data
     for med in manager.medications.values():
         async_add_entities([RemindersSwitch(manager, med, "reminders")], config_subentry_id=med.id)
+    for tracked in manager.body.tracked.values():
+        async_add_entities(
+            [MeasurementReminderSwitch(manager, tracked, "reminder")],
+            config_subentry_id=tracked.subentry_id,
+        )
 
 
 class RemindersSwitch(MedicationEntity, SwitchEntity):
@@ -41,3 +47,21 @@ class RemindersSwitch(MedicationEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Pause reminders."""
         await self.manager.async_set_paused(self.med.id, True)
+
+
+class MeasurementReminderSwitch(MeasurementEntity, SwitchEntity):
+    """Turn the reminder of a measurement type on or off."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def _update_from_manager(self) -> None:
+        tracked = self.tracked
+        self._attr_is_on = bool(tracked and tracked.reminder_enabled)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the reminder on."""
+        self.body.async_update_reminder(self.subentry_id, {CONF_REMINDER_ENABLED: True})
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the reminder off."""
+        self.body.async_update_reminder(self.subentry_id, {CONF_REMINDER_ENABLED: False})

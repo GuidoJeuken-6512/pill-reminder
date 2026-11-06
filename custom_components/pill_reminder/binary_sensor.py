@@ -5,9 +5,10 @@ from __future__ import annotations
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from . import PillReminderConfigEntry
-from .entity import MedicationEntity, PersonEntity
+from .entity import MeasurementEntity, MedicationEntity, PersonEntity
 
 PARALLEL_UPDATES = 0
 
@@ -23,6 +24,11 @@ async def async_setup_entry(
     for med in manager.medications.values():
         async_add_entities(
             [MedicationDueBinarySensor(manager, med, "due")], config_subentry_id=med.id
+        )
+    for tracked in manager.body.tracked.values():
+        async_add_entities(
+            [MeasurementDueBinarySensor(manager, tracked, "due")],
+            config_subentry_id=tracked.subentry_id,
         )
 
 
@@ -57,4 +63,18 @@ class PersonDueBinarySensor(PersonEntity, BinarySensorEntity):
         self._attr_extra_state_attributes = {
             "user_id": self.manager.user_id,
             "medications": sorted({r.medication_name for r in open_doses}),
+        }
+
+
+class MeasurementDueBinarySensor(MeasurementEntity, BinarySensorEntity):
+    """On from the reminder time until a value is entered (or the day ends)."""
+
+    def _update_from_manager(self) -> None:
+        self._attr_is_on = self.body.is_due(self.subentry_id)
+        tracked = self.tracked
+        slot = tracked.today_slot(dt_util.utcnow()) if tracked else None
+        self._attr_extra_state_attributes = {
+            "person": self.manager.person,
+            "metric": self.metric.key,
+            "reminder_time": slot.isoformat() if slot else None,
         }

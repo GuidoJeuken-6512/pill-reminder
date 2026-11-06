@@ -7,11 +7,15 @@
         "data": {
           "person_name": "Name",
           "user_id": "Home-Assistant-Benutzer",
-          "notify_services": "Handys (Notify-Dienste)"
+          "notify_services": "Handys (Notify-Dienste)",
+          "track_body": "Gewicht und Bauchumfang erfassen",
+          "height": "Körpergröße"
         },
         "data_description": {
           "user_id": "Damit wird die Erinnerungskarte im Dashboard nur diesem Benutzer angezeigt.",
-          "notify_services": "Notify-Dienste der Companion App (notify.mobile_app_…), die die Erinnerungen erhalten."
+          "notify_services": "Notify-Dienste der Companion App (notify.mobile_app_…), die die Erinnerungen erhalten.",
+          "track_body": "Gewicht (täglich) und Bauchumfang (montags), beide mit Erinnerung um 07:00. Lässt sich später ändern oder entfernen.",
+          "height": "Für BMI und Verhältnis Taille/Größe. Kann später im Dashboard geändert werden."
         }
       },
       "reconfigure": {
@@ -19,7 +23,11 @@
         "data": {
           "person_name": "Name",
           "user_id": "Home-Assistant-Benutzer",
-          "notify_services": "Handys (Notify-Dienste)"
+          "notify_services": "Handys (Notify-Dienste)",
+          "height": "Körpergröße"
+        },
+        "data_description": {
+          "height": "Für BMI und Verhältnis Taille/Größe. Kann später im Dashboard geändert werden."
         }
       }
     },
@@ -45,11 +53,13 @@
           "escalate_after": "Eskalieren nach so vielen Erinnerungen",
           "escalation_services": "Eskalations-Kontakte (Notify-Dienste)",
           "notify_missed": "Nachricht senden, wenn eine Einnahme verpasst wurde",
-          "retention_days": "Historie aufbewahren"
+          "retention_days": "Historie aufbewahren",
+          "measurement_repeat_interval": "Messwert-Erinnerung wiederholen nach"
         },
         "data_description": {
           "persistent_notification": "Diese Benachrichtigungen sehen alle Benutzer.",
-          "notify_missed": "Geht an die Person und – bei aktiver Eskalation – an die Eskalations-Kontakte."
+          "notify_missed": "Geht an die Person und – bei aktiver Eskalation – an die Eskalations-Kontakte.",
+          "measurement_repeat_interval": "Eine Wiederholung, wenn nichts eingetragen wurde (nur bis Mitternacht). 0 = keine."
         }
       }
     },
@@ -103,6 +113,43 @@
       "abort": {
         "reconfigure_successful": "Medikament gespeichert."
       }
+    },
+    "measurement": {
+      "entry_type": "Messwert",
+      "initiate_flow": {
+        "user": "Messwert hinzufügen",
+        "reconfigure": "Erinnerung bearbeiten"
+      },
+      "step": {
+        "user": {
+          "title": "Messwert hinzufügen",
+          "data": {
+            "metric": "Messwert",
+            "reminder_enabled": "Erinnerung",
+            "reminder_time": "Uhrzeit der Erinnerung",
+            "weekdays": "Wochentage"
+          }
+        },
+        "reconfigure": {
+          "title": "Erinnerung: {metric}",
+          "data": {
+            "reminder_enabled": "Erinnerung",
+            "reminder_time": "Uhrzeit der Erinnerung",
+            "weekdays": "Wochentage"
+          }
+        }
+      },
+      "error": {
+        "unknown_metric": "Unbekannter Messwert.",
+        "already_tracked": "Dieser Messwert wird bereits erfasst.",
+        "invalid_time": "Ungültige Uhrzeit. Format HH:MM.",
+        "weekdays_required": "Mindestens einen Wochentag auswählen.",
+        "invalid_weekdays": "Unbekannter Wochentag. Beispiele: täglich, Mo, Mo-Fr, Mo, Do."
+      },
+      "abort": {
+        "all_tracked": "Alle verfügbaren Messwerte werden bereits erfasst.",
+        "reconfigure_successful": "Erinnerung gespeichert."
+      }
     }
   },
   "selector": {
@@ -131,6 +178,12 @@
         "due": "Fällig",
         "snoozed": "Verschoben"
       }
+    },
+    "metric": {
+      "options": {
+        "weight": "Gewicht",
+        "waist": "Bauchumfang"
+      }
     }
   },
   "entity": {
@@ -140,6 +193,12 @@
       },
       "any_due": {
         "name": "Medikament fällig"
+      },
+      "weight_due": {
+        "name": "Fällig"
+      },
+      "waist_due": {
+        "name": "Fällig"
       }
     },
     "button": {
@@ -207,11 +266,84 @@
       "skipped_today": {
         "name": "Heute übersprungen",
         "unit_of_measurement": "Dosen"
+      },
+      "bmi": {
+        "name": "BMI"
+      },
+      "bmi_category": {
+        "name": "BMI-Kategorie",
+        "state": {
+          "underweight": "Untergewicht",
+          "normal": "Normalgewicht",
+          "overweight": "Übergewicht",
+          "obese_1": "Adipositas Grad I",
+          "obese_2": "Adipositas Grad II",
+          "obese_3": "Adipositas Grad III"
+        }
+      },
+      "whtr": {
+        "name": "Taille-Größe-Verhältnis"
+      },
+      "whtr_category": {
+        "name": "Taille-Größe-Kategorie",
+        "state": {
+          "healthy": "Gesund",
+          "increased": "Erhöhtes Risiko",
+          "high": "Hohes Risiko"
+        }
+      },
+      "weight_last_measured": {
+        "name": "Gemessen"
+      },
+      "weight_change_7d": {
+        "name": "Änderung 7 Tage"
+      },
+      "weight_change_30d": {
+        "name": "Änderung 30 Tage"
+      },
+      "weight_trend": {
+        "name": "Trend",
+        "unit_of_measurement": "kg/Woche"
+      },
+      "weight_trend_direction": {
+        "name": "Trendrichtung",
+        "state": {
+          "rising": "Steigend",
+          "falling": "Fallend",
+          "stable": "Stabil"
+        }
+      },
+      "waist_last_measured": {
+        "name": "Gemessen"
+      },
+      "waist_change_7d": {
+        "name": "Änderung 7 Tage"
+      },
+      "waist_change_30d": {
+        "name": "Änderung 30 Tage"
+      },
+      "waist_trend": {
+        "name": "Trend",
+        "unit_of_measurement": "cm/Woche"
+      },
+      "waist_trend_direction": {
+        "name": "Trendrichtung",
+        "state": {
+          "rising": "Steigend",
+          "falling": "Fallend",
+          "stable": "Stabil"
+        }
       }
     },
     "switch": {
       "reminders": {
         "name": "Erinnerungen"
+      },
+      "weight_reminder": {
+        "name": "Erinnerung"
+      },
+      "waist_reminder": {
+        "name": "Erinnerung"
       }
     },
     "text": {
@@ -235,6 +367,12 @@
       },
       "new_dosage": {
         "name": "Neues Medikament: Dosis"
+      },
+      "weight_reminder_weekdays": {
+        "name": "Erinnerungstage"
+      },
+      "waist_reminder_weekdays": {
+        "name": "Erinnerungstage"
       }
     },
     "number": {
@@ -243,6 +381,23 @@
       },
       "cfg_late_minutes": {
         "name": "Verpasst nach (Minuten)"
+      },
+      "height": {
+        "name": "Körpergröße"
+      },
+      "weight_input": {
+        "name": "Eintragen"
+      },
+      "waist_input": {
+        "name": "Eintragen"
+      }
+    },
+    "time": {
+      "weight_reminder_time": {
+        "name": "Erinnerungszeit"
+      },
+      "waist_reminder_time": {
+        "name": "Erinnerungszeit"
       }
     }
   },
@@ -282,6 +437,30 @@
     },
     "windows_overlap": {
       "message": "Die Bestätigungsfenster zweier Einnahmezeiten überschneiden sich. „Früher bestätigen“ bzw. „Verpasst nach“ verkürzen oder die Zeiten weiter auseinanderlegen."
+    },
+    "not_a_person_entity": {
+      "message": "{entity_id} ist keine Entität von Pill Reminder."
+    },
+    "person_required": {
+      "message": "Bitte eine Person wählen (Eintrag oder eine ihrer Entitäten)."
+    },
+    "metric_required": {
+      "message": "Bitte einen Messwert wählen (Gewicht, Bauchumfang)."
+    },
+    "unknown_metric": {
+      "message": "Unbekannter Messwert: {metric}."
+    },
+    "value_out_of_range": {
+      "message": "{value} liegt außerhalb des erlaubten Bereichs {min}–{max} {unit}."
+    },
+    "measured_in_future": {
+      "message": "Der Messzeitpunkt liegt in der Zukunft."
+    },
+    "no_measurement": {
+      "message": "Es gibt keinen passenden Messwert."
+    },
+    "invalid_height": {
+      "message": "Die Körpergröße muss zwischen 50 und 250 cm liegen."
     }
   },
   "services": {
@@ -374,6 +553,114 @@
           "description": "Auf diese Status beschränken."
         }
       }
+    },
+    "add_measurement": {
+      "name": "Messwert hinzufügen",
+      "description": "Speichert einen Wert, z. B. von einer smarten Waage oder um einen älteren Wert nachzutragen.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+        },
+        "entity_id": {
+          "name": "Entität",
+          "description": "Alternativ eine beliebige Entität der Person; bei einer Entität eines Messwerts wird der Messwert daraus übernommen."
+        },
+        "metric": {
+          "name": "Messwert",
+          "description": "Gewicht oder Bauchumfang."
+        },
+        "value": {
+          "name": "Wert",
+          "description": "In kg (Gewicht) oder cm (Bauchumfang)."
+        },
+        "measured_at": {
+          "name": "Gemessen am",
+          "description": "Zum Nachtragen eines älteren Werts. Standard: jetzt."
+        }
+      }
+    },
+    "delete_measurement": {
+      "name": "Messwert löschen",
+      "description": "Löscht alle Werte eines Tages oder den letzten Wert.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+        },
+        "entity_id": {
+          "name": "Entität",
+          "description": "Alternativ eine beliebige Entität der Person; bei einer Entität eines Messwerts wird der Messwert daraus übernommen."
+        },
+        "metric": {
+          "name": "Messwert",
+          "description": "Gewicht oder Bauchumfang."
+        },
+        "date": {
+          "name": "Datum",
+          "description": "Alle Werte dieses Tages löschen. Ohne Datum wird der letzte Wert gelöscht."
+        }
+      }
+    },
+    "get_measurements": {
+      "name": "Messwerte abrufen",
+      "description": "Liefert die gespeicherten Messwerte.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+        },
+        "entity_id": {
+          "name": "Entität",
+          "description": "Alternativ eine beliebige Entität der Person; bei einer Entität eines Messwerts wird der Messwert daraus übernommen."
+        },
+        "metric": {
+          "name": "Messwert",
+          "description": "Gewicht oder Bauchumfang."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Nur Messwerte ab diesem Zeitpunkt."
+        },
+        "end": {
+          "name": "Ende",
+          "description": "Nur Messwerte vor diesem Zeitpunkt."
+        }
+      }
+    },
+    "export_measurements": {
+      "name": "Messwerte exportieren",
+      "description": "Schreibt die Messwerte als CSV nach /config/pill_reminder/.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+        },
+        "entity_id": {
+          "name": "Entität",
+          "description": "Alternativ eine beliebige Entität der Person; bei einer Entität eines Messwerts wird der Messwert daraus übernommen."
+        },
+        "metric": {
+          "name": "Messwert",
+          "description": "Gewicht oder Bauchumfang."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Nur Messwerte ab diesem Zeitpunkt."
+        },
+        "end": {
+          "name": "Ende",
+          "description": "Nur Messwerte vor diesem Zeitpunkt."
+        }
+      }
+    }
+  },
+  "device": {
+    "weight": {
+      "name": "{person} Gewicht"
+    },
+    "waist": {
+      "name": "{person} Bauchumfang"
     }
   }
 }

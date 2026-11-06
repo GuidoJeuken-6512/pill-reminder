@@ -107,6 +107,42 @@ EXPORT_DIR: Final = DOMAIN
 RESTORE_LOOKBACK_HOURS: Final = 48
 
 
+# ---------------------------------------------------------------- measurements
+# Person (config entry data)
+CONF_HEIGHT: Final = "height"
+CONF_TRACK_BODY: Final = "track_body"  # only in the "add person" form
+MIN_HEIGHT: Final = 50.0
+MAX_HEIGHT: Final = 250.0
+
+# Options
+CONF_MEASUREMENT_REPEAT: Final = "measurement_repeat_interval"
+DEFAULT_MEASUREMENT_REPEAT: Final = 120  # minutes, 0 = no repeat
+
+# Subentry (tracked measurement type, e.g. weight)
+SUBENTRY_MEASUREMENT: Final = "measurement"
+CONF_METRIC: Final = "metric"
+CONF_REMINDER_ENABLED: Final = "reminder_enabled"
+CONF_REMINDER_TIME: Final = "reminder_time"
+DEFAULT_REMINDER_TIME: Final = "07:00"
+
+SOURCE_DASHBOARD: Final = "dashboard"
+
+EVENT_MEASUREMENT_ADDED: Final = f"{DOMAIN}_measurement_added"
+EVENT_MEASUREMENT_REMINDER: Final = f"{DOMAIN}_measurement_reminder_sent"
+
+ATTR_METRIC: Final = "metric"
+ATTR_VALUE: Final = "value"
+ATTR_MEASURED_AT: Final = "measured_at"
+ATTR_DATE: Final = "date"
+
+SERVICE_ADD_MEASUREMENT: Final = "add_measurement"
+SERVICE_DELETE_MEASUREMENT: Final = "delete_measurement"
+SERVICE_GET_MEASUREMENTS: Final = "get_measurements"
+SERVICE_EXPORT_MEASUREMENTS: Final = "export_measurements"
+
+MEASUREMENT_CHANNEL: Final = "Pill Reminder measurements"
+
+
 def signal_update(entry_id: str) -> str:
     """Dispatcher signal sent whenever a person's state changes."""
     return f"{DOMAIN}_{entry_id}_update"

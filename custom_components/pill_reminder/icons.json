@@ -12,6 +12,18 @@
         "state": {
           "on": "mdi:bell-ring"
         }
+      },
+      "weight_due": {
+        "default": "mdi:bell-check",
+        "state": {
+          "on": "mdi:bell-ring"
+        }
+      },
+      "waist_due": {
+        "default": "mdi:bell-check",
+        "state": {
+          "on": "mdi:bell-ring"
+        }
       }
     },
     "button": {
@@ -75,10 +87,78 @@
       },
       "skipped_today": {
         "default": "mdi:skip-next"
+      },
+      "bmi": {
+        "default": "mdi:human"
+      },
+      "bmi_category": {
+        "default": "mdi:human"
+      },
+      "whtr": {
+        "default": "mdi:human-handsdown"
+      },
+      "whtr_category": {
+        "default": "mdi:human-handsdown"
+      },
+      "weight_last": {
+        "default": "mdi:scale-bathroom"
+      },
+      "weight_last_measured": {
+        "default": "mdi:clock-check-outline"
+      },
+      "weight_change_7d": {
+        "default": "mdi:delta"
+      },
+      "weight_change_30d": {
+        "default": "mdi:delta"
+      },
+      "weight_trend": {
+        "default": "mdi:chart-line"
+      },
+      "weight_trend_direction": {
+        "default": "mdi:trending-neutral",
+        "state": {
+          "rising": "mdi:trending-up",
+          "falling": "mdi:trending-down"
+        }
+      },
+      "waist_last": {
+        "default": "mdi:tape-measure"
+      },
+      "waist_last_measured": {
+        "default": "mdi:clock-check-outline"
+      },
+      "waist_change_7d": {
+        "default": "mdi:delta"
+      },
+      "waist_change_30d": {
+        "default": "mdi:delta"
+      },
+      "waist_trend": {
+        "default": "mdi:chart-line"
+      },
+      "waist_trend_direction": {
+        "default": "mdi:trending-neutral",
+        "state": {
+          "rising": "mdi:trending-up",
+          "falling": "mdi:trending-down"
+        }
       }
     },
     "switch": {
       "reminders": {
+        "default": "mdi:bell",
+        "state": {
+          "off": "mdi:bell-off"
+        }
+      },
+      "weight_reminder": {
+        "default": "mdi:bell",
+        "state": {
+          "off": "mdi:bell-off"
+        }
+      },
+      "waist_reminder": {
         "default": "mdi:bell",
         "state": {
           "off": "mdi:bell-off"
@@ -106,6 +186,12 @@
       },
       "new_dosage": {
         "default": "mdi:scale-balance"
+      },
+      "weight_reminder_weekdays": {
+        "default": "mdi:calendar-week"
+      },
+      "waist_reminder_weekdays": {
+        "default": "mdi:calendar-week"
       }
     },
     "number": {
@@ -114,6 +200,23 @@
       },
       "cfg_late_minutes": {
         "default": "mdi:clock-end"
+      },
+      "height": {
+        "default": "mdi:human-male-height"
+      },
+      "weight_input": {
+        "default": "mdi:scale-bathroom"
+      },
+      "waist_input": {
+        "default": "mdi:tape-measure"
+      }
+    },
+    "time": {
+      "weight_reminder_time": {
+        "default": "mdi:clock-outline"
+      },
+      "waist_reminder_time": {
+        "default": "mdi:clock-outline"
       }
     }
   },
@@ -132,6 +235,18 @@
     },
     "export_history": {
       "service": "mdi:file-delimited"
+    },
+    "add_measurement": {
+      "service": "mdi:plus-circle"
+    },
+    "delete_measurement": {
+      "service": "mdi:delete"
+    },
+    "get_measurements": {
+      "service": "mdi:scale-bathroom"
+    },
+    "export_measurements": {
+      "service": "mdi:file-export"
     }
   }
 }

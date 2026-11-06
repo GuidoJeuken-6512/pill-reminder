@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import PillReminderConfigEntry
 from .const import CONF_DOSAGE, CONF_NAME, CONF_TIMES, CONF_WEEKDAYS
-from .entity import MedicationEntity, PersonEntity
+from .entity import MeasurementEntity, MedicationEntity, PersonEntity
 from .models import Medication
 from .scheduler import ReminderManager
 from .validation import format_times, format_weekdays
@@ -84,6 +84,11 @@ async def async_setup_entry(
             (MedicationText(manager, med, desc) for desc in MEDICATION_TEXTS),
             config_subentry_id=med.id,
         )
+    for tracked in manager.body.tracked.values():
+        async_add_entities(
+            [ReminderWeekdaysText(manager, tracked, "reminder_weekdays")],
+            config_subentry_id=tracked.subentry_id,
+        )
 
 
 class MedicationText(MedicationEntity, TextEntity):
@@ -132,3 +137,21 @@ class DraftText(PersonEntity, TextEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributes for dashboard filters."""
         return {"person": self.manager.person}
+
+
+class ReminderWeekdaysText(MeasurementEntity, TextEntity):
+    """Weekdays of a measurement reminder, e.g. 'daily', 'Mon' or 'Mon-Fri'."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_native_max = 60
+
+    def _update_from_manager(self) -> None:
+        tracked = self.tracked
+        language = (self.hass.config.language or "en").split("-")[0]
+        self._attr_native_value = (
+            format_weekdays(list(tracked.weekdays), language) if tracked else None
+        )
+
+    async def async_set_value(self, value: str) -> None:
+        """Parse and store the weekdays."""
+        self.body.async_update_reminder(self.subentry_id, {CONF_WEEKDAYS: value})

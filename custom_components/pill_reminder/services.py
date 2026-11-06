@@ -1,8 +1,8 @@
-"""Service actions of the Pill Reminder integration."""
+"""Service actions of the Pill Reminder integration (doses and measurements)."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_ENTITY_ID
@@ -20,21 +20,34 @@ import voluptuous as vol
 
 from .const import (
     ATTR_CONFIG_ENTRY_ID,
+    ATTR_DATE,
     ATTR_END,
+    ATTR_MEASURED_AT,
+    ATTR_METRIC,
     ATTR_START,
     ATTR_STATUS,
     ATTR_TAKEN_AT,
+    ATTR_VALUE,
+    CONF_METRIC,
     DOMAIN,
+    SERVICE_ADD_MEASUREMENT,
+    SERVICE_DELETE_MEASUREMENT,
     SERVICE_EXPORT_HISTORY,
+    SERVICE_EXPORT_MEASUREMENTS,
     SERVICE_GET_HISTORY,
+    SERVICE_GET_MEASUREMENTS,
     SERVICE_MARK_TAKEN,
     SERVICE_SKIP,
     SERVICE_SNOOZE,
     SOURCE_SERVICE,
+    SUBENTRY_MEASUREMENT,
 )
+from .metrics import METRICS
 from .models import DoseRecord, DoseStatus
 
 if TYPE_CHECKING:
+    from .body import BodyTracker
+    from .measurements import Measurement
     from .scheduler import ReminderManager
 
 ATTR_MINUTES = "minutes"
@@ -77,7 +90,15 @@ def _resolve_medication(hass: HomeAssistant, entity_id: str) -> tuple[ReminderMa
             translation_key="not_a_medication",
             translation_placeholders={"entity_id": entity_id},
         )
-    return _manager_for_entry(hass, entity.config_entry_id), entity.config_subentry_id
+    manager = _manager_for_entry(hass, entity.config_entry_id)
+    if entity.config_subentry_id not in manager.medications:
+        # e.g. an entity of a measurement (weight)
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="not_a_medication",
+            translation_placeholders={"entity_id": entity_id},
+        )
+    return manager, entity.config_subentry_id
 
 
 def _managers(hass: HomeAssistant, call: ServiceCall) -> list[tuple[ReminderManager, str | None]]:
@@ -104,9 +125,169 @@ def _filtered(call: ServiceCall, manager: ReminderManager, med_id: str | None) -
     )
 
 
+# ---------------------------------------------------------------- measurements
+
+PERSON_FIELDS = {
+    vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+    vol.Optional(ATTR_ENTITY_ID): cv.entity_id,
+}
+METRIC_FIELD = vol.In(list(METRICS))
+
+ADD_MEASUREMENT_SCHEMA = vol.Schema(
+    {
+        **PERSON_FIELDS,
+        vol.Optional(ATTR_METRIC): METRIC_FIELD,
+        vol.Required(ATTR_VALUE): vol.Coerce(float),
+        vol.Optional(ATTR_MEASURED_AT): cv.datetime,
+    }
+)
+DELETE_MEASUREMENT_SCHEMA = vol.Schema(
+    {
+        **PERSON_FIELDS,
+        vol.Optional(ATTR_METRIC): METRIC_FIELD,
+        vol.Optional(ATTR_DATE): cv.date,
+    }
+)
+MEASUREMENTS_SCHEMA = vol.Schema(
+    {
+        **PERSON_FIELDS,
+        vol.Optional(ATTR_METRIC): METRIC_FIELD,
+        vol.Optional(ATTR_START): cv.datetime,
+        vol.Optional(ATTR_END): cv.datetime,
+    }
+)
+
+
+def _resolve_person(hass: HomeAssistant, call: ServiceCall) -> tuple[BodyTracker, str | None]:
+    """Person (and measurement type, if the entity belongs to one) of a call."""
+    if entity_id := call.data.get(ATTR_ENTITY_ID):
+        entity = er.async_get(hass).async_get(entity_id)
+        if entity is None or entity.platform != DOMAIN or entity.config_entry_id is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="not_a_person_entity",
+                translation_placeholders={"entity_id": entity_id},
+            )
+        body = _manager_for_entry(hass, entity.config_entry_id).body
+        metric = None
+        sub = body.entry.subentries.get(entity.config_subentry_id or "")
+        if sub is not None and sub.subentry_type == SUBENTRY_MEASUREMENT:
+            metric = sub.data.get(CONF_METRIC)
+        return body, call.data.get(ATTR_METRIC) or metric
+    if entry_id := call.data.get(ATTR_CONFIG_ENTRY_ID):
+        return _manager_for_entry(hass, entry_id).body, call.data.get(ATTR_METRIC)
+    loaded = hass.config_entries.async_loaded_entries(DOMAIN)
+    if len(loaded) == 1:
+        return loaded[0].runtime_data.body, call.data.get(ATTR_METRIC)
+    raise ServiceValidationError(translation_domain=DOMAIN, translation_key="person_required")
+
+
+def _required_metric(metric: str | None) -> str:
+    if metric is None:
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="metric_required")
+    return metric
+
+
+def _bodies(hass: HomeAssistant, call: ServiceCall) -> list[tuple[BodyTracker, str | None]]:
+    """Persons selected by a measurement history call (all if none is given)."""
+    if call.data.get(ATTR_ENTITY_ID) or call.data.get(ATTR_CONFIG_ENTRY_ID):
+        return [_resolve_person(hass, call)]
+    return [
+        (entry.runtime_data.body, call.data.get(ATTR_METRIC))
+        for entry in hass.config_entries.async_loaded_entries(DOMAIN)
+    ]
+
+
+def _measurements(call: ServiceCall, body: BodyTracker, metric: str | None) -> list[Measurement]:
+    start = call.data.get(ATTR_START)
+    end = call.data.get(ATTR_END)
+    return body.store.measurements(
+        metric,
+        start=dt_util.as_utc(start) if start else None,
+        end=dt_util.as_utc(end) if end else None,
+    )
+
+
+@callback
+def _async_setup_measurement_services(hass: HomeAssistant) -> None:
+    """Register the measurement actions."""
+
+    async def add_measurement(call: ServiceCall) -> ServiceResponse:
+        body, metric = _resolve_person(hass, call)
+        measured_at = call.data.get(ATTR_MEASURED_AT)
+        if measured_at is not None and measured_at.tzinfo is None:
+            measured_at = measured_at.replace(tzinfo=dt_util.get_default_time_zone())
+        measurement = await body.async_add_measurement(
+            _required_metric(metric),
+            call.data[ATTR_VALUE],
+            source=SOURCE_SERVICE,
+            measured_at=measured_at,
+        )
+        return {"measurement": measurement.as_dict()}
+
+    async def delete_measurement(call: ServiceCall) -> ServiceResponse:
+        body, metric = _resolve_person(hass, call)
+        removed = body.delete_measurements(_required_metric(metric), call.data.get(ATTR_DATE))
+        return {"deleted": [m.as_dict() for m in removed]}
+
+    async def get_measurements(call: ServiceCall) -> ServiceResponse:
+        people: list[dict[str, Any]] = [
+            {
+                "config_entry_id": body.entry_id,
+                "person": body.person,
+                "height": body.height,
+                "measurements": [m.as_dict() for m in _measurements(call, body, metric)],
+            }
+            for body, metric in _bodies(hass, call)
+        ]
+        return {"people": people}
+
+    async def export_measurements(call: ServiceCall) -> ServiceResponse:
+        stamp = dt_util.now().strftime("%Y%m%d_%H%M%S")
+        files = []
+        for body, metric in _bodies(hass, call):
+            measurements = _measurements(call, body, metric)
+            slug = "".join(c if c.isalnum() else "_" for c in body.person.lower())
+            path = await body.store.async_export_csv(
+                f"{slug}_measurements_{stamp}.csv", measurements
+            )
+            files.append({"person": body.person, "path": path, "count": len(measurements)})
+        return {"files": files}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ADD_MEASUREMENT,
+        add_measurement,
+        ADD_MEASUREMENT_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_MEASUREMENT,
+        delete_measurement,
+        DELETE_MEASUREMENT_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_MEASUREMENTS,
+        get_measurements,
+        MEASUREMENTS_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_EXPORT_MEASUREMENTS,
+        export_measurements,
+        MEASUREMENTS_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
+
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register services (once, independent of config entries)."""
+    _async_setup_measurement_services(hass)
 
     async def mark_taken(call: ServiceCall) -> None:
         manager, med_id = _resolve_medication(hass, call.data[ATTR_ENTITY_ID])

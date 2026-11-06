@@ -1,4 +1,4 @@
-"""Sensors for the Pill Reminder integration."""
+"""Sensors: medication, adherence, body measurements, BMI and waist-to-height ratio."""
 
 from __future__ import annotations
 
@@ -19,9 +19,13 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import PillReminderConfigEntry
-from .entity import MedicationEntity, PersonEntity
+from .body import BodyTracker
+from .entity import BodyEntity, MeasurementEntity, MedicationEntity, PersonEntity
+from .measurement_reminders import TrackedMetric
+from .metrics import MetricType
 from .models import DoseStatus, Medication
 from .scheduler import ReminderManager
+from .stats import BmiCategory, TrendDirection, WhtrCategory
 
 PARALLEL_UPDATES = 0
 
@@ -154,6 +158,13 @@ async def async_setup_entry(
             (MedicationSensor(manager, med, desc) for desc in MEDICATION_SENSORS),
             config_subentry_id=med.id,
         )
+    if manager.body.enabled:
+        async_add_entities(BodySensor(manager, desc) for desc in BODY_SENSORS)
+    for tracked in manager.body.tracked.values():
+        async_add_entities(
+            (MeasurementSensor(manager, tracked, desc) for desc in MEASUREMENT_SENSORS),
+            config_subentry_id=tracked.subentry_id,
+        )
 
 
 class MedicationSensor(MedicationEntity, SensorEntity):
@@ -203,3 +214,142 @@ class PersonSensor(PersonEntity, SensorEntity):
 
     def _update_from_manager(self) -> None:
         self._attr_native_value = self.entity_description.value_fn(self.manager, dt_util.utcnow())
+
+
+# ---------------------------------------------------------------- measurements
+
+
+@dataclass(frozen=True, kw_only=True)
+class BodySensorDescription(SensorEntityDescription):
+    """A value derived from the person's measurements."""
+
+    value_fn: Callable[[BodyTracker], Any]
+
+
+BODY_SENSORS: tuple[BodySensorDescription, ...] = (
+    BodySensorDescription(
+        key="bmi",
+        translation_key="bmi",
+        native_unit_of_measurement="kg/m²",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda b: b.bmi(),
+    ),
+    BodySensorDescription(
+        key="bmi_category",
+        translation_key="bmi_category",
+        device_class=SensorDeviceClass.ENUM,
+        options=[c.value for c in BmiCategory],
+        value_fn=lambda b: c.value if (c := b.bmi_category()) else None,
+    ),
+    BodySensorDescription(
+        key="whtr",
+        translation_key="whtr",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda b: b.whtr(),
+    ),
+    BodySensorDescription(
+        key="whtr_category",
+        translation_key="whtr_category",
+        device_class=SensorDeviceClass.ENUM,
+        options=[c.value for c in WhtrCategory],
+        value_fn=lambda b: c.value if (c := b.whtr_category()) else None,
+    ),
+)
+
+
+@dataclass(frozen=True, kw_only=True)
+class MeasurementSensorDescription(SensorEntityDescription):
+    """A value per measurement type."""
+
+    value_fn: Callable[[BodyTracker, str], Any]
+    # Use the metric's unit and device class
+    with_unit: bool = False
+
+
+def _last_value(body: BodyTracker, key: str) -> float | None:
+    latest = body.latest(key)
+    return latest.value if latest else None
+
+
+def _last_measured(body: BodyTracker, key: str) -> datetime | None:
+    latest = body.latest(key)
+    return latest.measured_at if latest else None
+
+
+MEASUREMENT_SENSORS: tuple[MeasurementSensorDescription, ...] = (
+    MeasurementSensorDescription(
+        key="last",
+        state_class=SensorStateClass.MEASUREMENT,
+        with_unit=True,
+        value_fn=_last_value,
+    ),
+    MeasurementSensorDescription(
+        key="last_measured",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=_last_measured,
+    ),
+    MeasurementSensorDescription(
+        key="change_7d",
+        with_unit=True,
+        value_fn=lambda b, key: b.change(key, 7),
+    ),
+    MeasurementSensorDescription(
+        key="change_30d",
+        with_unit=True,
+        value_fn=lambda b, key: b.change(key, 30),
+    ),
+    MeasurementSensorDescription(
+        key="trend",
+        suggested_display_precision=2,
+        value_fn=lambda b, key: b.trend(key),
+    ),
+    MeasurementSensorDescription(
+        key="trend_direction",
+        device_class=SensorDeviceClass.ENUM,
+        options=[d.value for d in TrendDirection],
+        value_fn=lambda b, key: d.value if (d := b.trend_direction(key)) else None,
+    ),
+)
+
+
+class BodySensor(BodyEntity, SensorEntity):
+    """BMI, waist-to-height ratio and their categories."""
+
+    entity_description: BodySensorDescription
+
+    def __init__(self, manager: ReminderManager, desc: BodySensorDescription) -> None:
+        """Initialize."""
+        super().__init__(manager, desc.key)
+        self.entity_description = desc
+
+    def _update_from_manager(self) -> None:
+        self._attr_native_value = self.entity_description.value_fn(self.body)
+
+
+class MeasurementSensor(MeasurementEntity, SensorEntity):
+    """Last value, last measured, change and trend of a measurement type."""
+
+    entity_description: MeasurementSensorDescription
+
+    def __init__(
+        self,
+        manager: ReminderManager,
+        tracked: TrackedMetric,
+        desc: MeasurementSensorDescription,
+    ) -> None:
+        """Initialize."""
+        super().__init__(manager, tracked, desc.key)
+        self.entity_description = desc
+        metric: MetricType = tracked.metric
+        if desc.key == "last":
+            # Main value of the device: named like the device ("Anna Weight")
+            self._attr_name = None
+        if desc.with_unit:
+            self._attr_native_unit_of_measurement = metric.unit
+            self._attr_device_class = metric.sensor_device_class
+            self._attr_suggested_display_precision = metric.decimals
+
+    def _update_from_manager(self) -> None:
+        self._attr_native_value = self.entity_description.value_fn(self.body, self.metric.key)

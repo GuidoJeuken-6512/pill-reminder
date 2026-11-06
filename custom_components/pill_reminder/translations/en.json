@@ -7,11 +7,15 @@
         "data": {
           "person_name": "Name",
           "user_id": "Home Assistant user",
-          "notify_services": "Phones (notify services)"
+          "notify_services": "Phones (notify services)",
+          "track_body": "Track weight and waist circumference",
+          "height": "Height"
         },
         "data_description": {
           "user_id": "Used to show the reminder card in the dashboard only to this user.",
-          "notify_services": "Companion App notify services (notify.mobile_app_…) that receive the reminders."
+          "notify_services": "Companion App notify services (notify.mobile_app_…) that receive the reminders.",
+          "track_body": "Weight (daily) and waist circumference (Mondays), both with a reminder at 07:00. Can be changed or removed later.",
+          "height": "Used for BMI and waist-to-height ratio. Can be changed later in the dashboard."
         }
       },
       "reconfigure": {
@@ -19,7 +23,11 @@
         "data": {
           "person_name": "Name",
           "user_id": "Home Assistant user",
-          "notify_services": "Phones (notify services)"
+          "notify_services": "Phones (notify services)",
+          "height": "Height"
+        },
+        "data_description": {
+          "height": "Used for BMI and waist-to-height ratio. Can be changed later in the dashboard."
         }
       }
     },
@@ -45,11 +53,13 @@
           "escalate_after": "Escalate after this many reminders",
           "escalation_services": "Escalation contacts (notify services)",
           "notify_missed": "Send a message when a dose was missed",
-          "retention_days": "Keep history for"
+          "retention_days": "Keep history for",
+          "measurement_repeat_interval": "Repeat a measurement reminder after"
         },
         "data_description": {
           "persistent_notification": "Persistent notifications are visible to all users.",
-          "notify_missed": "Sent to the person and, if escalation is on, to the escalation contacts."
+          "notify_missed": "Sent to the person and, if escalation is on, to the escalation contacts.",
+          "measurement_repeat_interval": "One repeat if no value was entered (only until midnight). 0 = no repeat."
         }
       }
     },
@@ -103,6 +113,43 @@
       "abort": {
         "reconfigure_successful": "Medication saved."
       }
+    },
+    "measurement": {
+      "entry_type": "Measurement",
+      "initiate_flow": {
+        "user": "Add measurement",
+        "reconfigure": "Edit reminder"
+      },
+      "step": {
+        "user": {
+          "title": "Add measurement",
+          "data": {
+            "metric": "Measurement",
+            "reminder_enabled": "Reminder",
+            "reminder_time": "Reminder time",
+            "weekdays": "Weekdays"
+          }
+        },
+        "reconfigure": {
+          "title": "Reminder: {metric}",
+          "data": {
+            "reminder_enabled": "Reminder",
+            "reminder_time": "Reminder time",
+            "weekdays": "Weekdays"
+          }
+        }
+      },
+      "error": {
+        "unknown_metric": "Unknown measurement.",
+        "already_tracked": "This measurement is already tracked.",
+        "invalid_time": "Invalid time. Use HH:MM.",
+        "weekdays_required": "Select at least one weekday.",
+        "invalid_weekdays": "Unknown weekday. Examples: daily, Mon, Mon-Fri, Mon, Thu."
+      },
+      "abort": {
+        "all_tracked": "All available measurements are already tracked.",
+        "reconfigure_successful": "Reminder saved."
+      }
     }
   },
   "selector": {
@@ -131,6 +178,12 @@
         "due": "Due",
         "snoozed": "Snoozed"
       }
+    },
+    "metric": {
+      "options": {
+        "weight": "Weight",
+        "waist": "Waist circumference"
+      }
     }
   },
   "entity": {
@@ -140,6 +193,12 @@
       },
       "any_due": {
         "name": "Medication due"
+      },
+      "weight_due": {
+        "name": "Due"
+      },
+      "waist_due": {
+        "name": "Due"
       }
     },
     "button": {
@@ -207,11 +266,84 @@
       "skipped_today": {
         "name": "Skipped today",
         "unit_of_measurement": "doses"
+      },
+      "bmi": {
+        "name": "BMI"
+      },
+      "bmi_category": {
+        "name": "BMI category",
+        "state": {
+          "underweight": "Underweight",
+          "normal": "Normal weight",
+          "overweight": "Overweight",
+          "obese_1": "Obesity class I",
+          "obese_2": "Obesity class II",
+          "obese_3": "Obesity class III"
+        }
+      },
+      "whtr": {
+        "name": "Waist-to-height ratio"
+      },
+      "whtr_category": {
+        "name": "Waist-to-height category",
+        "state": {
+          "healthy": "Healthy",
+          "increased": "Increased risk",
+          "high": "High risk"
+        }
+      },
+      "weight_last_measured": {
+        "name": "Measured"
+      },
+      "weight_change_7d": {
+        "name": "Change 7 days"
+      },
+      "weight_change_30d": {
+        "name": "Change 30 days"
+      },
+      "weight_trend": {
+        "name": "Trend",
+        "unit_of_measurement": "kg/week"
+      },
+      "weight_trend_direction": {
+        "name": "Trend direction",
+        "state": {
+          "rising": "Rising",
+          "falling": "Falling",
+          "stable": "Stable"
+        }
+      },
+      "waist_last_measured": {
+        "name": "Measured"
+      },
+      "waist_change_7d": {
+        "name": "Change 7 days"
+      },
+      "waist_change_30d": {
+        "name": "Change 30 days"
+      },
+      "waist_trend": {
+        "name": "Trend",
+        "unit_of_measurement": "cm/week"
+      },
+      "waist_trend_direction": {
+        "name": "Trend direction",
+        "state": {
+          "rising": "Rising",
+          "falling": "Falling",
+          "stable": "Stable"
+        }
       }
     },
     "switch": {
       "reminders": {
         "name": "Reminders"
+      },
+      "weight_reminder": {
+        "name": "Reminder"
+      },
+      "waist_reminder": {
+        "name": "Reminder"
       }
     },
     "text": {
@@ -235,6 +367,12 @@
       },
       "new_dosage": {
         "name": "New medication: dosage"
+      },
+      "weight_reminder_weekdays": {
+        "name": "Reminder weekdays"
+      },
+      "waist_reminder_weekdays": {
+        "name": "Reminder weekdays"
       }
     },
     "number": {
@@ -243,6 +381,23 @@
       },
       "cfg_late_minutes": {
         "name": "Missed after (minutes)"
+      },
+      "height": {
+        "name": "Height"
+      },
+      "weight_input": {
+        "name": "Enter"
+      },
+      "waist_input": {
+        "name": "Enter"
+      }
+    },
+    "time": {
+      "weight_reminder_time": {
+        "name": "Reminder time"
+      },
+      "waist_reminder_time": {
+        "name": "Reminder time"
       }
     }
   },
@@ -282,6 +437,30 @@
     },
     "windows_overlap": {
       "message": "The confirmation windows of two intake times overlap. Reduce \"confirm early\" / \"missed after\" or space the times further apart."
+    },
+    "not_a_person_entity": {
+      "message": "{entity_id} is not a Pill Reminder entity."
+    },
+    "person_required": {
+      "message": "Select a person (config entry or one of its entities)."
+    },
+    "metric_required": {
+      "message": "Select a measurement (weight, waist)."
+    },
+    "unknown_metric": {
+      "message": "Unknown measurement: {metric}."
+    },
+    "value_out_of_range": {
+      "message": "{value} is outside the allowed range {min}–{max} {unit}."
+    },
+    "measured_in_future": {
+      "message": "The measurement time lies in the future."
+    },
+    "no_measurement": {
+      "message": "There is no matching measurement."
+    },
+    "invalid_height": {
+      "message": "The height must be between 50 and 250 cm."
     }
   },
   "services": {
@@ -374,6 +553,114 @@
           "description": "Limit to these statuses."
         }
       }
+    },
+    "add_measurement": {
+      "name": "Add measurement",
+      "description": "Stores a value, e.g. from a smart scale or to enter an older value.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "The person (Pill Reminder entry). Not needed with only one person."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Alternatively any entity of the person; for an entity of a measurement the measurement is taken from it."
+        },
+        "metric": {
+          "name": "Measurement",
+          "description": "Weight or waist circumference."
+        },
+        "value": {
+          "name": "Value",
+          "description": "In kg (weight) or cm (waist)."
+        },
+        "measured_at": {
+          "name": "Measured at",
+          "description": "To enter an older value. Default: now."
+        }
+      }
+    },
+    "delete_measurement": {
+      "name": "Delete measurement",
+      "description": "Deletes all values of a day, or the most recent value.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "The person (Pill Reminder entry). Not needed with only one person."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Alternatively any entity of the person; for an entity of a measurement the measurement is taken from it."
+        },
+        "metric": {
+          "name": "Measurement",
+          "description": "Weight or waist circumference."
+        },
+        "date": {
+          "name": "Date",
+          "description": "Delete all values of this day. Without a date the most recent value is deleted."
+        }
+      }
+    },
+    "get_measurements": {
+      "name": "Get measurements",
+      "description": "Returns the stored measurements.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "The person (Pill Reminder entry). Not needed with only one person."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Alternatively any entity of the person; for an entity of a measurement the measurement is taken from it."
+        },
+        "metric": {
+          "name": "Measurement",
+          "description": "Weight or waist circumference."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Only measurements from this time."
+        },
+        "end": {
+          "name": "End",
+          "description": "Only measurements before this time."
+        }
+      }
+    },
+    "export_measurements": {
+      "name": "Export measurements",
+      "description": "Writes the measurements as CSV to /config/pill_reminder/.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "The person (Pill Reminder entry). Not needed with only one person."
+        },
+        "entity_id": {
+          "name": "Entity",
+          "description": "Alternatively any entity of the person; for an entity of a measurement the measurement is taken from it."
+        },
+        "metric": {
+          "name": "Measurement",
+          "description": "Weight or waist circumference."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Only measurements from this time."
+        },
+        "end": {
+          "name": "End",
+          "description": "Only measurements before this time."
+        }
+      }
+    }
+  },
+  "device": {
+    "weight": {
+      "name": "{person} Weight"
+    },
+    "waist": {
+      "name": "{person} Waist"
     }
   }
 }
