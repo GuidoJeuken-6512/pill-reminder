@@ -86,7 +86,7 @@ def _measurements(manager: ReminderManager, now: datetime) -> dict[str, Any]:
     }
     for sub_id, tracked in body.tracked.items():
         key = tracked.metric.key
-        latest = body.latest(key)
+        latest = body.latest(tracked.metric.main.key)
         state = body.store.reminders.get(key)
         result[key] = {
             "subentry_id": sub_id,
@@ -95,7 +95,7 @@ def _measurements(manager: ReminderManager, now: datetime) -> dict[str, Any]:
             "weekdays": list(tracked.weekdays),
             "due": body.is_due(sub_id),
             "next_reminder": (n.isoformat() if (n := tracked.next_slot(now)) else None),
-            "count": len(body.store.measurements(key)),
+            "count": len(body.store.measurements(tracked.metric.main.key)),
             "last_measured": latest.measured_at.isoformat() if latest else None,
             "last_reminder": state.as_dict() if state else None,
         }

@@ -2,11 +2,15 @@
 
 # Pill Reminder
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![Release](https://img.shields.io/github/v/release/GuidoJeuken-6512/pill-reminder)](https://github.com/GuidoJeuken-6512/pill-reminder/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/GuidoJeuken-6512/pill-reminder/total?label=downloads)](https://github.com/GuidoJeuken-6512/pill-reminder/releases)
+![Usage](https://img.shields.io/badge/dynamic/json?color=9932CC&logo=home-assistant&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.pill_reminder.total)
+[![Stars](https://img.shields.io/github/stars/GuidoJeuken-6512/pill-reminder?style=flat)](https://github.com/GuidoJeuken-6512/pill-reminder/stargazers)
+[![License](https://img.shields.io/github/license/GuidoJeuken-6512/pill-reminder.svg)](LICENSE)
 [![Validate](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml/badge.svg)](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml)
-[![Release](https://img.shields.io/github/v/release/GuidoJeuken-6512/pill-reminder)](https://github.com/GuidoJeuken-6512/pill-reminder/releases)
 
-Home Assistant integration that reminds people to take their medication and to enter their **weight** and **waist circumference**. It logs every intake (or missed intake), keeps the measurements and shows adherence, **BMI**, **waist-to-height ratio** and the **trend** – one app, one dashboard.
+Home Assistant integration that reminds people to take their medication and to enter their **weight**, **waist circumference** and **blood pressure**. It logs every intake (or missed intake), keeps the measurements and shows adherence, **BMI**, **waist-to-height ratio**, **blood pressure class** and the **trend** – one app, one dashboard.
 
 📖 **[User guide](docs/user-guide.md)** – setup, every setting, the life of a dose, body measurements, dashboard, entities, actions, automation examples, troubleshooting.
 
@@ -25,9 +29,9 @@ Home Assistant integration that reminds people to take their medication and to e
 
 ### Body measurements
 
-- **Weight** and **waist circumference** per person, entered in the dashboard (or from a smart scale via an action). New persons track both right away; it can be turned off per person.
+- **Weight**, **waist circumference** and **blood pressure** (systolic, diastolic, pulse) per person, entered in the dashboard and stored with a **Save** button (works in the Companion App too), or from a smart scale / blood pressure monitor via an action. New persons track weight and waist right away; blood pressure is added with **Add measurement**.
 - **Reminder per measurement**: weight daily, waist on Mondays, each at 07:00 by default. Time, weekdays and on/off can be changed in the dashboard. One repeat after 2 hours if nothing was entered; tapping the notification opens the dashboard.
-- **Evaluation**: BMI with WHO class, waist-to-height ratio with class, change over 7 and 30 days, trend per week (rising / falling / stable), 90-day graphs from the long-term statistics.
+- **Evaluation**: BMI with WHO class, waist-to-height ratio with class, blood pressure class (ESC/ESH) and 7-day averages, change over 7 and 30 days, trend per week (rising / falling / stable), 90-day graphs from the long-term statistics.
 
 ### Both
 
@@ -85,7 +89,8 @@ Body measurements (person "Anna", tracks weight and waist):
 
 | Entity | Meaning |
 |---|---|
-| `number.anna_weight_enter`, `number.anna_waist_enter` | Enter a value (stored with the current time) |
+| `number.anna_weight_enter`, `number.anna_waist_enter` | Input field (shows the last value) |
+| `button.anna_weight_save`, `button.anna_waist_save` | Store the input with the current time |
 | `sensor.anna_weight`, `sensor.anna_waist` | Last value (long-term statistics) |
 | `sensor.anna_weight_measured` | Time of the last value |
 | `sensor.anna_weight_change_7_days`, `…_change_30_days` | Change compared to 7 / 30 days ago |
@@ -95,6 +100,11 @@ Body measurements (person "Anna", tracks weight and waist):
 | `number.anna_height` | Height in cm |
 | `sensor.anna_bmi`, `sensor.anna_bmi_category` | BMI and WHO class |
 | `sensor.anna_waist_to_height_ratio`, `sensor.anna_waist_to_height_category` | Waist-to-height ratio and class |
+| `number.anna_blood_pressure_systolic`, `…_diastolic`, `…_pulse`, `button.anna_blood_pressure_save` | Blood pressure input (pulse optional) |
+| `sensor.anna_blood_pressure` | Last reading, e.g. `128/82` |
+| `sensor.anna_blood_pressure_category` | optimal / normal / high normal / hypertension grade 1–3 |
+| `sensor.anna_blood_pressure_systolic`, `…_diastolic`, `…_pulse` | Last values (long-term statistics) |
+| `sensor.anna_blood_pressure_systolic_7_day_average`, … | 7-day averages |
 
 Medication entities carry the attributes `person` and `medication`; the **Taken** button additionally has `due` (due right now) and `actionable` (may be confirmed now). Use them to filter in your own dashboards independent of language and entity ids (e.g. with auto-entities).
 
@@ -102,7 +112,7 @@ Medication entities carry the attributes `person` and `medication`; the **Taken*
 
 `pill_reminder_dose_due`, `…_reminder_sent`, `…_dose_snoozed`, `…_escalated`, `…_dose_taken`, `…_dose_missed`, `…_dose_skipped` – each with `person`, `medication`, `scheduled`, `status`, `source`, `reminders_sent`.
 
-`pill_reminder_measurement_added` (`person`, `metric`, `value`, `unit`, `measured_at`, `source`) and `pill_reminder_measurement_reminder_sent` (`person`, `metric`, `count`).
+`pill_reminder_measurement_added` (`person`, `metric`, `values`, `units`, `measured_at`, `source`; for weight and waist also `value` and `unit`) and `pill_reminder_measurement_reminder_sent` (`person`, `metric`, `count`).
 
 ## Actions
 
@@ -113,7 +123,7 @@ Medication entities carry the attributes `person` and `medication`; the **Taken*
 | `pill_reminder.skip` | Skip the dose |
 | `pill_reminder.get_history` | History as response data (filter: person, medication, period, status) |
 | `pill_reminder.export_history` | History as CSV in `/config/pill_reminder/` |
-| `pill_reminder.add_measurement` | Add a value: `metric` (`weight`/`waist`), `value`, optional `measured_at` for older values |
+| `pill_reminder.add_measurement` | Add a value: `metric` (`weight`/`waist`) with `value`, or `blood_pressure` with `systolic`, `diastolic`, optional `pulse`; optional `measured_at` for older values |
 | `pill_reminder.delete_measurement` | Delete all values of a `date`, or the most recent one |
 | `pill_reminder.get_measurements` | Measurements as response data |
 | `pill_reminder.export_measurements` | Measurements as CSV in `/config/pill_reminder/` |
@@ -131,4 +141,4 @@ docker exec tw-test ruff check custom_components tests
 powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
 ```
 
-**Note:** This is a reminder aid, not a medical device. BMI and waist-to-height ratio are general reference values for adults. Nothing here replaces medical advice.
+**Note:** This is a reminder aid, not a medical device. BMI, waist-to-height ratio and blood pressure classes are general reference values for adults. Nothing here replaces medical advice.

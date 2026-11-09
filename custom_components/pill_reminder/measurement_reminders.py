@@ -184,7 +184,8 @@ class MetricReminder:
         slot = self.tracked.today_slot(now)
         if slot is None or slot > now:
             return False
-        return not self.tracker.store.on_day(self.key, dt_util.as_local(now).date())
+        main = self.tracked.metric.main.key
+        return not self.tracker.store.on_day(main, dt_util.as_local(now).date())
 
     def state_for(self, slot: datetime) -> ReminderState | None:
         """What was sent for this slot (None if nothing)."""
@@ -226,7 +227,8 @@ class MetricReminder:
         await tracker.notifier.async_send_measurement_reminder(
             tracker.notify_services,
             self.tracked.metric,
-            last=tracker.store.latest(self.key),
+            last=tracker.latest_reading(self.key),
+            last_measured=tracker.last_measured(self.key),
             count=count,
             url=tracker.dashboard_url(),
             persistent=tracker.persistent,

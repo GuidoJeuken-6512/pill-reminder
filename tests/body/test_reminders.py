@@ -63,6 +63,9 @@ async def test_repeat_and_clear(hass: HomeAssistant, berlin, phone_calls) -> Non
         {"entity_id": "number.anna_weight_enter", "value": 80},
         blocking=True,
     )
+    await hass.services.async_call(
+        "button", "press", {"entity_id": "button.anna_weight_save"}, blocking=True
+    )
     await hass.async_block_till_done()
     assert hass.states.get("binary_sensor.anna_weight_due").state == "off"
     (clear,) = _clears(phone_calls)

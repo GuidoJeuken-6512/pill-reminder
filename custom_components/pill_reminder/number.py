@@ -20,10 +20,10 @@ from .const import (
     CONF_LATE_MINUTES,
     MAX_HEIGHT,
     MIN_HEIGHT,
-    SOURCE_DASHBOARD,
 )
 from .entity import BodyEntity, MeasurementEntity, MedicationEntity
 from .measurement_reminders import TrackedMetric
+from .metrics import ValueField
 from .models import Medication
 from .scheduler import ReminderManager
 
@@ -79,7 +79,7 @@ async def async_setup_entry(
         async_add_entities([HeightNumber(manager, "height")])
     for tracked in manager.body.tracked.values():
         async_add_entities(
-            [MeasurementInput(manager, tracked, "input")],
+            (MeasurementInput(manager, tracked, field) for field in tracked.metric.fields),
             config_subentry_id=tracked.subentry_id,
         )
 
@@ -110,27 +110,31 @@ class WindowNumber(MedicationEntity, NumberEntity):
 
 
 class MeasurementInput(MeasurementEntity, NumberEntity):
-    """'Enter weight': setting a value stores a measurement with the current time."""
+    """Input field of a value, e.g. weight or systolic pressure.
+
+    Setting a value only remembers it; the "Save" button stores the reading.
+    On phones the Companion App does not always send the value of a number box,
+    and blood pressure needs several values at once.
+    """
 
     _attr_mode = NumberMode.BOX
 
-    def __init__(self, manager: ReminderManager, tracked: TrackedMetric, key: str) -> None:
+    def __init__(self, manager: ReminderManager, tracked: TrackedMetric, field: ValueField) -> None:
         """Initialize."""
-        super().__init__(manager, tracked, key)
-        metric = tracked.metric
-        self._attr_native_min_value = metric.min_value
-        self._attr_native_max_value = metric.max_value
-        self._attr_native_step = metric.step
-        self._attr_native_unit_of_measurement = metric.unit
-        self._attr_device_class = metric.number_device_class
+        super().__init__(manager, tracked, "input", field)
+        self.value_field = field
+        self._attr_native_min_value = field.min_value
+        self._attr_native_max_value = field.max_value
+        self._attr_native_step = field.step
+        self._attr_native_unit_of_measurement = field.unit
+        self._attr_device_class = field.number_device_class
 
     def _update_from_manager(self) -> None:
-        latest = self.body.latest(self.metric.key)
-        self._attr_native_value = latest.value if latest else None
+        self._attr_native_value = self.body.draft_value(self.value_field.key)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Store a measurement."""
-        await self.body.async_add_measurement(self.metric.key, value, source=SOURCE_DASHBOARD)
+        """Remember the value until "Save" is pressed."""
+        self.body.async_set_draft(self.value_field.key, value)
 
 
 class HeightNumber(BodyEntity, NumberEntity):

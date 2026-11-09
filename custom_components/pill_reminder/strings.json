@@ -182,7 +182,8 @@
     "metric": {
       "options": {
         "weight": "Weight",
-        "waist": "Waist circumference"
+        "waist": "Waist circumference",
+        "blood_pressure": "Blood pressure"
       }
     }
   },
@@ -198,6 +199,9 @@
         "name": "Due"
       },
       "waist_due": {
+        "name": "Due"
+      },
+      "blood_pressure_due": {
         "name": "Due"
       }
     },
@@ -216,6 +220,15 @@
       },
       "add_medication": {
         "name": "Add medication"
+      },
+      "weight_save": {
+        "name": "Save"
+      },
+      "waist_save": {
+        "name": "Save"
+      },
+      "blood_pressure_save": {
+        "name": "Save"
       }
     },
     "calendar": {
@@ -333,6 +346,92 @@
           "falling": "Falling",
           "stable": "Stable"
         }
+      },
+      "blood_pressure_last_measured": {
+        "name": "Measured"
+      },
+      "blood_pressure_category": {
+        "name": "Category",
+        "state": {
+          "optimal": "Optimal",
+          "normal": "Normal",
+          "high_normal": "High normal",
+          "grade_1": "Hypertension grade 1",
+          "grade_2": "Hypertension grade 2",
+          "grade_3": "Hypertension grade 3"
+        }
+      },
+      "systolic_last": {
+        "name": "Systolic"
+      },
+      "systolic_average_7d": {
+        "name": "Systolic 7-day average"
+      },
+      "systolic_change_7d": {
+        "name": "Systolic change 7 days"
+      },
+      "systolic_change_30d": {
+        "name": "Systolic change 30 days"
+      },
+      "systolic_trend": {
+        "name": "Systolic trend",
+        "unit_of_measurement": "mmHg/week"
+      },
+      "systolic_trend_direction": {
+        "name": "Systolic trend direction",
+        "state": {
+          "rising": "Rising",
+          "falling": "Falling",
+          "stable": "Stable"
+        }
+      },
+      "diastolic_last": {
+        "name": "Diastolic"
+      },
+      "diastolic_average_7d": {
+        "name": "Diastolic 7-day average"
+      },
+      "diastolic_change_7d": {
+        "name": "Diastolic change 7 days"
+      },
+      "diastolic_change_30d": {
+        "name": "Diastolic change 30 days"
+      },
+      "diastolic_trend": {
+        "name": "Diastolic trend",
+        "unit_of_measurement": "mmHg/week"
+      },
+      "diastolic_trend_direction": {
+        "name": "Diastolic trend direction",
+        "state": {
+          "rising": "Rising",
+          "falling": "Falling",
+          "stable": "Stable"
+        }
+      },
+      "pulse_last": {
+        "name": "Pulse"
+      },
+      "pulse_average_7d": {
+        "name": "Pulse 7-day average"
+      },
+      "pulse_change_7d": {
+        "name": "Pulse change 7 days"
+      },
+      "pulse_change_30d": {
+        "name": "Pulse change 30 days"
+      },
+      "pulse_trend": {
+        "name": "Pulse trend",
+        "unit_of_measurement": "bpm/week"
+      },
+      "pulse_trend_direction": {
+        "name": "Pulse trend direction",
+        "state": {
+          "rising": "Rising",
+          "falling": "Falling",
+          "stable": "Stable"
+        }
       }
     },
     "switch": {
@@ -343,6 +442,9 @@
         "name": "Reminder"
       },
       "waist_reminder": {
+        "name": "Reminder"
+      },
+      "blood_pressure_reminder": {
         "name": "Reminder"
       }
     },
@@ -373,6 +475,9 @@
       },
       "waist_reminder_weekdays": {
         "name": "Reminder weekdays"
+      },
+      "blood_pressure_reminder_weekdays": {
+        "name": "Reminder weekdays"
       }
     },
     "number": {
@@ -390,6 +495,15 @@
       },
       "waist_input": {
         "name": "Enter"
+      },
+      "systolic_input": {
+        "name": "Systolic"
+      },
+      "diastolic_input": {
+        "name": "Diastolic"
+      },
+      "pulse_input": {
+        "name": "Pulse"
       }
     },
     "time": {
@@ -397,6 +511,9 @@
         "name": "Reminder time"
       },
       "waist_reminder_time": {
+        "name": "Reminder time"
+      },
+      "blood_pressure_reminder_time": {
         "name": "Reminder time"
       }
     }
@@ -461,6 +578,12 @@
     },
     "invalid_height": {
       "message": "The height must be between 50 and 250 cm."
+    },
+    "value_required": {
+      "message": "Enter a value for {field}."
+    },
+    "systolic_not_above_diastolic": {
+      "message": "The systolic value must be higher than the diastolic value."
     }
   },
   "services": {
@@ -568,15 +691,27 @@
         },
         "metric": {
           "name": "Measurement",
-          "description": "Weight or waist circumference."
+          "description": "Weight, waist circumference or blood pressure."
         },
         "value": {
           "name": "Value",
-          "description": "In kg (weight) or cm (waist)."
+          "description": "Weight (kg) or waist circumference (cm)."
         },
         "measured_at": {
           "name": "Measured at",
           "description": "To enter an older value. Default: now."
+        },
+        "systolic": {
+          "name": "Systolic",
+          "description": "Blood pressure: upper value in mmHg."
+        },
+        "diastolic": {
+          "name": "Diastolic",
+          "description": "Blood pressure: lower value in mmHg."
+        },
+        "pulse": {
+          "name": "Pulse",
+          "description": "Blood pressure: pulse in beats per minute (optional)."
         }
       }
     },
@@ -594,7 +729,7 @@
         },
         "metric": {
           "name": "Measurement",
-          "description": "Weight or waist circumference."
+          "description": "Weight, waist circumference or blood pressure."
         },
         "date": {
           "name": "Date",
@@ -616,7 +751,7 @@
         },
         "metric": {
           "name": "Measurement",
-          "description": "Weight or waist circumference."
+          "description": "Weight, waist circumference or blood pressure."
         },
         "start": {
           "name": "Start",
@@ -642,7 +777,7 @@
         },
         "metric": {
           "name": "Measurement",
-          "description": "Weight or waist circumference."
+          "description": "Weight, waist circumference or blood pressure."
         },
         "start": {
           "name": "Start",
@@ -661,6 +796,9 @@
     },
     "waist": {
       "name": "{person} Waist"
+    },
+    "blood_pressure": {
+      "name": "{person} Blood pressure"
     }
   }
 }

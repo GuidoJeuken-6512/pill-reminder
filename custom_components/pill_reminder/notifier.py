@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime
 import logging
 from typing import Any
 
@@ -19,7 +20,6 @@ from .const import (
     MEASUREMENT_CHANNEL,
     NOTIFICATION_CHANNEL,
 )
-from .measurements import Measurement
 from .metrics import MetricType
 from .models import DoseRecord, Medication
 
@@ -214,6 +214,7 @@ MEASUREMENT_TEXTS: dict[str, dict[str, str]] = {
     "de": {
         "title_weight": "⚖️ Zeit für die Waage",
         "title_waist": "📏 Bauchumfang messen",
+        "title_blood_pressure": "🩺 Blutdruck messen",
         "title": "📋 Zeit zum Messen",
         "message": "{person}, bitte trage deinen heutigen Wert ein.",
         "last": " Letzter Wert: {value} {unit} ({date}).",
@@ -222,6 +223,7 @@ MEASUREMENT_TEXTS: dict[str, dict[str, str]] = {
     "en": {
         "title_weight": "⚖️ Time to step on the scale",
         "title_waist": "📏 Time to measure your waist",
+        "title_blood_pressure": "🩺 Time to measure your blood pressure",
         "title": "📋 Time to measure",
         "message": "{person}, please enter today's value.",
         "last": " Last value: {value} {unit} ({date}).",
@@ -249,21 +251,22 @@ class MeasurementNotifier(Notifier):
         return f"{DOMAIN}_{self.entry_id}_{metric}"
 
     def measurement_texts(
-        self, metric: MetricType, last: Measurement | None, count: int
+        self,
+        metric: MetricType,
+        last: str | None,
+        last_measured: datetime | None,
+        count: int,
     ) -> tuple[str, str]:
-        """Title and message of a measurement reminder."""
+        """Title and message of a measurement reminder; `last` is e.g. '81.2' or '128/82'."""
         lang = self._language()
         texts = MEASUREMENT_TEXTS[lang]
         title = texts.get(f"title_{metric.key}", texts["title"])
         message = texts["message"].format(person=self.person)
-        if last is not None:
-            value = f"{last.value:.{metric.decimals}f}"
-            if lang == "de":
-                value = value.replace(".", ",")
+        if last is not None and last_measured is not None:
             message += texts["last"].format(
-                value=value,
-                unit=metric.unit,
-                date=dt_util.as_local(last.measured_at).strftime(DATE_FORMATS[lang]),
+                value=last.replace(".", ",") if lang == "de" else last,
+                unit=metric.main.unit,
+                date=dt_util.as_local(last_measured).strftime(DATE_FORMATS[lang]),
             )
         if count > 1:
             title += texts["repeat"]
@@ -274,13 +277,14 @@ class MeasurementNotifier(Notifier):
         services: list[str],
         metric: MetricType,
         *,
-        last: Measurement | None,
+        last: str | None,
+        last_measured: datetime | None,
         count: int,
         url: str,
         persistent: bool,
     ) -> None:
         """Send the reminder to the person's phones."""
-        title, message = self.measurement_texts(metric, last, count)
+        title, message = self.measurement_texts(metric, last, last_measured, count)
         data: dict[str, Any] = {
             "tag": self.measurement_tag(metric.key),
             "group": f"{DOMAIN}_measurements",

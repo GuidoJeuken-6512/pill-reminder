@@ -24,6 +24,12 @@
         "state": {
           "on": "mdi:bell-ring"
         }
+      },
+      "blood_pressure_due": {
+        "default": "mdi:bell-check",
+        "state": {
+          "on": "mdi:bell-ring"
+        }
       }
     },
     "button": {
@@ -41,6 +47,15 @@
       },
       "add_medication": {
         "default": "mdi:plus-circle"
+      },
+      "weight_save": {
+        "default": "mdi:content-save"
+      },
+      "waist_save": {
+        "default": "mdi:content-save"
+      },
+      "blood_pressure_save": {
+        "default": "mdi:content-save"
       }
     },
     "calendar": {
@@ -143,6 +158,81 @@
           "rising": "mdi:trending-up",
           "falling": "mdi:trending-down"
         }
+      },
+      "blood_pressure_last": {
+        "default": "mdi:heart-pulse"
+      },
+      "blood_pressure_last_measured": {
+        "default": "mdi:clock-check-outline"
+      },
+      "blood_pressure_category": {
+        "default": "mdi:heart-pulse"
+      },
+      "systolic_last": {
+        "default": "mdi:arrow-up-bold"
+      },
+      "systolic_average_7d": {
+        "default": "mdi:approximately-equal"
+      },
+      "systolic_change_7d": {
+        "default": "mdi:delta"
+      },
+      "systolic_change_30d": {
+        "default": "mdi:delta"
+      },
+      "systolic_trend": {
+        "default": "mdi:chart-line"
+      },
+      "systolic_trend_direction": {
+        "default": "mdi:trending-neutral",
+        "state": {
+          "rising": "mdi:trending-up",
+          "falling": "mdi:trending-down"
+        }
+      },
+      "diastolic_last": {
+        "default": "mdi:arrow-down-bold"
+      },
+      "diastolic_average_7d": {
+        "default": "mdi:approximately-equal"
+      },
+      "diastolic_change_7d": {
+        "default": "mdi:delta"
+      },
+      "diastolic_change_30d": {
+        "default": "mdi:delta"
+      },
+      "diastolic_trend": {
+        "default": "mdi:chart-line"
+      },
+      "diastolic_trend_direction": {
+        "default": "mdi:trending-neutral",
+        "state": {
+          "rising": "mdi:trending-up",
+          "falling": "mdi:trending-down"
+        }
+      },
+      "pulse_last": {
+        "default": "mdi:heart-pulse"
+      },
+      "pulse_average_7d": {
+        "default": "mdi:approximately-equal"
+      },
+      "pulse_change_7d": {
+        "default": "mdi:delta"
+      },
+      "pulse_change_30d": {
+        "default": "mdi:delta"
+      },
+      "pulse_trend": {
+        "default": "mdi:chart-line"
+      },
+      "pulse_trend_direction": {
+        "default": "mdi:trending-neutral",
+        "state": {
+          "rising": "mdi:trending-up",
+          "falling": "mdi:trending-down"
+        }
       }
     },
     "switch": {
@@ -159,6 +249,12 @@
         }
       },
       "waist_reminder": {
+        "default": "mdi:bell",
+        "state": {
+          "off": "mdi:bell-off"
+        }
+      },
+      "blood_pressure_reminder": {
         "default": "mdi:bell",
         "state": {
           "off": "mdi:bell-off"
@@ -192,6 +288,9 @@
       },
       "waist_reminder_weekdays": {
         "default": "mdi:calendar-week"
+      },
+      "blood_pressure_reminder_weekdays": {
+        "default": "mdi:calendar-week"
       }
     },
     "number": {
@@ -209,6 +308,15 @@
       },
       "waist_input": {
         "default": "mdi:tape-measure"
+      },
+      "systolic_input": {
+        "default": "mdi:arrow-up-bold"
+      },
+      "diastolic_input": {
+        "default": "mdi:arrow-down-bold"
+      },
+      "pulse_input": {
+        "default": "mdi:heart-pulse"
       }
     },
     "time": {
@@ -216,6 +324,9 @@
         "default": "mdi:clock-outline"
       },
       "waist_reminder_time": {
+        "default": "mdi:clock-outline"
+      },
+      "blood_pressure_reminder_time": {
         "default": "mdi:clock-outline"
       }
     }

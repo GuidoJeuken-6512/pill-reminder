@@ -182,7 +182,8 @@
     "metric": {
       "options": {
         "weight": "Gewicht",
-        "waist": "Bauchumfang"
+        "waist": "Bauchumfang",
+        "blood_pressure": "Blutdruck"
       }
     }
   },
@@ -198,6 +199,9 @@
         "name": "Fällig"
       },
       "waist_due": {
+        "name": "Fällig"
+      },
+      "blood_pressure_due": {
         "name": "Fällig"
       }
     },
@@ -216,6 +220,15 @@
       },
       "add_medication": {
         "name": "Medikament hinzufügen"
+      },
+      "weight_save": {
+        "name": "Speichern"
+      },
+      "waist_save": {
+        "name": "Speichern"
+      },
+      "blood_pressure_save": {
+        "name": "Speichern"
       }
     },
     "calendar": {
@@ -333,6 +346,92 @@
           "falling": "Fallend",
           "stable": "Stabil"
         }
+      },
+      "blood_pressure_last_measured": {
+        "name": "Gemessen"
+      },
+      "blood_pressure_category": {
+        "name": "Einstufung",
+        "state": {
+          "optimal": "Optimal",
+          "normal": "Normal",
+          "high_normal": "Hoch normal",
+          "grade_1": "Hypertonie Grad 1",
+          "grade_2": "Hypertonie Grad 2",
+          "grade_3": "Hypertonie Grad 3"
+        }
+      },
+      "systolic_last": {
+        "name": "Systolisch"
+      },
+      "systolic_average_7d": {
+        "name": "Systolisch Mittel 7 Tage"
+      },
+      "systolic_change_7d": {
+        "name": "Systolisch Veränderung 7 Tage"
+      },
+      "systolic_change_30d": {
+        "name": "Systolisch Veränderung 30 Tage"
+      },
+      "systolic_trend": {
+        "name": "Systolisch Trend",
+        "unit_of_measurement": "mmHg/Woche"
+      },
+      "systolic_trend_direction": {
+        "name": "Systolisch Trendrichtung",
+        "state": {
+          "rising": "Steigend",
+          "falling": "Fallend",
+          "stable": "Stabil"
+        }
+      },
+      "diastolic_last": {
+        "name": "Diastolisch"
+      },
+      "diastolic_average_7d": {
+        "name": "Diastolisch Mittel 7 Tage"
+      },
+      "diastolic_change_7d": {
+        "name": "Diastolisch Veränderung 7 Tage"
+      },
+      "diastolic_change_30d": {
+        "name": "Diastolisch Veränderung 30 Tage"
+      },
+      "diastolic_trend": {
+        "name": "Diastolisch Trend",
+        "unit_of_measurement": "mmHg/Woche"
+      },
+      "diastolic_trend_direction": {
+        "name": "Diastolisch Trendrichtung",
+        "state": {
+          "rising": "Steigend",
+          "falling": "Fallend",
+          "stable": "Stabil"
+        }
+      },
+      "pulse_last": {
+        "name": "Puls"
+      },
+      "pulse_average_7d": {
+        "name": "Puls Mittel 7 Tage"
+      },
+      "pulse_change_7d": {
+        "name": "Puls Veränderung 7 Tage"
+      },
+      "pulse_change_30d": {
+        "name": "Puls Veränderung 30 Tage"
+      },
+      "pulse_trend": {
+        "name": "Puls Trend",
+        "unit_of_measurement": "bpm/Woche"
+      },
+      "pulse_trend_direction": {
+        "name": "Puls Trendrichtung",
+        "state": {
+          "rising": "Steigend",
+          "falling": "Fallend",
+          "stable": "Stabil"
+        }
       }
     },
     "switch": {
@@ -343,6 +442,9 @@
         "name": "Erinnerung"
       },
       "waist_reminder": {
+        "name": "Erinnerung"
+      },
+      "blood_pressure_reminder": {
         "name": "Erinnerung"
       }
     },
@@ -373,6 +475,9 @@
       },
       "waist_reminder_weekdays": {
         "name": "Erinnerungstage"
+      },
+      "blood_pressure_reminder_weekdays": {
+        "name": "Erinnerungstage"
       }
     },
     "number": {
@@ -390,6 +495,15 @@
       },
       "waist_input": {
         "name": "Eintragen"
+      },
+      "systolic_input": {
+        "name": "Systolisch"
+      },
+      "diastolic_input": {
+        "name": "Diastolisch"
+      },
+      "pulse_input": {
+        "name": "Puls"
       }
     },
     "time": {
@@ -397,6 +511,9 @@
         "name": "Erinnerungszeit"
       },
       "waist_reminder_time": {
+        "name": "Erinnerungszeit"
+      },
+      "blood_pressure_reminder_time": {
         "name": "Erinnerungszeit"
       }
     }
@@ -461,6 +578,12 @@
     },
     "invalid_height": {
       "message": "Die Körpergröße muss zwischen 50 und 250 cm liegen."
+    },
+    "value_required": {
+      "message": "Bitte einen Wert für {field} eintragen."
+    },
+    "systolic_not_above_diastolic": {
+      "message": "Der systolische Wert muss höher sein als der diastolische."
     }
   },
   "services": {
@@ -568,15 +691,27 @@
         },
         "metric": {
           "name": "Messwert",
-          "description": "Gewicht oder Bauchumfang."
+          "description": "Gewicht, Bauchumfang oder Blutdruck."
         },
         "value": {
           "name": "Wert",
-          "description": "In kg (Gewicht) oder cm (Bauchumfang)."
+          "description": "Gewicht (kg) oder Bauchumfang (cm)."
         },
         "measured_at": {
           "name": "Gemessen am",
           "description": "Zum Nachtragen eines älteren Werts. Standard: jetzt."
+        },
+        "systolic": {
+          "name": "Systolisch",
+          "description": "Blutdruck: oberer Wert in mmHg."
+        },
+        "diastolic": {
+          "name": "Diastolisch",
+          "description": "Blutdruck: unterer Wert in mmHg."
+        },
+        "pulse": {
+          "name": "Puls",
+          "description": "Blutdruck: Puls in Schlägen pro Minute (optional)."
         }
       }
     },
@@ -594,7 +729,7 @@
         },
         "metric": {
           "name": "Messwert",
-          "description": "Gewicht oder Bauchumfang."
+          "description": "Gewicht, Bauchumfang oder Blutdruck."
         },
         "date": {
           "name": "Datum",
@@ -616,7 +751,7 @@
         },
         "metric": {
           "name": "Messwert",
-          "description": "Gewicht oder Bauchumfang."
+          "description": "Gewicht, Bauchumfang oder Blutdruck."
         },
         "start": {
           "name": "Start",
@@ -642,7 +777,7 @@
         },
         "metric": {
           "name": "Messwert",
-          "description": "Gewicht oder Bauchumfang."
+          "description": "Gewicht, Bauchumfang oder Blutdruck."
         },
         "start": {
           "name": "Start",
@@ -661,6 +796,9 @@
     },
     "waist": {
       "name": "{person} Bauchumfang"
+    },
+    "blood_pressure": {
+      "name": "{person} Blutdruck"
     }
   }
 }

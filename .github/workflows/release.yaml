@@ -19,3 +19,22 @@ jobs:
             echo "::error::Release tag v$tag does not match manifest version $version"
             exit 1
           fi
+
+  asset:
+    name: Attach pill_reminder.zip
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build ZIP
+        run: |
+          # HACS (zip_release) unpacks the ZIP into custom_components/pill_reminder/,
+          # so the files sit at the ZIP root. GitHub counts its downloads (README badge).
+          cd custom_components/pill_reminder
+          zip -r ../../pill_reminder.zip . -x '*__pycache__*'
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" pill_reminder.zip --clobber

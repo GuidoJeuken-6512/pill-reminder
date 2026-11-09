@@ -42,7 +42,7 @@ from .const import (
     SOURCE_SERVICE,
     SUBENTRY_MEASUREMENT,
 )
-from .metrics import METRICS
+from .metrics import BLOOD_PRESSURE, METRICS
 from .models import DoseRecord, DoseStatus
 
 if TYPE_CHECKING:
@@ -137,7 +137,10 @@ ADD_MEASUREMENT_SCHEMA = vol.Schema(
     {
         **PERSON_FIELDS,
         vol.Optional(ATTR_METRIC): METRIC_FIELD,
-        vol.Required(ATTR_VALUE): vol.Coerce(float),
+        # weight / waist
+        vol.Optional(ATTR_VALUE): vol.Coerce(float),
+        # blood pressure
+        **{vol.Optional(field.key): vol.Coerce(float) for field in BLOOD_PRESSURE.fields},
         vol.Optional(ATTR_MEASURED_AT): cv.datetime,
     }
 )
@@ -201,11 +204,15 @@ def _bodies(hass: HomeAssistant, call: ServiceCall) -> list[tuple[BodyTracker, s
 def _measurements(call: ServiceCall, body: BodyTracker, metric: str | None) -> list[Measurement]:
     start = call.data.get(ATTR_START)
     end = call.data.get(ATTR_END)
-    return body.store.measurements(
-        metric,
-        start=dt_util.as_utc(start) if start else None,
-        end=dt_util.as_utc(end) if end else None,
-    )
+    fields = {f.key for f in METRICS[metric].fields} if metric else None
+    return [
+        m
+        for m in body.store.measurements(
+            start=dt_util.as_utc(start) if start else None,
+            end=dt_util.as_utc(end) if end else None,
+        )
+        if fields is None or m.metric in fields
+    ]
 
 
 @callback
@@ -213,17 +220,22 @@ def _async_setup_measurement_services(hass: HomeAssistant) -> None:
     """Register the measurement actions."""
 
     async def add_measurement(call: ServiceCall) -> ServiceResponse:
-        body, metric = _resolve_person(hass, call)
+        body, metric_key = _resolve_person(hass, call)
+        metric = METRICS[_required_metric(metric_key)]
         measured_at = call.data.get(ATTR_MEASURED_AT)
         if measured_at is not None and measured_at.tzinfo is None:
             measured_at = measured_at.replace(tzinfo=dt_util.get_default_time_zone())
-        measurement = await body.async_add_measurement(
-            _required_metric(metric),
-            call.data[ATTR_VALUE],
-            source=SOURCE_SERVICE,
-            measured_at=measured_at,
+        if metric.single:
+            values = {metric.key: call.data.get(ATTR_VALUE)}
+        else:
+            values = {field.key: call.data.get(field.key) for field in metric.fields}
+        stored = await body.async_add_values(
+            metric.key, values, source=SOURCE_SERVICE, measured_at=measured_at
         )
-        return {"measurement": measurement.as_dict()}
+        response: dict[str, Any] = {"measurements": [m.as_dict() for m in stored]}
+        if metric.single:
+            response["measurement"] = stored[0].as_dict()  # as in 0.4.0
+        return response
 
     async def delete_measurement(call: ServiceCall) -> ServiceResponse:
         body, metric = _resolve_person(hass, call)

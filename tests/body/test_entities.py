@@ -14,10 +14,12 @@ from .conftest import advance, local, make_entry, setup
 
 
 async def set_number(hass: HomeAssistant, entity_id: str, value: float) -> None:
-    """Enter a value like the dashboard does."""
+    """Enter a value and press "Save" like the dashboard does."""
     await hass.services.async_call(
         "number", "set_value", {"entity_id": entity_id, "value": value}, blocking=True
     )
+    save = "button." + entity_id.split(".", 1)[1].replace("_enter", "_save")
+    await hass.services.async_call("button", "press", {"entity_id": save}, blocking=True)
     await hass.async_block_till_done()
 
 

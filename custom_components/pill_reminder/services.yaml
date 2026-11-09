@@ -91,13 +91,38 @@ add_measurement:
           options:
             - weight
             - waist
+            - blood_pressure
     value:
-      required: true
+      required: false
       selector:
         number:
           min: 20
           max: 400
           step: 0.1
+          mode: box
+    systolic:
+      required: false
+      selector:
+        number:
+          min: 60
+          max: 260
+          unit_of_measurement: mmHg
+          mode: box
+    diastolic:
+      required: false
+      selector:
+        number:
+          min: 30
+          max: 160
+          unit_of_measurement: mmHg
+          mode: box
+    pulse:
+      required: false
+      selector:
+        number:
+          min: 30
+          max: 220
+          unit_of_measurement: bpm
           mode: box
     measured_at:
       required: false

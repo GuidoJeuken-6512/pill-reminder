@@ -24,7 +24,7 @@ from homeassistant.util import slugify
 
 from .body import BodyTracker
 from .const import DOMAIN
-from .metrics import WAIST, WEIGHT, metric_title
+from .metrics import BLOOD_PRESSURE, METRICS, WAIST, WEIGHT, field_title, metric_title
 from .scheduler import ReminderManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,7 +32,11 @@ _LOGGER = logging.getLogger(__name__)
 DASHBOARD_URL = "pill-reminder"
 DASHBOARD_ICON = "mdi:pill"
 BODY_ICON = "mdi:heart-pulse"
-METRIC_ICONS = {WEIGHT.key: "mdi:scale-bathroom", WAIST.key: "mdi:tape-measure"}
+METRIC_ICONS = {
+    WEIGHT.key: "mdi:scale-bathroom",
+    WAIST.key: "mdi:tape-measure",
+    BLOOD_PRESSURE.key: "mdi:heart-pulse",
+}
 
 TEXTS: dict[str, dict[str, str]] = {
     "de": {
@@ -82,7 +86,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "body_tab": "Körper",
         "body_path": "koerper",
         "enter": "Heute eintragen",
-        "enter_hint": "Trage den heutigen Wert ein und bestätige mit Enter.",
+        "save": "Speichern",
+        "save_hint": "Werte eintragen, dann speichern",
+        "bp_disclaimer": (
+            "Einstufung des letzten Werts nach ESC/ESH (Praxiswerte). Zu Hause gelten "
+            "Mittelwerte ab 135/85 als erhöht. Keine Diagnose."
+        ),
         "missing": "⏰ **{metric}** für heute fehlt noch.",
         "body": "BMI & Taille/Größe",
         "bmi": "BMI",
@@ -164,7 +173,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "body_tab": "Body",
         "body_path": "body",
         "enter": "Enter today",
-        "enter_hint": "Type today's value and confirm with Enter.",
+        "save": "Save",
+        "save_hint": "Enter the values, then save",
+        "bp_disclaimer": (
+            "Class of the last reading per ESC/ESH (office values). At home, averages "
+            "from 135/85 count as high. Not a diagnosis."
+        ),
         "missing": "⏰ Today's **{metric}** is still missing.",
         "body": "BMI & waist-to-height",
         "bmi": "BMI",
@@ -745,11 +759,12 @@ def _body_view(
     metrics = body.tracked_keys()
     sections: list[dict[str, Any]] = []
 
-    # 1) Enter today's values
+    # 1) Enter today's values: one card per measurement with a "Save" button
     enter: list[dict[str, Any]] = [
         {"type": "heading", "heading": texts["enter"], "icon": "mdi:pencil-plus"}
     ]
     for key in metrics:
+        metric = METRICS[key]
         if due := ids.get("binary_sensor", f"{eid}_{key}_due"):
             enter.append(
                 {
@@ -758,18 +773,37 @@ def _body_view(
                     "visibility": _when(due, "on"),
                 }
             )
-    inputs = [
-        {"entity": entity_id, "icon": METRIC_ICONS.get(key, "mdi:pencil")}
-        for key in metrics
-        if (entity_id := ids.get("number", f"{eid}_{key}_input"))
-    ]
-    if inputs:
-        enter.append({"type": "entities", "entities": inputs})
-        enter.append({"type": "markdown", "content": texts["enter_hint"]})
+        rows: list[Any] = [
+            {"entity": entity_id, "name": field_title(field.key, lang)}
+            if not metric.single
+            else {"entity": entity_id, "icon": METRIC_ICONS.get(key, "mdi:pencil")}
+            for field in metric.fields
+            if (entity_id := ids.get("number", f"{eid}_{field.key}_input"))
+        ]
+        if save := ids.get("button", f"{eid}_{key}_save"):
+            rows.append(
+                {
+                    "type": "button",
+                    "name": texts["save_hint"],
+                    "icon": "mdi:content-save",
+                    "action_name": texts["save"],
+                    "tap_action": _press(save),
+                }
+            )
+        if rows:
+            enter.append(
+                {
+                    "type": "entities",
+                    "title": metric_title(key, lang),
+                    "entities": rows,
+                    "grid_options": {"columns": 6},
+                }
+            )
     sections.append({"type": "grid", "cards": enter})
 
     # 2) One section per measurement type
     for key in metrics:
+        metric = METRICS[key]
         cards: list[dict[str, Any]] = [
             {
                 "type": "heading",
@@ -777,15 +811,29 @@ def _body_view(
                 "icon": METRIC_ICONS.get(key, "mdi:chart-line"),
             }
         ]
-        for sensor_key, columns in (
-            ("last", 6),
-            ("last_measured", 6),
-            ("change_7d", 4),
-            ("change_30d", 4),
-            ("trend_direction", 4),
-        ):
-            if entity_id := ids.get("sensor", f"{eid}_{key}_{sensor_key}"):
+        if metric.single:
+            tiles = (
+                ("sensor", f"{key}_last", 6),
+                ("sensor", f"{key}_last_measured", 6),
+                ("sensor", f"{key}_change_7d", 4),
+                ("sensor", f"{key}_change_30d", 4),
+                ("sensor", f"{key}_trend_direction", 4),
+            )
+        else:
+            tiles = (
+                ("sensor", f"{key}_last", 6),
+                ("sensor", f"{key}_category", 6),
+                ("sensor", f"{key}_last_measured", 6),
+                *(("sensor", f"{f.key}_average_7d", 4) for f in metric.fields if f.average),
+                *(("sensor", f"{f.key}_trend_direction", 6) for f in metric.fields if f.required),
+            )
+        for domain, sensor_key, columns in tiles:
+            if entity_id := ids.get(domain, f"{eid}_{sensor_key}"):
                 cards.append(_tile(entity_id, columns))
+        if key == BLOOD_PRESSURE.key:
+            cards.append(
+                {"type": "markdown", "content": f"<small>{texts['bp_disclaimer']}</small>"}
+            )
         sections.append({"type": "grid", "cards": cards})
 
     # 3) BMI and waist-to-height ratio
@@ -844,8 +892,15 @@ def _body_view(
         {"type": "heading", "heading": texts["body_history"], "icon": "mdi:chart-line"}
     ]
     for key in metrics:
-        if last := ids.get("sensor", f"{eid}_{key}_last"):
-            history.append(_hint(last, f"{metric_title(key, lang)}: {texts['no_history']}"))
+        metric = METRICS[key]
+        lasts = [
+            entity_id
+            for field in metric.fields
+            if (entity_id := ids.get("sensor", f"{eid}_{field.key}_last"))
+        ]
+        if lasts:
+            main = lasts[0]
+            history.append(_hint(main, f"{metric_title(key, lang)}: {texts['no_history']}"))
             history.append(
                 {
                     "type": "statistics-graph",
@@ -853,10 +908,10 @@ def _body_view(
                     "chart_type": "line",
                     "period": "day",
                     "days_to_show": 90,
-                    "stat_types": ["mean", "min", "max"],
-                    "entities": [last],
+                    "stat_types": ["mean", "min", "max"] if metric.single else ["mean"],
+                    "entities": lasts,
                     "grid_options": {"columns": "full"},
-                    "visibility": _has_number(last),
+                    "visibility": _has_number(main),
                 }
             )
     if len(history) > 1:
@@ -865,7 +920,7 @@ def _body_view(
     badges = [
         {"type": "entity", "entity": entity_id, "show_name": True}
         for entity_id in (
-            *(ids.get("sensor", f"{eid}_{key}_last") for key in metrics),
+            *(ids.get("sensor", f"{eid}_{key}_last") for key in metrics),  # 81.2 kg, 128/82
             ids.get("sensor", f"{eid}_bmi") if WEIGHT.key in metrics else None,
         )
         if entity_id

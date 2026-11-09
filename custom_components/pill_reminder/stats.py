@@ -136,3 +136,45 @@ def trend_direction(slope: float | None, threshold: float) -> TrendDirection | N
     if slope <= -threshold:
         return TrendDirection.FALLING
     return TrendDirection.STABLE
+
+
+class BloodPressureCategory(StrEnum):
+    """Blood pressure classes for adults (ESC/ESH, office values)."""
+
+    OPTIMAL = "optimal"
+    NORMAL = "normal"
+    HIGH_NORMAL = "high_normal"
+    GRADE_1 = "grade_1"
+    GRADE_2 = "grade_2"
+    GRADE_3 = "grade_3"
+
+
+# (systolic from, diastolic from, class) - the higher of both values decides
+_BP_CLASSES = (
+    (180, 110, BloodPressureCategory.GRADE_3),
+    (160, 100, BloodPressureCategory.GRADE_2),
+    (140, 90, BloodPressureCategory.GRADE_1),
+    (130, 85, BloodPressureCategory.HIGH_NORMAL),
+    (120, 80, BloodPressureCategory.NORMAL),
+)
+
+
+def blood_pressure_category(
+    systolic: float | None, diastolic: float | None
+) -> BloodPressureCategory | None:
+    """Class of a blood pressure reading; the higher class of both values counts."""
+    if systolic is None or diastolic is None:
+        return None
+    for sys_from, dia_from, category in _BP_CLASSES:
+        if systolic >= sys_from or diastolic >= dia_from:
+            return category
+    return BloodPressureCategory.OPTIMAL
+
+
+def average(points: Points, now: datetime, days: int) -> float | None:
+    """Mean of all values of the last `days` days."""
+    start = now - timedelta(days=days)
+    values = [v for t, v in points if start <= t <= now]
+    if not values:
+        return None
+    return sum(values) / len(values)

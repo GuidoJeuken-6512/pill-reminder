@@ -22,10 +22,10 @@ from . import PillReminderConfigEntry
 from .body import BodyTracker
 from .entity import BodyEntity, MeasurementEntity, MedicationEntity, PersonEntity
 from .measurement_reminders import TrackedMetric
-from .metrics import MetricType
+from .metrics import BLOOD_PRESSURE, ValueField
 from .models import DoseStatus, Medication
 from .scheduler import ReminderManager
-from .stats import BmiCategory, TrendDirection, WhtrCategory
+from .stats import BloodPressureCategory, BmiCategory, TrendDirection, WhtrCategory
 
 PARALLEL_UPDATES = 0
 
@@ -161,8 +161,21 @@ async def async_setup_entry(
     if manager.body.enabled:
         async_add_entities(BodySensor(manager, desc) for desc in BODY_SENSORS)
     for tracked in manager.body.tracked.values():
+        metric = tracked.metric
         async_add_entities(
-            (MeasurementSensor(manager, tracked, desc) for desc in MEASUREMENT_SENSORS),
+            [
+                *(
+                    FieldSensor(manager, tracked, field, desc)
+                    for field in metric.fields
+                    for desc in FIELD_SENSORS
+                    if field.average or not desc.average_only
+                ),
+                *(
+                    MetricSensor(manager, tracked, desc)
+                    for desc in METRIC_SENSORS
+                    if desc.metrics is None or metric.key in desc.metrics
+                ),
+            ],
             config_subentry_id=tracked.subentry_id,
         )
 
@@ -260,12 +273,14 @@ BODY_SENSORS: tuple[BodySensorDescription, ...] = (
 
 
 @dataclass(frozen=True, kw_only=True)
-class MeasurementSensorDescription(SensorEntityDescription):
-    """A value per measurement type."""
+class FieldSensorDescription(SensorEntityDescription):
+    """A value per value field (weight, systolic, ...)."""
 
     value_fn: Callable[[BodyTracker, str], Any]
-    # Use the metric's unit and device class
+    # Use the field's unit and device class
     with_unit: bool = False
+    # Only for fields with `average=True` (blood pressure)
+    average_only: bool = False
 
 
 def _last_value(body: BodyTracker, key: str) -> float | None:
@@ -273,43 +288,70 @@ def _last_value(body: BodyTracker, key: str) -> float | None:
     return latest.value if latest else None
 
 
-def _last_measured(body: BodyTracker, key: str) -> datetime | None:
-    latest = body.latest(key)
-    return latest.measured_at if latest else None
-
-
-MEASUREMENT_SENSORS: tuple[MeasurementSensorDescription, ...] = (
-    MeasurementSensorDescription(
+FIELD_SENSORS: tuple[FieldSensorDescription, ...] = (
+    FieldSensorDescription(
         key="last",
         state_class=SensorStateClass.MEASUREMENT,
         with_unit=True,
         value_fn=_last_value,
     ),
-    MeasurementSensorDescription(
-        key="last_measured",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=_last_measured,
+    FieldSensorDescription(
+        key="average_7d",
+        with_unit=True,
+        average_only=True,
+        value_fn=lambda b, key: b.average(key, 7),
     ),
-    MeasurementSensorDescription(
+    FieldSensorDescription(
         key="change_7d",
         with_unit=True,
         value_fn=lambda b, key: b.change(key, 7),
     ),
-    MeasurementSensorDescription(
+    FieldSensorDescription(
         key="change_30d",
         with_unit=True,
         value_fn=lambda b, key: b.change(key, 30),
     ),
-    MeasurementSensorDescription(
+    FieldSensorDescription(
         key="trend",
         suggested_display_precision=2,
         value_fn=lambda b, key: b.trend(key),
     ),
-    MeasurementSensorDescription(
+    FieldSensorDescription(
         key="trend_direction",
         device_class=SensorDeviceClass.ENUM,
         options=[d.value for d in TrendDirection],
         value_fn=lambda b, key: d.value if (d := b.trend_direction(key)) else None,
+    ),
+)
+
+
+@dataclass(frozen=True, kw_only=True)
+class MetricSensorDescription(SensorEntityDescription):
+    """A value of the whole measurement type (all fields)."""
+
+    value_fn: Callable[[BodyTracker, str], Any]
+    # Only for these measurement types (None = all)
+    metrics: tuple[str, ...] | None = None
+
+
+METRIC_SENSORS: tuple[MetricSensorDescription, ...] = (
+    MetricSensorDescription(
+        key="last_measured",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda b, key: b.last_measured(key),
+    ),
+    # "128/82" - main value of the blood pressure device
+    MetricSensorDescription(
+        key="last",
+        metrics=(BLOOD_PRESSURE.key,),
+        value_fn=lambda b, key: b.latest_reading(key),
+    ),
+    MetricSensorDescription(
+        key="category",
+        metrics=(BLOOD_PRESSURE.key,),
+        device_class=SensorDeviceClass.ENUM,
+        options=[c.value for c in BloodPressureCategory],
+        value_fn=lambda b, key: c.value if (c := b.blood_pressure_category()) else None,
     ),
 )
 
@@ -328,28 +370,50 @@ class BodySensor(BodyEntity, SensorEntity):
         self._attr_native_value = self.entity_description.value_fn(self.body)
 
 
-class MeasurementSensor(MeasurementEntity, SensorEntity):
-    """Last value, last measured, change and trend of a measurement type."""
+class FieldSensor(MeasurementEntity, SensorEntity):
+    """Last value, average, change and trend of one value field."""
 
-    entity_description: MeasurementSensorDescription
+    entity_description: FieldSensorDescription
 
     def __init__(
         self,
         manager: ReminderManager,
         tracked: TrackedMetric,
-        desc: MeasurementSensorDescription,
+        field: ValueField,
+        desc: FieldSensorDescription,
+    ) -> None:
+        """Initialize."""
+        super().__init__(manager, tracked, desc.key, field)
+        self.entity_description = desc
+        self.value_field = field
+        if desc.key == "last" and tracked.metric.single:
+            # Main value of the device: named like the device ("Anna Weight")
+            self._attr_name = None
+        if desc.with_unit:
+            self._attr_native_unit_of_measurement = field.unit
+            self._attr_device_class = field.sensor_device_class
+            self._attr_suggested_display_precision = field.decimals
+
+    def _update_from_manager(self) -> None:
+        self._attr_native_value = self.entity_description.value_fn(self.body, self.value_field.key)
+
+
+class MetricSensor(MeasurementEntity, SensorEntity):
+    """Last measured, and for blood pressure the reading and its class."""
+
+    entity_description: MetricSensorDescription
+
+    def __init__(
+        self,
+        manager: ReminderManager,
+        tracked: TrackedMetric,
+        desc: MetricSensorDescription,
     ) -> None:
         """Initialize."""
         super().__init__(manager, tracked, desc.key)
         self.entity_description = desc
-        metric: MetricType = tracked.metric
         if desc.key == "last":
-            # Main value of the device: named like the device ("Anna Weight")
-            self._attr_name = None
-        if desc.with_unit:
-            self._attr_native_unit_of_measurement = metric.unit
-            self._attr_device_class = metric.sensor_device_class
-            self._attr_suggested_display_precision = metric.decimals
+            self._attr_name = None  # "Anna Blood pressure: 128/82"
 
     def _update_from_manager(self) -> None:
         self._attr_native_value = self.entity_description.value_fn(self.body, self.metric.key)

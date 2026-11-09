@@ -1,8 +1,8 @@
 # Pill Reminder – User guide
 
-Pill Reminder reminds people in your household to take their medication and to enter their weight and waist circumference. It records every dose and every measurement and shows how regularly the medication was taken, the BMI, the waist-to-height ratio and the trend. This guide explains how it works, every setting, the dashboard, the entities, and how to use it in your own automations.
+Pill Reminder reminds people in your household to take their medication and to enter their weight, waist circumference and blood pressure. It records every dose and every measurement and shows how regularly the medication was taken, the BMI, the waist-to-height ratio, the blood pressure class and the trend. This guide explains how it works, every setting, the dashboard, the entities, and how to use it in your own automations.
 
-> **Note:** Pill Reminder is a reminder aid, not a medical device. BMI and waist-to-height ratio are general reference values for adults, not a diagnosis. Nothing here replaces medical advice. Always keep a second way of remembering important medication.
+> **Note:** Pill Reminder is a reminder aid, not a medical device. BMI, waist-to-height ratio and blood pressure classes are general reference values for adults, not a diagnosis. Nothing here replaces medical advice. Always keep a second way of remembering important medication.
 
 ## Contents
 
@@ -29,7 +29,7 @@ Pill Reminder reminds people in your household to take their medication and to e
 
 - **Person** – each person is one entry of the integration. A person has a name, optionally a Home Assistant user (for the dashboard), one or more phones and optionally a height.
 - **Medication** – each person can have any number of medications. A medication has a name, an optional dosage or note, one or more **intake times** and the **weekdays** on which it is taken.
-- **Measurement** – a person can track **weight** and **waist circumference**, each with its own reminder. See [Body measurements](#7-body-measurements).
+- **Measurement** – a person can track **weight**, **waist circumference** and **blood pressure**, each with its own reminder. See [Body measurements](#7-body-measurements).
 - **Dose** – every intake time on every scheduled day creates one dose. Each dose ends with exactly one final status: *taken*, *missed*, *skipped* or *paused*. All doses are stored, which is the basis for the statistics, the calendar and the export.
 
 At an intake time the dose becomes **due**. The person gets a push notification with **Taken** and **Later** buttons. The reminder repeats until the dose is confirmed or its time window has passed. If it is not confirmed in time, the dose is logged as **missed**.
@@ -171,8 +171,9 @@ Doses are saved on disk. After a restart of Home Assistant:
 |---|---|---|---|
 | **Weight** | kg | every day, 07:00 | 20–400 |
 | **Waist circumference** | cm | Mondays, 07:00 | 30–250 |
+| **Blood pressure** | systolic and diastolic in mmHg, pulse in bpm | every day, 07:00 | 60–260 / 30–160 / 30–220 |
 
-A new person tracks both, unless **Track weight and waist circumference** was turned off. Each measurement is a sub-entry of the person:
+A new person tracks weight and waist, unless **Track weight and waist circumference** was turned off. Blood pressure is added with **Add measurement**. Each measurement is a sub-entry of the person:
 
 - **Add a measurement** (for example after turning it off): **Settings → Devices & services → Pill Reminder → Add measurement** on the person's entry.
 - **Remove a measurement:** delete its sub-entry on the person's entry. Its values stay stored.
@@ -180,7 +181,9 @@ A new person tracks both, unless **Track weight and waist circumference** was tu
 
 ### Entering values
 
-- In the dashboard (**Body** tab): type the value into **Enter** and confirm with Enter. It is stored with the current time.
+- In the dashboard (**Body** tab): type the values into the input fields and press **Save**. The reading is stored with the current time. Nothing is stored before **Save** – this also makes input work in the Companion App on phones.
+- **Weight and waist:** the field shows the last value. **Save** without typing stores the same value again.
+- **Blood pressure:** the fields are empty. Systolic and diastolic are required, pulse is optional; systolic must be higher than diastolic. After saving, the fields are empty again.
 - With the action `pill_reminder.add_measurement`, for example from a smart scale or to enter an older value. See [Actions](#12-actions).
 
 Several values on one day are all stored. For change and trend, the **last value of each day** counts.
@@ -203,7 +206,9 @@ Several values on one day are all stored. For change and trend, the **last value
 | **Waist-to-height ratio (WHtR)** | waist (cm) ÷ height (cm). Classes: < 0.5 healthy, < 0.6 increased risk, from 0.6 high risk. |
 | **Change 7 / 30 days** | Latest value minus the last value from at least 7 (30) days ago. Empty if there is no value in that period or the reference value is older than twice the period. |
 | **Trend** | Slope of a straight line through the daily values of the last 14 days, in kg (cm) per week. Needs at least 3 days with values. |
-| **Trend direction** | rising / falling / stable. "Stable" means less than 0.2 kg or 0.5 cm per week. |
+| **Trend direction** | rising / falling / stable. "Stable" means less than 0.2 kg, 0.5 cm or 2 mmHg (bpm) per week. |
+| **Blood pressure class** | Last reading, ESC/ESH classes for office values; the higher class of both values counts: optimal < 120/80, normal from 120/80, high normal from 130/85, hypertension grade 1 from 140/90, grade 2 from 160/100, grade 3 from 180/110. At home, averages from 135/85 already count as high. |
+| **7-day average** (blood pressure) | Mean of all readings of the last 7 days, for systolic, diastolic and pulse. |
 
 BMI and WHtR stay `unknown` until there is a value and a height. The last values are long-term statistics, so the 90-day graphs and the Home Assistant history show them over years.
 
@@ -244,8 +249,8 @@ Charts and gauges appear after the first resolved dose; before that the dashboar
 
 **Body tab**
 
-- **Enter today** – an input field per measurement and a hint while today's value is still missing.
-- One section per measurement: last value, when it was measured, change over 7 and 30 days, trend direction.
+- **Enter today** – one card per measurement with its input fields and a **Save** button, plus a hint while today's value is still missing.
+- One section per measurement: last value, when it was measured, change over 7 and 30 days, trend direction. For blood pressure: last reading, class, 7-day averages and trend directions.
 - **BMI & waist-to-height** – gauges with colour bands and the class. They appear once there is a value and a height; before that a hint explains what is missing.
 - **History (90 days)** – mean, minimum and maximum per day.
 
@@ -316,7 +321,8 @@ Shown for weight; waist works the same way (`…_waist_…`).
 
 | Entity | Meaning |
 |---|---|
-| `number.anna_weight_enter` | Enter a value. Shows the last value. |
+| `number.anna_weight_enter` | Input field. Shows the last value. |
+| `button.anna_weight_save` | Store the input. |
 | `sensor.anna_weight` | Last value (long-term statistics). |
 | `sensor.anna_weight_measured` | Time of the last value. |
 | `sensor.anna_weight_change_7_days`, `sensor.anna_weight_change_30_days` | Change compared to 7 / 30 days ago. |
@@ -326,6 +332,19 @@ Shown for weight; waist works the same way (`…_waist_…`).
 | `switch.anna_weight_reminder` | Reminder on/off. |
 | `time.anna_weight_reminder_time` | Reminder time. |
 | `text.anna_weight_reminder_weekdays` | Reminder weekdays, for example `daily` or `Mon`. |
+
+Blood pressure (each value field has its own last value, change, trend and trend direction, named after the field):
+
+| Entity | Meaning |
+|---|---|
+| `number.anna_blood_pressure_systolic`, `number.anna_blood_pressure_diastolic`, `number.anna_blood_pressure_pulse` | Input fields. |
+| `button.anna_blood_pressure_save` | Store the reading. |
+| `sensor.anna_blood_pressure` | Last reading as text, e.g. `128/82`. |
+| `sensor.anna_blood_pressure_category` | Class of the last reading. |
+| `sensor.anna_blood_pressure_systolic`, `sensor.anna_blood_pressure_diastolic`, `sensor.anna_blood_pressure_pulse` | Last values (long-term statistics). |
+| `sensor.anna_blood_pressure_systolic_7_day_average`, `sensor.anna_blood_pressure_diastolic_7_day_average`, `sensor.anna_blood_pressure_pulse_7_day_average` | 7-day averages. |
+| `sensor.anna_blood_pressure_systolic_trend_direction` | Trend direction (likewise for diastolic and pulse). |
+| `sensor.anna_blood_pressure_measured`, `binary_sensor.anna_blood_pressure_due`, `switch.anna_blood_pressure_reminder`, `time.anna_blood_pressure_reminder_time`, `text.anna_blood_pressure_reminder_weekdays` | As for weight. |
 
 Per person, only while the person tracks a measurement:
 
@@ -428,7 +447,7 @@ Columns: `id`, `medication_id`, `medication_name`, `scheduled`, `status`, `resol
 
 The person is selected with `config_entry_id` or with `entity_id` (any entity of the person). With only one person, both can be left out. With an entity of a measurement, for example `sensor.anna_weight`, `metric` can be left out too.
 
-**`pill_reminder.add_measurement`** – store a value. `metric` is `weight` or `waist`, `value` is in kg or cm. With `measured_at` an older value can be entered.
+**`pill_reminder.add_measurement`** – store a reading. For `weight` or `waist`, `value` is in kg or cm. For `blood_pressure`, use `systolic` and `diastolic` (mmHg) and optionally `pulse`. With `measured_at` an older reading can be entered.
 
 ```yaml
 action: pill_reminder.add_measurement
@@ -438,13 +457,22 @@ data:
   measured_at: "2026-11-01 07:15:00"   # optional
 ```
 
+```yaml
+action: pill_reminder.add_measurement
+data:
+  metric: blood_pressure
+  systolic: 128
+  diastolic: 82
+  pulse: 64   # optional
+```
+
 Values entered with an older `measured_at` count for change and trend, but do not appear in the long-term statistics graph (Home Assistant only records the current state).
 
-**`pill_reminder.delete_measurement`** – delete all values of a `date`, or without a date the most recent value.
+**`pill_reminder.delete_measurement`** – delete all values of a `date`, or without a date the most recent reading (for blood pressure all three values).
 
 **`pill_reminder.get_measurements`** – the values as response data, filtered by person, `metric`, `start` and `end`. The response also contains the height.
 
-**`pill_reminder.export_measurements`** – the values as CSV in `/config/pill_reminder/<person>_measurements_<date>_<time>.csv`. Columns: `id`, `metric`, `value`, `measured_at`, `source`.
+**`pill_reminder.export_measurements`** – the values as CSV in `/config/pill_reminder/<person>_measurements_<date>_<time>.csv`. Columns: `id`, `metric` (`weight`, `waist`, `systolic`, `diastolic`, `pulse`), `value`, `measured_at`, `source`.
 
 ## 13. Events and automation examples
 
@@ -466,7 +494,7 @@ Measurements fire two more events:
 
 | Event | When | Data |
 |---|---|---|
-| `pill_reminder_measurement_added` | A value was stored. | `person`, `metric`, `value`, `unit`, `measured_at`, `source` |
+| `pill_reminder_measurement_added` | A reading was stored. | `person`, `metric`, `values` and `units` (per field), `measured_at`, `source`; for weight and waist also `value` and `unit` |
 | `pill_reminder_measurement_reminder_sent` | A measurement reminder was sent. | `person`, `metric`, `count` |
 
 **Flash a light while medication is due**

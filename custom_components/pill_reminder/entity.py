@@ -10,7 +10,7 @@ from homeassistant.helpers.entity import Entity
 from .body import BodyTracker
 from .const import DOMAIN, signal_update
 from .measurement_reminders import TrackedMetric
-from .metrics import MetricType
+from .metrics import MetricType, ValueField
 from .models import Medication
 from .scheduler import ReminderManager
 
@@ -97,13 +97,25 @@ class BodyEntity(PersonEntity):
 class MeasurementEntity(PillReminderEntity):
     """Entity of one tracked measurement type (one device per subentry)."""
 
-    def __init__(self, manager: ReminderManager, tracked: TrackedMetric, key: str) -> None:
-        """Initialize; translation key and unique id are '<metric>_<key>'."""
+    def __init__(
+        self,
+        manager: ReminderManager,
+        tracked: TrackedMetric,
+        key: str,
+        field: ValueField | None = None,
+    ) -> None:
+        """Initialize; translation key and unique id are '<metric or field>_<key>'.
+
+        Entities of a value field (e.g. systolic) use the field key, entities
+        of the whole measurement (e.g. reminder) the measurement key. For
+        weight and waist both are the same.
+        """
         super().__init__(manager)
         self.body: BodyTracker = manager.body
         self.subentry_id = tracked.subentry_id
         self.metric: MetricType = tracked.metric
-        full_key = f"{tracked.metric.key}_{key}"
+        self.field: ValueField | None = field
+        full_key = f"{field.key if field else tracked.metric.key}_{key}"
         self._attr_translation_key = full_key
         self._attr_unique_id = f"{manager.entry_id}_{full_key}"
         self._attr_device_info = DeviceInfo(

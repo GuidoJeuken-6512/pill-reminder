@@ -1,4 +1,4 @@
-"""Buttons (taken / snooze / skip) for the Pill Reminder integration."""
+"""Buttons: taken / snooze / skip a dose, manage medications, save a measurement."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import PillReminderConfigEntry
-from .const import SOURCE_BUTTON
-from .entity import MedicationEntity, PersonEntity
+from .const import SOURCE_BUTTON, SOURCE_DASHBOARD
+from .entity import MeasurementEntity, MedicationEntity, PersonEntity
 
 PARALLEL_UPDATES = 0
 
@@ -32,6 +32,11 @@ async def async_setup_entry(
                 DeleteMedicationButton(manager, med, "delete_medication"),
             ],
             config_subentry_id=med.id,
+        )
+    for tracked in manager.body.tracked.values():
+        async_add_entities(
+            [SaveMeasurementButton(manager, tracked, "save")],
+            config_subentry_id=tracked.subentry_id,
         )
 
 
@@ -89,3 +94,11 @@ class AddMedicationButton(PersonEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Add the medication."""
         self.manager.async_add_medication()
+
+
+class SaveMeasurementButton(MeasurementEntity, ButtonEntity):
+    """Store the values of the input fields (e.g. weight, or systolic/diastolic/pulse)."""
+
+    async def async_press(self) -> None:
+        """Save the reading with the current time."""
+        await self.body.async_save_drafts(self.metric.key, source=SOURCE_DASHBOARD)

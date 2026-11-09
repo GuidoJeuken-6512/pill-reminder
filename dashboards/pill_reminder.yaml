@@ -5,8 +5,8 @@
 #
 # Use it as a starting point for your own dashboard. It shows what the
 # generated dashboard looks like for a person "Anna" with the medication
-# "Ramipril" who also tracks weight and waist (Home Assistant language:
-# English). Replace the entity ids with yours and add
+# "Ramipril" who also tracks weight, waist and blood pressure (Home
+# Assistant language: English). Replace the entity ids with yours and add
 # `visible: [{user: <user id>}]` to restrict a view.
 
 title: Health
@@ -264,6 +264,9 @@ views:
     entity: sensor.anna_waist
     show_name: true
   - type: entity
+    entity: sensor.anna_blood_pressure
+    show_name: true
+  - type: entity
     entity: sensor.anna_bmi
     show_name: true
   sections:
@@ -278,6 +281,22 @@ views:
       - condition: state
         entity: binary_sensor.anna_weight_due
         state: 'on'
+    - type: entities
+      title: Weight
+      entities:
+      - entity: number.anna_weight_enter
+        icon: mdi:scale-bathroom
+      - type: button
+        name: Enter the values, then save
+        icon: mdi:content-save
+        action_name: Save
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.anna_weight_save
+      grid_options:
+        columns: 6
     - type: markdown
       content: ⏰ Today's **Waist circumference** is still missing.
       visibility:
@@ -285,13 +304,47 @@ views:
         entity: binary_sensor.anna_waist_due
         state: 'on'
     - type: entities
+      title: Waist circumference
       entities:
-      - entity: number.anna_weight_enter
-        icon: mdi:scale-bathroom
       - entity: number.anna_waist_enter
         icon: mdi:tape-measure
+      - type: button
+        name: Enter the values, then save
+        icon: mdi:content-save
+        action_name: Save
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.anna_waist_save
+      grid_options:
+        columns: 6
     - type: markdown
-      content: Type today's value and confirm with Enter.
+      content: ⏰ Today's **Blood pressure** is still missing.
+      visibility:
+      - condition: state
+        entity: binary_sensor.anna_blood_pressure_due
+        state: 'on'
+    - type: entities
+      title: Blood pressure
+      entities:
+      - entity: number.anna_blood_pressure_systolic
+        name: Systolic
+      - entity: number.anna_blood_pressure_diastolic
+        name: Diastolic
+      - entity: number.anna_blood_pressure_pulse
+        name: Pulse
+      - type: button
+        name: Enter the values, then save
+        icon: mdi:content-save
+        action_name: Save
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.anna_blood_pressure_save
+      grid_options:
+        columns: 6
   - type: grid
     cards:
     - type: heading
@@ -342,6 +395,46 @@ views:
       entity: sensor.anna_waist_trend_direction
       grid_options:
         columns: 4
+  - type: grid
+    cards:
+    - type: heading
+      heading: Blood pressure
+      icon: mdi:heart-pulse
+    - type: tile
+      entity: sensor.anna_blood_pressure
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anna_blood_pressure_category
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anna_blood_pressure_measured
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anna_blood_pressure_systolic_7_day_average
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.anna_blood_pressure_diastolic_7_day_average
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.anna_blood_pressure_pulse_7_day_average
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.anna_blood_pressure_systolic_trend_direction
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.anna_blood_pressure_diastolic_trend_direction
+      grid_options:
+        columns: 6
+    - type: markdown
+      content: <small>Class of the last reading per ESC/ESH (office values). At home, averages from 135/85
+        count as high. Not a diagnosis.</small>
   - type: grid
     cards:
     - type: heading
@@ -485,6 +578,31 @@ views:
       - condition: numeric_state
         entity: sensor.anna_waist
         above: 0
+    - type: markdown
+      content: 'Blood pressure: The history appears after the first value.'
+      visibility:
+      - condition: state
+        entity: sensor.anna_blood_pressure_systolic
+        state:
+        - unknown
+        - unavailable
+    - type: statistics-graph
+      title: Blood pressure
+      chart_type: line
+      period: day
+      days_to_show: 90
+      stat_types:
+      - mean
+      entities:
+      - sensor.anna_blood_pressure_systolic
+      - sensor.anna_blood_pressure_diastolic
+      - sensor.anna_blood_pressure_pulse
+      grid_options:
+        columns: full
+      visibility:
+      - condition: numeric_state
+        entity: sensor.anna_blood_pressure_systolic
+        above: 0
 - title: Manage
   path: anna-manage
   icon: mdi:cog
@@ -574,6 +692,15 @@ views:
       - switch.anna_waist_reminder
       - time.anna_waist_reminder_time
       - text.anna_waist_reminder_weekdays
+      grid_options:
+        columns: 6
+    - type: entities
+      title: Blood pressure
+      state_color: true
+      entities:
+      - switch.anna_blood_pressure_reminder
+      - time.anna_blood_pressure_reminder_time
+      - text.anna_blood_pressure_reminder_weekdays
       grid_options:
         columns: 6
     - type: markdown

@@ -28,7 +28,11 @@ async def test_dashboard_entity_ids_exist(
     """
     hass.config.language = "en"
     entry.add_to_hass(hass)
-    for metric, weekdays in (("weight", [0, 1, 2, 3, 4, 5, 6]), ("waist", [0])):
+    for metric, weekdays in (
+        ("weight", [0, 1, 2, 3, 4, 5, 6]),
+        ("waist", [0]),
+        ("blood_pressure", [0, 1, 2, 3, 4, 5, 6]),
+    ):
         sub = metric_subentry(f"sub_{metric}", metric, weekdays)
         hass.config_entries.async_add_subentry(
             entry,

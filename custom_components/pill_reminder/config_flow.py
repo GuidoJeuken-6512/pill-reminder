@@ -187,6 +187,7 @@ def default_measurements(language: str) -> list[ConfigSubentryData]:
             unique_id=metric.key,
         )
         for metric in METRICS.values()
+        if metric.default
     ]
 
 

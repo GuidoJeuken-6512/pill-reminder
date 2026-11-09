@@ -152,7 +152,17 @@ async def test_subentry_add_and_edit(hass: HomeAssistant, berlin, phone_calls) -
     assert hass.states.get("number.anna_waist_enter") is not None
     assert hass.states.get("time.anna_waist_reminder_time").state == "08:15:00"
 
-    # All types tracked → abort
+    # Blood pressure is the last one; then all types are tracked → abort
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, SUBENTRY_MEASUREMENT), context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {"metric": "blood_pressure", "reminder_enabled": True, "reminder_time": "08:00"},
+    )
+    await hass.async_block_till_done()
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert hass.states.get("number.anna_blood_pressure_systolic") is not None
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, SUBENTRY_MEASUREMENT), context={"source": config_entries.SOURCE_USER}
     )
