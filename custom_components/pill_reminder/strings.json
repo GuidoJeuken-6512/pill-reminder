@@ -446,6 +446,15 @@
       },
       "blood_pressure_reminder": {
         "name": "Reminder"
+      },
+      "track_weight": {
+        "name": "Track weight"
+      },
+      "track_waist": {
+        "name": "Track waist circumference"
+      },
+      "track_blood_pressure": {
+        "name": "Track blood pressure"
       }
     },
     "text": {

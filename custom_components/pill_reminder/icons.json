@@ -259,6 +259,15 @@
         "state": {
           "off": "mdi:bell-off"
         }
+      },
+      "track_weight": {
+        "default": "mdi:scale-bathroom"
+      },
+      "track_waist": {
+        "default": "mdi:tape-measure"
+      },
+      "track_blood_pressure": {
+        "default": "mdi:heart-pulse"
       }
     },
     "text": {

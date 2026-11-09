@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
+from types import MappingProxyType
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -14,16 +15,22 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_HEIGHT,
     CONF_MEASUREMENT_REPEAT,
+    CONF_METRIC,
     CONF_NOTIFY_SERVICES,
     CONF_PERSISTENT_NOTIFICATION,
     CONF_PERSON_NAME,
+    CONF_REMINDER_ENABLED,
+    CONF_REMINDER_TIME,
     CONF_USER_ID,
+    CONF_WEEKDAYS,
     DEFAULT_MEASUREMENT_REPEAT,
     DEFAULT_PERSISTENT_NOTIFICATION,
+    DEFAULT_REMINDER_TIME,
     DOMAIN,
     EVENT_MEASUREMENT_ADDED,
     MAX_HEIGHT,
     MIN_HEIGHT,
+    SUBENTRY_MEASUREMENT,
     signal_update,
 )
 from .measurement_reminders import MetricReminder, TrackedMetric
@@ -37,6 +44,7 @@ from .metrics import (
     WEIGHT,
     MetricType,
     field_title,
+    metric_title,
 )
 from .notifier import MeasurementNotifier
 from .stats import (
@@ -55,6 +63,16 @@ from .stats import (
     whtr_category,
 )
 from .validation import validate_measurement
+
+
+def default_subentry_data(metric: MetricType) -> dict[str, Any]:
+    """Subentry data of a newly tracked measurement: reminder at 07:00."""
+    return {
+        CONF_METRIC: metric.key,
+        CONF_REMINDER_ENABLED: True,
+        CONF_REMINDER_TIME: DEFAULT_REMINDER_TIME,
+        CONF_WEEKDAYS: list(metric.default_weekdays),
+    }
 
 
 class BodyTracker:
@@ -310,6 +328,32 @@ class BodyTracker:
         removed = self.store.remove({m.id for m in targets})
         self.async_notify_entities()
         return removed
+
+    @callback
+    def async_set_tracked(self, key: str, track: bool) -> None:
+        """Start or stop tracking a measurement type (from the dashboard).
+
+        Stopping removes the subentry with its entities; the stored values
+        stay and are shown again when the measurement is tracked again.
+        The person reloads via the update listener.
+        """
+        metric = self._metric(key)
+        tracked = self.tracked_by_metric(key)
+        if track and tracked is None:
+            language = self.hass.config.language or "en"
+            self.hass.config_entries.async_add_subentry(
+                self.entry,
+                ConfigSubentry(
+                    data=MappingProxyType(default_subentry_data(metric)),
+                    subentry_type=SUBENTRY_MEASUREMENT,
+                    title=metric_title(key, language),
+                    unique_id=key,
+                ),
+            )
+        elif not track and tracked is not None:
+            for field in metric.fields:
+                self.drafts.pop(field.key, None)
+            self.hass.config_entries.async_remove_subentry(self.entry, tracked.subentry_id)
 
     @callback
     def async_set_height(self, height: float) -> None:

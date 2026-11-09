@@ -31,6 +31,7 @@ from homeassistant.helpers.selector import (
 from homeassistant.util import dt as dt_util, slugify
 import voluptuous as vol
 
+from .body import default_subentry_data
 from .const import (
     ALL_WEEKDAYS,
     CONF_CREATED_AT,
@@ -176,12 +177,7 @@ def default_measurements(language: str) -> list[ConfigSubentryData]:
     """Weight daily and waist on Mondays, both with a reminder at 07:00."""
     return [
         ConfigSubentryData(
-            data={
-                CONF_METRIC: metric.key,
-                CONF_REMINDER_ENABLED: True,
-                CONF_REMINDER_TIME: DEFAULT_REMINDER_TIME,
-                CONF_WEEKDAYS: list(metric.default_weekdays),
-            },
+            data=default_subentry_data(metric),
             subentry_type=SUBENTRY_MEASUREMENT,
             title=metric_title(metric.key, language),
             unique_id=metric.key,

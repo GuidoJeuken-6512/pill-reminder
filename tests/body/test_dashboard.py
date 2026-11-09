@@ -80,11 +80,17 @@ async def test_body_without_values(hass: HomeAssistant, berlin, phone_calls, ent
 
 
 async def test_no_body_tab_without_measurements(hass: HomeAssistant, berlin, phone_calls) -> None:
-    """Medication only: no body tab, no measurement settings."""
+    """Medication only: no body tab; the manage tab offers to track measurements."""
     await setup(hass, make_entry(subentries=[]))
     config = await async_build_dashboard(hass)
     assert [v["path"] for v in config["views"]] == ["anna", "anna-manage"]
-    assert not [c for c in _cards(config["views"][1]) if c.get("heading") == "Measurements"]
+    manage_ids = _entity_ids(config["views"][1])
+    assert {
+        "switch.anna_track_weight",
+        "switch.anna_track_waist_circumference",
+        "switch.anna_track_blood_pressure",
+    } <= manage_ids
+    assert "number.anna_height" not in manage_ids
 
 
 async def test_two_persons_unique_paths(hass: HomeAssistant, berlin, phone_calls) -> None:

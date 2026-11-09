@@ -667,6 +667,18 @@ views:
     - type: heading
       heading: Measurements
       icon: mdi:heart-pulse
+    - type: entities
+      title: Track
+      state_color: true
+      entities:
+      - switch.anna_track_weight
+      - switch.anna_track_waist_circumference
+      - switch.anna_track_blood_pressure
+      grid_options:
+        columns: 6
+    - type: markdown
+      content: Switching off removes the measurement from the dashboard; the stored values are kept and
+        come back when it is switched on again.
     - type: markdown
       content: 'Reminder per measurement: time and weekdays, e.g. `daily`, `Mon` or `Mon-Fri`. The height
         is needed for BMI and waist-to-height ratio.'
@@ -703,5 +715,3 @@ views:
       - text.anna_blood_pressure_reminder_weekdays
       grid_options:
         columns: 6
-    - type: markdown
-      content: 'Add or remove a measurement: **Settings → Devices & services → Pill Reminder → Add measurement**'

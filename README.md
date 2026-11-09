@@ -29,7 +29,7 @@ Home Assistant integration that reminds people to take their medication and to e
 
 ### Body measurements
 
-- **Weight**, **waist circumference** and **blood pressure** (systolic, diastolic, pulse) per person, entered in the dashboard and stored with a **Save** button (works in the Companion App too), or from a smart scale / blood pressure monitor via an action. New persons track weight and waist right away; blood pressure is added with **Add measurement**.
+- **Weight**, **waist circumference** and **blood pressure** (systolic, diastolic, pulse) per person, entered in the dashboard and stored with a **Save** button (works in the Companion App too), or from a smart scale / blood pressure monitor via an action. New persons track weight and waist right away; blood pressure and the others are switched on or off in the dashboard (**Manage** tab), stored values are kept.
 - **Reminder per measurement**: weight daily, waist on Mondays, each at 07:00 by default. Time, weekdays and on/off can be changed in the dashboard. One repeat after 2 hours if nothing was entered; tapping the notification opens the dashboard.
 - **Evaluation**: BMI with WHO class, waist-to-height ratio with class, blood pressure class (ESC/ESH) and 7-day averages, change over 7 and 30 days, trend per week (rising / falling / stable), 90-day graphs from the long-term statistics.
 
@@ -57,7 +57,7 @@ Requires Home Assistant 2026.8 or newer.
 3. **Configure** (gear icon) for repeat interval, snooze duration, escalation, history retention and the repeat of measurement reminders.
 4. Done: **Health** appears in the sidebar (`/pill-reminder`). Enter today's weight in the **Body** tab.
 
-A person set up without measurements can add them later: **Add measurement** on the person's integration entry.
+Measurements are switched on or off in the **Manage** tab (`switch.anna_track_weight`, `…_track_waist_circumference`, `…_track_blood_pressure`); switching off keeps the stored values. **Add measurement** on the integration entry works too.
 
 Input formats in the dashboard: times `08:00, 20:00` · weekdays `daily`, `Mon-Fri` or `Mon, Wed, Fri` (German also works: `täglich`, `Mo-Fr`).
 

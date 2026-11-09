@@ -111,9 +111,10 @@ TEXTS: dict[str, dict[str, str]] = {
             "oder `Mo-Fr`. Die Größe wird für BMI und Taille/Größe gebraucht."
         ),
         "person": "Person",
-        "more_metrics": (
-            "Messwert hinzufügen oder entfernen: **Einstellungen → Geräte & Dienste → "
-            "Pill Reminder → Messwert hinzufügen**"
+        "track": "Erfassen",
+        "track_hint": (
+            "Ausschalten entfernt den Messwert aus dem Dashboard; die gespeicherten Werte "
+            "bleiben erhalten und sind beim Einschalten wieder da."
         ),
         "disclaimer": (
             "BMI und WHtR sind Richtwerte für Erwachsene, keine Diagnose. Kein Medizinprodukt."
@@ -196,9 +197,10 @@ TEXTS: dict[str, dict[str, str]] = {
             "`Mon-Fri`. The height is needed for BMI and waist-to-height ratio."
         ),
         "person": "Person",
-        "more_metrics": (
-            "Add or remove a measurement: **Settings → Devices & services → "
-            "Pill Reminder → Add measurement**"
+        "track": "Track",
+        "track_hint": (
+            "Switching off removes the measurement from the dashboard; the stored values "
+            "are kept and come back when it is switched on again."
         ),
         "disclaimer": (
             "BMI and WHtR are reference values for adults, not a diagnosis. Not a medical device."
@@ -701,14 +703,13 @@ def _manage_view(
     sections: list[dict[str, Any]] = [
         {"type": "grid", "column_span": 3, "cards": _manage_cards(ids, manager, texts)}
     ]
-    if manager.body.enabled:
-        sections.append(
-            {
-                "type": "grid",
-                "column_span": 3,
-                "cards": _measurement_settings_cards(hass, ids, manager.body, texts),
-            }
-        )
+    sections.append(
+        {
+            "type": "grid",
+            "column_span": 3,
+            "cards": _measurement_settings_cards(hass, ids, manager.body, texts),
+        }
+    )
     view: dict[str, Any] = {
         "title": title,
         "path": path,
@@ -939,13 +940,29 @@ def _body_view(
 def _measurement_settings_cards(
     hass: HomeAssistant, ids: _Ids, body: BodyTracker, texts: dict[str, str]
 ) -> list[dict[str, Any]]:
-    """Height and the reminder of each measurement (Manage tab)."""
+    """Which measurements are tracked, height and reminders (Manage tab)."""
     eid = body.entry_id
     lang = _language(hass)
     cards: list[dict[str, Any]] = [
         {"type": "heading", "heading": texts["measurements"], "icon": BODY_ICON},
-        {"type": "markdown", "content": texts["measurements_hint"]},
     ]
+    switches = [
+        entity_id for key in METRICS if (entity_id := ids.get("switch", f"{eid}_track_{key}"))
+    ]
+    if switches:
+        cards.append(
+            {
+                "type": "entities",
+                "title": texts["track"],
+                "state_color": True,
+                "entities": switches,
+                "grid_options": {"columns": 6},
+            }
+        )
+        cards.append({"type": "markdown", "content": texts["track_hint"]})
+    if not body.enabled:
+        return cards
+    cards.append({"type": "markdown", "content": texts["measurements_hint"]})
     if height := ids.get("number", f"{eid}_height"):
         cards.append(
             {
@@ -975,7 +992,6 @@ def _measurement_settings_cards(
                     "grid_options": {"columns": 6},
                 }
             )
-    cards.append({"type": "markdown", "content": texts["more_metrics"]})
     return cards
 
 

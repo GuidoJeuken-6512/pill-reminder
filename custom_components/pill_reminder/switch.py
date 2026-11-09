@@ -1,4 +1,4 @@
-"""'Reminders enabled' switch for the Pill Reminder integration."""
+"""Switches: pause a medication, measurement reminder, track a measurement."""
 
 from __future__ import annotations
 
@@ -11,7 +11,9 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import PillReminderConfigEntry
 from .const import CONF_REMINDER_ENABLED
-from .entity import MeasurementEntity, MedicationEntity
+from .entity import BodyEntity, MeasurementEntity, MedicationEntity
+from .metrics import METRICS, MetricType
+from .scheduler import ReminderManager
 
 PARALLEL_UPDATES = 0
 
@@ -23,6 +25,8 @@ async def async_setup_entry(
 ) -> None:
     """Set up switches."""
     manager = entry.runtime_data
+    # On the person device, so they survive removing the measurement itself
+    async_add_entities(TrackMeasurementSwitch(manager, metric) for metric in METRICS.values())
     for med in manager.medications.values():
         async_add_entities([RemindersSwitch(manager, med, "reminders")], config_subentry_id=med.id)
     for tracked in manager.body.tracked.values():
@@ -65,3 +69,25 @@ class MeasurementReminderSwitch(MeasurementEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the reminder off."""
         self.body.async_update_reminder(self.subentry_id, {CONF_REMINDER_ENABLED: False})
+
+
+class TrackMeasurementSwitch(BodyEntity, SwitchEntity):
+    """'Track blood pressure': add or remove a measurement type from the dashboard."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, manager: ReminderManager, metric: MetricType) -> None:
+        """Initialize."""
+        super().__init__(manager, f"track_{metric.key}")
+        self.metric_key = metric.key
+
+    def _update_from_manager(self) -> None:
+        self._attr_is_on = self.body.tracked_by_metric(self.metric_key) is not None
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Track the measurement (reminder at 07:00)."""
+        self.body.async_set_tracked(self.metric_key, True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Stop tracking; stored values are kept."""
+        self.body.async_set_tracked(self.metric_key, False)

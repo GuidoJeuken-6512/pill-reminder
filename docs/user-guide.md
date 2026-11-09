@@ -173,10 +173,11 @@ Doses are saved on disk. After a restart of Home Assistant:
 | **Waist circumference** | cm | Mondays, 07:00 | 30–250 |
 | **Blood pressure** | systolic and diastolic in mmHg, pulse in bpm | every day, 07:00 | 60–260 / 30–160 / 30–220 |
 
-A new person tracks weight and waist, unless **Track weight and waist circumference** was turned off. Blood pressure is added with **Add measurement**. Each measurement is a sub-entry of the person:
+A new person tracks weight and waist, unless **Track weight and waist circumference** was turned off. Each measurement is a sub-entry of the person:
 
-- **Add a measurement** (for example after turning it off): **Settings → Devices & services → Pill Reminder → Add measurement** on the person's entry.
-- **Remove a measurement:** delete its sub-entry on the person's entry. Its values stay stored.
+- **Add or remove a measurement in the dashboard:** **Manage** tab → **Measurements** → switch **Track weight**, **Track waist circumference** or **Track blood pressure** on or off. The person and administrators can do this, no admin rights needed. A new measurement gets a reminder at 07:00 on its default weekdays.
+- **Switching off** removes the measurement's entities and its section in the **Body** tab. The stored values stay and come back when it is switched on again; the reminder settings start from the defaults again.
+- Alternatively: **Settings → Devices & services → Pill Reminder → Add measurement** on the person's entry, or delete the sub-entry there.
 - **Change the reminder:** in the dashboard (**Manage** tab) or via the sub-entry's ⋮ → **Edit reminder**. Changes apply immediately.
 
 ### Entering values
@@ -351,6 +352,8 @@ Per person, only while the person tracks a measurement:
 | Entity | Meaning |
 |---|---|
 | `number.anna_height` | Height in cm. |
+
+Always present per person: `switch.anna_track_weight`, `switch.anna_track_waist_circumference`, `switch.anna_track_blood_pressure` – measurement tracked or not (Manage tab).
 | `sensor.anna_bmi`, `sensor.anna_bmi_category` | BMI and WHO class. |
 | `sensor.anna_waist_to_height_ratio`, `sensor.anna_waist_to_height_category` | Waist-to-height ratio and class. |
 
@@ -629,7 +632,7 @@ The height is missing. Enter it in the **Manage** tab (`number.anna_height`) or 
 
 **The Body tab is missing**
 
-The person tracks no measurement. Add one: **Settings → Devices & services → Pill Reminder → Add measurement**.
+The person tracks no measurement. Switch one on in the **Manage** tab (**Measurements** → **Track weight**).
 
 **Times are rejected: "confirmation windows overlap"**
 

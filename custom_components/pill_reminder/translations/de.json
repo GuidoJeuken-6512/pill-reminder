@@ -446,6 +446,15 @@
       },
       "blood_pressure_reminder": {
         "name": "Erinnerung"
+      },
+      "track_weight": {
+        "name": "Gewicht erfassen"
+      },
+      "track_waist": {
+        "name": "Bauchumfang erfassen"
+      },
+      "track_blood_pressure": {
+        "name": "Blutdruck erfassen"
       }
     },
     "text": {
