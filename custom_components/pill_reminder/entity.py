@@ -1,4 +1,4 @@
-"""Base entities for the Pill Reminder integration."""
+"""Base entities for the Health Tracker integration."""
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ class PersonEntity(PillReminderEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, manager.entry_id)},
             name=manager.person,
-            manufacturer="Pill Reminder",
+            manufacturer="Health Tracker",
             model="Person",
             entry_type=DeviceEntryType.SERVICE,
         )
@@ -81,7 +81,7 @@ class MedicationEntity(PillReminderEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, med.id)},
             name=med.name,
-            manufacturer="Pill Reminder",
+            manufacturer="Health Tracker",
             model=med.dosage or None,
             entry_type=DeviceEntryType.SERVICE,
             via_device_id=manager.person_device_id,
@@ -101,7 +101,7 @@ class OnDemandEntity(PillReminderEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, med.id)},
             name=med.name,
-            manufacturer="Pill Reminder",
+            manufacturer="Health Tracker",
             model=med.dosage or None,
             entry_type=DeviceEntryType.SERVICE,
             via_device_id=manager.person_device_id,
@@ -149,7 +149,7 @@ class MeasurementEntity(PillReminderEntity):
             identifiers={(DOMAIN, f"{manager.entry_id}_{tracked.metric.key}")},
             translation_key=tracked.metric.key,
             translation_placeholders={"person": manager.person},
-            manufacturer="Pill Reminder",
+            manufacturer="Health Tracker",
             model="Measurement",
             entry_type=DeviceEntryType.SERVICE,
             via_device_id=manager.person_device_id,

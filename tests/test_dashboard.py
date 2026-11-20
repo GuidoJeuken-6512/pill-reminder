@@ -117,7 +117,7 @@ async def test_view_per_person(
 async def test_no_persons_message(hass: HomeAssistant) -> None:
     """Without persons the dashboard explains how to start."""
     config = await async_build_dashboard(hass)
-    assert "Pill Reminder" in config["views"][0]["cards"][0]["content"]
+    assert "Health Tracker" in config["views"][0]["cards"][0]["content"]
 
 
 async def test_dashboard_registered_and_removed(

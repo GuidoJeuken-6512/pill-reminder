@@ -1,4 +1,4 @@
-"""'Due' and 'limit reached' binary sensors for the Pill Reminder integration."""
+"""'Due' and 'limit reached' binary sensors for the Health Tracker integration."""
 
 from __future__ import annotations
 

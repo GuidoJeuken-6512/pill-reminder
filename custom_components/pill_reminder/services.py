@@ -1,4 +1,4 @@
-"""Service actions of the Pill Reminder integration (doses, intakes, measurements)."""
+"""Service actions of the Health Tracker integration (doses, intakes, measurements)."""
 
 from __future__ import annotations
 

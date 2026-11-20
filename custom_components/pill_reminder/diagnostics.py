@@ -1,4 +1,4 @@
-"""Diagnostics for the Pill Reminder integration.
+"""Diagnostics for the Health Tracker integration.
 
 Diagnostics files are often pasted into public issues, so everything that
 identifies a person (names, Home Assistant user ids, phones) and all health

@@ -1,6 +1,6 @@
 {
   "domain": "pill_reminder",
-  "name": "Pill Reminder",
+  "name": "Health Tracker",
   "after_dependencies": ["frontend", "lovelace", "mobile_app", "notify"],
   "categories": ["health_wellbeing", "messaging_notifications"],
   "codeowners": ["@GuidoJeuken-6512"],

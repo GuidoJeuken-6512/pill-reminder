@@ -1,4 +1,4 @@
-"""Pill Reminder: medication reminders and body measurements for Home Assistant."""
+"""Health Tracker: medication reminders and body measurements for Home Assistant."""
 
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PillReminderConfigEntry)
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, entry.entry_id)},
         name=entry.data[CONF_PERSON_NAME],
-        manufacturer="Pill Reminder",
+        manufacturer="Health Tracker",
         model="Person",
         entry_type=dr.DeviceEntryType.SERVICE,
     )

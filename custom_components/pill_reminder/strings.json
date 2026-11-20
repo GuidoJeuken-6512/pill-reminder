@@ -624,7 +624,7 @@
       "message": "Unknown medication."
     },
     "not_a_medication": {
-      "message": "{entity_id} is not an entity of a Pill Reminder medication."
+      "message": "{entity_id} is not an entity of a Health Tracker medication."
     },
     "entry_not_loaded": {
       "message": "The selected person is not loaded."
@@ -648,7 +648,7 @@
       "message": "The confirmation windows of two intake times overlap. Reduce \"confirm early\" / \"missed after\" or space the times further apart."
     },
     "not_a_person_entity": {
-      "message": "{entity_id} is not a Pill Reminder entity."
+      "message": "{entity_id} is not a Health Tracker entity."
     },
     "person_required": {
       "message": "Select a person (config entry or one of its entities)."
@@ -678,7 +678,7 @@
       "message": "The systolic value must be higher than the diastolic value."
     },
     "not_an_on_demand_medication": {
-      "message": "{entity_id} is not an entity of a Pill Reminder on-demand medication."
+      "message": "{entity_id} is not an entity of a Health Tracker on-demand medication."
     },
     "no_intake": {
       "message": "There is no such intake."
@@ -784,7 +784,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "The person (Pill Reminder entry). Not needed with only one person."
+          "description": "The person (Health Tracker entry). Not needed with only one person."
         },
         "entity_id": {
           "name": "Entity",
@@ -822,7 +822,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "The person (Pill Reminder entry). Not needed with only one person."
+          "description": "The person (Health Tracker entry). Not needed with only one person."
         },
         "entity_id": {
           "name": "Entity",
@@ -844,7 +844,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "The person (Pill Reminder entry). Not needed with only one person."
+          "description": "The person (Health Tracker entry). Not needed with only one person."
         },
         "entity_id": {
           "name": "Entity",
@@ -870,7 +870,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "The person (Pill Reminder entry). Not needed with only one person."
+          "description": "The person (Health Tracker entry). Not needed with only one person."
         },
         "entity_id": {
           "name": "Entity",

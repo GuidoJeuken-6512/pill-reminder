@@ -1,4 +1,4 @@
-"""Persistent dose history and statistics for the Pill Reminder integration."""
+"""Persistent dose history and statistics for the Health Tracker integration."""
 
 from __future__ import annotations
 

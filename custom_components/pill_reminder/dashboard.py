@@ -46,11 +46,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "nothing_due": "✅ Gerade ist nichts fällig.",
         "no_medication": (
             "Noch keine Medikamente angelegt.\n\n"
-            "**Einstellungen → Geräte & Dienste → Pill Reminder → Medikament hinzufügen**"
+            "**Einstellungen → Geräte & Dienste → Health Tracker → Medikament hinzufügen**"
         ),
         "no_person": (
             "Noch keine Person eingerichtet.\n\n"
-            "**Einstellungen → Geräte & Dienste → Integration hinzufügen → Pill Reminder**"
+            "**Einstellungen → Geräte & Dienste → Integration hinzufügen → Health Tracker**"
         ),
         "taken": "eingenommen",
         "later": "Später",
@@ -152,11 +152,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "nothing_due": "✅ Nothing is due right now.",
         "no_medication": (
             "No medication yet.\n\n"
-            "**Settings → Devices & services → Pill Reminder → Add medication**"
+            "**Settings → Devices & services → Health Tracker → Add medication**"
         ),
         "no_person": (
             "No person set up yet.\n\n"
-            "**Settings → Devices & services → Add integration → Pill Reminder**"
+            "**Settings → Devices & services → Add integration → Health Tracker**"
         ),
         "taken": "taken",
         "later": "Later",
@@ -1282,7 +1282,7 @@ def async_update_dashboard(hass: HomeAssistant, *, removed_entry_id: str | None 
 
     if existing is not None and not isinstance(existing, PillReminderDashboard):
         _LOGGER.warning(
-            "A dashboard with the URL /%s already exists; the Pill Reminder "
+            "A dashboard with the URL /%s already exists; the Health Tracker "
             "dashboard is not created",
             DASHBOARD_URL,
         )

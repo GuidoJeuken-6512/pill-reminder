@@ -624,7 +624,7 @@
       "message": "Unbekanntes Medikament."
     },
     "not_a_medication": {
-      "message": "{entity_id} gehört zu keinem Pill Reminder-Medikament."
+      "message": "{entity_id} gehört zu keinem Health Tracker-Medikament."
     },
     "entry_not_loaded": {
       "message": "Die gewählte Person ist nicht geladen."
@@ -648,7 +648,7 @@
       "message": "Die Bestätigungsfenster zweier Einnahmezeiten überschneiden sich. „Früher bestätigen“ bzw. „Verpasst nach“ verkürzen oder die Zeiten weiter auseinanderlegen."
     },
     "not_a_person_entity": {
-      "message": "{entity_id} ist keine Entität von Pill Reminder."
+      "message": "{entity_id} ist keine Entität von Health Tracker."
     },
     "person_required": {
       "message": "Bitte eine Person wählen (Eintrag oder eine ihrer Entitäten)."
@@ -678,7 +678,7 @@
       "message": "Der systolische Wert muss höher sein als der diastolische."
     },
     "not_an_on_demand_medication": {
-      "message": "{entity_id} ist keine Entität eines Pill-Reminder-Bedarfsmedikaments."
+      "message": "{entity_id} ist keine Entität eines Health-Tracker-Bedarfsmedikaments."
     },
     "no_intake": {
       "message": "Diese Einnahme gibt es nicht."
@@ -784,7 +784,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+          "description": "Die Person (Health-Tracker-Eintrag). Bei nur einer Person nicht nötig."
         },
         "entity_id": {
           "name": "Entität",
@@ -822,7 +822,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+          "description": "Die Person (Health-Tracker-Eintrag). Bei nur einer Person nicht nötig."
         },
         "entity_id": {
           "name": "Entität",
@@ -844,7 +844,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+          "description": "Die Person (Health-Tracker-Eintrag). Bei nur einer Person nicht nötig."
         },
         "entity_id": {
           "name": "Entität",
@@ -870,7 +870,7 @@
       "fields": {
         "config_entry_id": {
           "name": "Person",
-          "description": "Die Person (Pill-Reminder-Eintrag). Bei nur einer Person nicht nötig."
+          "description": "Die Person (Health-Tracker-Eintrag). Bei nur einer Person nicht nötig."
         },
         "entity_id": {
           "name": "Entität",

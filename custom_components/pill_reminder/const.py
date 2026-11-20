@@ -1,4 +1,4 @@
-"""Constants for the Pill Reminder integration."""
+"""Constants for the Health Tracker integration."""
 
 from __future__ import annotations
 

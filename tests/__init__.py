@@ -1,1 +1,1 @@
-"""Tests for the Pill Reminder integration."""
+"""Tests for the Health Tracker integration."""

@@ -1,4 +1,4 @@
-"""Fixtures for Pill Reminder body measurement tests."""
+"""Fixtures for Health Tracker body measurement tests."""
 
 from __future__ import annotations
 

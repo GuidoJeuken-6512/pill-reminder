@@ -1,4 +1,4 @@
-"""Sending and clearing notifications for the Pill Reminder integration."""
+"""Sending and clearing notifications for the Health Tracker integration."""
 
 from __future__ import annotations
 

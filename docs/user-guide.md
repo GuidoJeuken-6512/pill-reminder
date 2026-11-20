@@ -1,8 +1,10 @@
-# Pill Reminder – User guide
+# Health Tracker – User guide
 
-Pill Reminder reminds people in your household to take their medication and to enter their weight, waist circumference and blood pressure. It records every dose and every measurement and shows how regularly the medication was taken, the BMI, the waist-to-height ratio, the blood pressure class and the trend. This guide explains how it works, every setting, the dashboard, the entities, and how to use it in your own automations.
+Health Tracker reminds people in your household to take their medication and to enter their weight, waist circumference and blood pressure. It records every dose and every measurement and shows how regularly the medication was taken, the BMI, the waist-to-height ratio, the blood pressure class and the trend. This guide explains how it works, every setting, the dashboard, the entities, and how to use it in your own automations.
 
-> **Note:** Pill Reminder is a reminder aid, not a medical device. BMI, waist-to-height ratio and blood pressure classes are general reference values for adults, not a diagnosis. Nothing here replaces medical advice. Always keep a second way of remembering important medication.
+> **Formerly "Pill Reminder":** only the name changed in 0.7.0. The domain (`pill_reminder`), the actions, events, entity ids, stored data and the Android notification channels keep their names.
+
+> **Note:** Health Tracker is a reminder aid, not a medical device. BMI, waist-to-height ratio and blood pressure classes are general reference values for adults, not a diagnosis. Nothing here replaces medical advice. Always keep a second way of remembering important medication.
 
 ## Contents
 
@@ -43,7 +45,7 @@ Requires Home Assistant **2026.8** or newer.
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GuidoJeuken-6512&repository=pill-reminder&category=integration)
 
 1. Click the button above, or open HACS → ⋮ → **Custom repositories** and add `https://github.com/GuidoJeuken-6512/pill-reminder` with the type **Integration**.
-2. Install **Pill Reminder**.
+2. Install **Health Tracker**.
 3. Restart Home Assistant.
 
 **Manual**
@@ -54,7 +56,7 @@ Copy the folder `custom_components/pill_reminder` into `/config/custom_component
 
 ## 3. Setting up a person
 
-**Settings → Devices & services → Add integration → Pill Reminder**
+**Settings → Devices & services → Add integration → Health Tracker**
 
 | Field | Meaning |
 |---|---|
@@ -73,7 +75,7 @@ Add each person as a separate entry. To change these values later, open the pers
 There are two ways to add a medication:
 
 - **In the dashboard:** open the **Manage** tab and fill in **New medication**. The person can do this without admin rights. See [the dashboard](#9-the-dashboard).
-- **In the integration entry:** **Settings → Devices & services → Pill Reminder → Add medication** on the person's entry.
+- **In the integration entry:** **Settings → Devices & services → Health Tracker → Add medication** on the person's entry.
 
 | Field | Default | Meaning |
 |---|---|---|
@@ -98,7 +100,7 @@ There are two ways to add a medication:
 Some medication is not taken on a schedule but when needed – for example a triptan or a painkiller for migraine. What matters there is not *whether* it was taken, but **how often**. For this, add an **on-demand medication**:
 
 - **In the dashboard:** **Manage** tab → **New on-demand medication** → name and dosage → **Add**.
-- **In the integration entry:** **Settings → Devices & services → Pill Reminder → Add on-demand medication**.
+- **In the integration entry:** **Settings → Devices & services → Health Tracker → Add on-demand medication**.
 
 | Field | Default | Meaning |
 |---|---|---|
@@ -197,7 +199,7 @@ A new person tracks weight and waist, unless **Track weight and waist circumfere
 
 - **Add or remove a measurement in the dashboard:** **Manage** tab → **Measurements** → switch **Track weight**, **Track waist circumference** or **Track blood pressure** on or off. The person and administrators can do this, no admin rights needed. A new measurement gets a reminder at 07:00 on its default weekdays.
 - **Switching off** removes the measurement's entities and its section in the **Body** tab. The stored values stay and come back when it is switched on again; the reminder settings start from the defaults again.
-- Alternatively: **Settings → Devices & services → Pill Reminder → Add measurement** on the person's entry, or delete the sub-entry there.
+- Alternatively: **Settings → Devices & services → Health Tracker → Add measurement** on the person's entry, or delete the sub-entry there.
 - **Change the reminder:** in the dashboard (**Manage** tab) or via the sub-entry's ⋮ → **Edit reminder**. Changes apply immediately.
 
 ### Entering values
@@ -648,7 +650,7 @@ automation:
 
 ```yaml
 automation:
-  - alias: "Scale → Pill Reminder"
+  - alias: "Scale → Health Tracker"
     triggers:
       - trigger: state
         entity_id: sensor.smart_scale_weight
@@ -684,7 +686,7 @@ automation:
 - Measurements are stored per person in `/config/.storage/pill_reminder.<entry_id>.measurements`, also part of the backup.
 - Intakes of on-demand medications are stored per person in `/config/.storage/pill_reminder.<entry_id>.intakes`. Like doses, they are kept for the history retention (default 365 days).
 - Removing a person deletes their doses, measurements and intakes. Deleting a medication or a measurement keeps its history.
-- **Diagnostics** (Settings → Devices & services → Pill Reminder → ⋮ → Download diagnostics) are made to be attached to public GitHub issues. Names, Home Assistant user ids, phones, medication names, dosages, the height and all measured values are removed. What stays are the times, weekdays, statuses, counters and timestamps needed to find a bug.
+- **Diagnostics** (Settings → Devices & services → Health Tracker → ⋮ → Download diagnostics) are made to be attached to public GitHub issues. Names, Home Assistant user ids, phones, medication names, dosages, the height and all measured values are removed. What stays are the times, weekdays, statuses, counters and timestamps needed to find a bug.
 
 ## 15. Troubleshooting
 

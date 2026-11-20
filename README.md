@@ -1,6 +1,6 @@
-<img src="custom_components/pill_reminder/brand/icon.png" alt="Pill Reminder" width="96" align="right">
+<img src="custom_components/pill_reminder/brand/icon.png" alt="Health Tracker" width="96" align="right">
 
-# Pill Reminder
+# Health Tracker
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Release](https://img.shields.io/github/v/release/GuidoJeuken-6512/pill-reminder)](https://github.com/GuidoJeuken-6512/pill-reminder/releases/latest)
@@ -11,6 +11,8 @@
 [![Validate](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml/badge.svg)](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml)
 
 Home Assistant integration that reminds people to take their medication and to enter their **weight**, **waist circumference** and **blood pressure**. It logs every intake (or missed intake), keeps the measurements and shows adherence, **BMI**, **waist-to-height ratio**, **blood pressure class** and the **trend** – one app, one dashboard.
+
+> **Formerly "Pill Reminder".** Since 0.7.0 the integration is called **Health Tracker**. Only the name changed: the domain stays `pill_reminder`, so updating keeps all persons, medications, doses, measurements, entity ids, actions (`pill_reminder.*`) and events (`pill_reminder_*`). Nothing needs to be set up again.
 
 📖 **[User guide](docs/user-guide.md)** – setup, every setting, the life of a dose, body measurements, dashboard, entities, actions, automation examples, troubleshooting.
 
@@ -51,14 +53,14 @@ Home Assistant integration that reminds people to take their medication and to e
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GuidoJeuken-6512&repository=pill-reminder&category=integration)
 
-or manually: HACS → ⋮ → Custom repositories → add `https://github.com/GuidoJeuken-6512/pill-reminder` (type "Integration"), install "Pill Reminder", restart Home Assistant.
+or manually: HACS → ⋮ → Custom repositories → add `https://github.com/GuidoJeuken-6512/pill-reminder` (type "Integration"), install "Health Tracker", restart Home Assistant.
 **Manual**: copy `custom_components/pill_reminder` to `/config/custom_components/`, restart Home Assistant.
 
 Requires Home Assistant 2026.8 or newer.
 
 ## Setup
 
-1. **Settings → Devices & services → Add integration → "Pill Reminder"**
+1. **Settings → Devices & services → Add integration → "Health Tracker"**
    Enter the name, the Home Assistant user (who sees the views in the dashboard), the phones (`notify.mobile_app_…`), whether to track weight and waist, and the height (for BMI).
 2. Add medications – either in the dashboard (**Manage** tab) or via **Add medication** on the person's integration entry: name, dosage, intake times (e.g. 08:00, 20:00), weekdays, how early a dose may be confirmed and after how many minutes it counts as missed. Medication taken as needed is added as **on-demand medication** (name, dosage, optional limits).
 3. **Configure** (gear icon) for repeat interval, snooze duration, escalation, history retention and the repeat of measurement reminders.

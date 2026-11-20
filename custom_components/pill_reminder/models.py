@@ -1,4 +1,4 @@
-"""Data models for the Pill Reminder integration."""
+"""Data models for the Health Tracker integration."""
 
 from __future__ import annotations
 
