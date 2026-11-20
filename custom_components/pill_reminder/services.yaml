@@ -10,6 +10,54 @@ mark_taken:
       selector:
         datetime:
 
+log_intake:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: pill_reminder
+    taken_at:
+      required: false
+      selector:
+        datetime:
+
+delete_intake:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: pill_reminder
+    intake_id:
+      required: false
+      selector:
+        text:
+
+get_intakes:
+  fields: &intake_fields
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: pill_reminder
+    entity_id:
+      required: false
+      selector:
+        entity:
+          integration: pill_reminder
+    start:
+      required: false
+      selector:
+        datetime:
+    end:
+      required: false
+      selector:
+        datetime:
+
+export_intakes:
+  fields: *intake_fields
+
 snooze:
   fields:
     entity_id:

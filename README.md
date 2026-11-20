@@ -27,6 +27,13 @@ Home Assistant integration that reminds people to take their medication and to e
 - **Tracking**: every dose is stored with scheduled time, actual time, number of reminders, escalation and source (button / notification / service). Restarts lose nothing: doses that passed while Home Assistant was down are logged as missed, running reminders continue.
 - **Evaluation**: adherence over 7/30 days (long-term statistics), streak, daily counters, last/next dose, calendar (✅ taken / ❌ missed with delay and details), logbook, `get_history` and `export_history` (CSV) actions.
 
+### On-demand medication
+
+- Medication taken **as needed** (e.g. for migraine): no schedule, no reminders – a **Taken** button per intake.
+- Counts **intakes today, this month, last month, in 30 days** and the **intake days this month** (several intakes on one day = one day), with a monthly bar chart from the long-term statistics.
+- Optional **limits** (days per month, intakes per day): a "limit reached" sensor and one phone warning, e.g. 10 days for triptans.
+- Forgotten intakes can be added afterwards (`log_intake` with `taken_at`), wrong ones deleted; `get_intakes` and `export_intakes` (CSV).
+
 ### Body measurements
 
 - **Weight**, **waist circumference** and **blood pressure** (systolic, diastolic, pulse) per person, entered in the dashboard and stored with a **Save** button (works in the Companion App too), or from a smart scale / blood pressure monitor via an action. New persons track weight and waist right away; blood pressure and the others are switched on or off in the dashboard (**Manage** tab), stored values are kept.
@@ -53,7 +60,7 @@ Requires Home Assistant 2026.8 or newer.
 
 1. **Settings → Devices & services → Add integration → "Pill Reminder"**
    Enter the name, the Home Assistant user (who sees the views in the dashboard), the phones (`notify.mobile_app_…`), whether to track weight and waist, and the height (for BMI).
-2. Add medications – either in the dashboard (**Manage** tab) or via **Add medication** on the person's integration entry: name, dosage, intake times (e.g. 08:00, 20:00), weekdays, how early a dose may be confirmed and after how many minutes it counts as missed.
+2. Add medications – either in the dashboard (**Manage** tab) or via **Add medication** on the person's integration entry: name, dosage, intake times (e.g. 08:00, 20:00), weekdays, how early a dose may be confirmed and after how many minutes it counts as missed. Medication taken as needed is added as **on-demand medication** (name, dosage, optional limits).
 3. **Configure** (gear icon) for repeat interval, snooze duration, escalation, history retention and the repeat of measurement reminders.
 4. Done: **Health** appears in the sidebar (`/pill-reminder`). Enter today's weight in the **Body** tab.
 
@@ -85,6 +92,18 @@ Examples for a person "Anna" with the medication "Ramipril" (Home Assistant lang
 
 Settings per medication (used by the **Manage medication** tab): `text.ramipril_name`, `text.ramipril_intake_times`, `text.ramipril_weekdays`, `text.ramipril_dosage`, `number.ramipril_confirm_early_minutes_before`, `number.ramipril_missed_after_minutes`, `button.ramipril_delete_medication`. Per person: `text.anna_new_medication_name` / `_times` / `_dosage` and `button.anna_add_medication`.
 
+On-demand medication "Sumatriptan":
+
+| Entity | Meaning |
+|---|---|
+| `button.sumatriptan_taken` | Log an intake |
+| `sensor.sumatriptan_intakes_this_month` | Intakes this calendar month (long-term statistics: intakes per month) |
+| `sensor.sumatriptan_intake_days_this_month` | Days with an intake this month |
+| `sensor.sumatriptan_intakes_last_month`, `sensor.sumatriptan_intakes_30_days`, `sensor.sumatriptan_intakes_today` | Further counts |
+| `sensor.sumatriptan_last_intake` | Time of the last intake |
+| `binary_sensor.sumatriptan_limit_reached` | Monthly or daily limit reached (only with a limit) |
+| `number.sumatriptan_limit_days_per_month`, `number.sumatriptan_limit_intakes_per_day` | Limits (0 = none) |
+
 Body measurements (person "Anna", tracks weight and waist):
 
 | Entity | Meaning |
@@ -112,6 +131,8 @@ Medication entities carry the attributes `person` and `medication`; the **Taken*
 
 `pill_reminder_dose_due`, `…_reminder_sent`, `…_dose_snoozed`, `…_escalated`, `…_dose_taken`, `…_dose_missed`, `…_dose_skipped` – each with `person`, `medication`, `scheduled`, `status`, `source`, `reminders_sent`.
 
+`pill_reminder_intake_taken` (`person`, `medication`, `taken_at`, `source`, `today`, `month`, `days_month`) and `pill_reminder_intake_limit_reached`.
+
 `pill_reminder_measurement_added` (`person`, `metric`, `values`, `units`, `measured_at`, `source`; for weight and waist also `value` and `unit`) and `pill_reminder_measurement_reminder_sent` (`person`, `metric`, `count`).
 
 ## Actions
@@ -123,6 +144,9 @@ Medication entities carry the attributes `person` and `medication`; the **Taken*
 | `pill_reminder.skip` | Skip the dose |
 | `pill_reminder.get_history` | History as response data (filter: person, medication, period, status) |
 | `pill_reminder.export_history` | History as CSV in `/config/pill_reminder/` |
+| `pill_reminder.log_intake` | Log an intake of an on-demand medication; with `taken_at` afterwards |
+| `pill_reminder.delete_intake` | Delete the most recent intake (or one by `intake_id`) |
+| `pill_reminder.get_intakes`, `pill_reminder.export_intakes` | Intakes as response data / CSV |
 | `pill_reminder.add_measurement` | Add a value: `metric` (`weight`/`waist`) with `value`, or `blood_pressure` with `systolic`, `diastolic`, optional `pulse`; optional `measured_at` for older values |
 | `pill_reminder.delete_measurement` | Delete all values of a `date`, or the most recent one |
 | `pill_reminder.get_measurements` | Measurements as response data |

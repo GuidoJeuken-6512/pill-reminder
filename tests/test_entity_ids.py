@@ -11,6 +11,7 @@ import pytest
 
 from .body.conftest import metric_subentry
 from .conftest import setup
+from .on_demand.conftest import on_demand_subentry
 
 DASHBOARDS = Path(__file__).parent.parent / "dashboards"
 
@@ -24,7 +25,7 @@ async def test_dashboard_entity_ids_exist(
 ) -> None:
     """Every entity referenced by an example dashboard exists (English instance).
 
-    Anna takes Ramipril and tracks weight and waist.
+    Anna takes Ramipril, Sumatriptan as needed and tracks weight and waist.
     """
     hass.config.language = "en"
     entry.add_to_hass(hass)
@@ -43,13 +44,23 @@ async def test_dashboard_entity_ids_exist(
                 unique_id=sub["unique_id"],
             ),
         )
+    suma = on_demand_subentry()
+    hass.config_entries.async_add_subentry(
+        entry,
+        ConfigSubentry(
+            data=suma["data"],
+            subentry_type=suma["subentry_type"],
+            title=suma["title"],
+            unique_id=None,
+        ),
+    )
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
     content = (DASHBOARDS / dashboard).read_text(encoding="utf-8")
     referenced = set(
         re.findall(
-            r"\b((?:sensor|binary_sensor|button|switch|calendar|text|number|time)\.(?:anna|ramipril)_[a-z0-9_]+)",
+            r"\b((?:sensor|binary_sensor|button|switch|calendar|text|number|time)\.(?:anna|ramipril|sumatriptan)_[a-z0-9_]+)",
             content,
         )
     )

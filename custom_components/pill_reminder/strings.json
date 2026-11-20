@@ -150,6 +150,49 @@
         "all_tracked": "All available measurements are already tracked.",
         "reconfigure_successful": "Reminder saved."
       }
+    },
+    "on_demand": {
+      "entry_type": "On-demand medication",
+      "initiate_flow": {
+        "user": "Add on-demand medication",
+        "reconfigure": "Edit on-demand medication"
+      },
+      "step": {
+        "user": {
+          "title": "Add on-demand medication",
+          "description": "A medication taken as needed, e.g. for migraine. There are no intake times and no reminders: press 'Taken' after each intake, and the integration counts the intakes per day and month.",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosage / note",
+            "max_days_per_month": "Limit: days per month",
+            "max_per_day": "Limit: intakes per day"
+          },
+          "data_description": {
+            "max_days_per_month": "Optional. Warns once a month when the medication was taken on this many days, e.g. 10 for triptans. Empty or 0 = no limit.",
+            "max_per_day": "Optional. Warns when it was taken this often on one day."
+          }
+        },
+        "reconfigure": {
+          "title": "Edit on-demand medication",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosage / note",
+            "max_days_per_month": "Limit: days per month",
+            "max_per_day": "Limit: intakes per day"
+          },
+          "data_description": {
+            "max_days_per_month": "Optional. Warns once a month when the medication was taken on this many days, e.g. 10 for triptans. Empty or 0 = no limit.",
+            "max_per_day": "Optional. Warns when it was taken this often on one day."
+          }
+        }
+      },
+      "error": {
+        "name_required": "Please enter a name.",
+        "invalid_limit": "Enter a whole number (0 = no limit)."
+      },
+      "abort": {
+        "reconfigure_successful": "Medication saved."
+      }
     }
   },
   "selector": {
@@ -203,6 +246,9 @@
       },
       "blood_pressure_due": {
         "name": "Due"
+      },
+      "limit_reached": {
+        "name": "Limit reached"
       }
     },
     "button": {
@@ -229,6 +275,9 @@
       },
       "blood_pressure_save": {
         "name": "Save"
+      },
+      "add_on_demand": {
+        "name": "Add on-demand medication"
       }
     },
     "calendar": {
@@ -432,6 +481,28 @@
           "falling": "Falling",
           "stable": "Stable"
         }
+      },
+      "intakes_month": {
+        "name": "Intakes this month",
+        "unit_of_measurement": "intakes"
+      },
+      "intake_days_month": {
+        "name": "Intake days this month"
+      },
+      "intakes_previous_month": {
+        "name": "Intakes last month",
+        "unit_of_measurement": "intakes"
+      },
+      "intakes_30d": {
+        "name": "Intakes 30 days",
+        "unit_of_measurement": "intakes"
+      },
+      "intakes_today": {
+        "name": "Intakes today",
+        "unit_of_measurement": "intakes"
+      },
+      "last_intake": {
+        "name": "Last intake"
       }
     },
     "switch": {
@@ -487,6 +558,12 @@
       },
       "blood_pressure_reminder_weekdays": {
         "name": "Reminder weekdays"
+      },
+      "new_on_demand_name": {
+        "name": "New on-demand medication: name"
+      },
+      "new_on_demand_dosage": {
+        "name": "New on-demand medication: dosage"
       }
     },
     "number": {
@@ -513,6 +590,12 @@
       },
       "pulse_input": {
         "name": "Pulse"
+      },
+      "cfg_max_days_per_month": {
+        "name": "Limit days per month"
+      },
+      "cfg_max_per_day": {
+        "name": "Limit intakes per day"
       }
     },
     "time": {
@@ -593,6 +676,15 @@
     },
     "systolic_not_above_diastolic": {
       "message": "The systolic value must be higher than the diastolic value."
+    },
+    "not_an_on_demand_medication": {
+      "message": "{entity_id} is not an entity of a Pill Reminder on-demand medication."
+    },
+    "no_intake": {
+      "message": "There is no such intake."
+    },
+    "invalid_limit": {
+      "message": "Enter a whole number for the limit (0 = no limit)."
     }
   },
   "services": {
@@ -795,6 +887,78 @@
         "end": {
           "name": "End",
           "description": "Only measurements before this time."
+        }
+      }
+    },
+    "log_intake": {
+      "name": "Log intake",
+      "description": "Logs an intake of an on-demand medication (e.g. for migraine). With a time, a past intake can be added afterwards.",
+      "fields": {
+        "entity_id": {
+          "name": "Medication",
+          "description": "Any entity of the on-demand medication, e.g. its 'Taken' button."
+        },
+        "taken_at": {
+          "name": "Taken at",
+          "description": "Optional: when it was taken (default: now)."
+        }
+      }
+    },
+    "delete_intake": {
+      "name": "Delete intake",
+      "description": "Deletes an intake logged by mistake (default: the most recent).",
+      "fields": {
+        "entity_id": {
+          "name": "Medication",
+          "description": "Any entity of the on-demand medication."
+        },
+        "intake_id": {
+          "name": "Intake id",
+          "description": "Optional: id from 'Get intakes'."
+        }
+      }
+    },
+    "get_intakes": {
+      "name": "Get intakes",
+      "description": "Returns the logged intakes of on-demand medications.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Optional: only this person."
+        },
+        "entity_id": {
+          "name": "Medication",
+          "description": "Optional: only this on-demand medication."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Optional: from this time."
+        },
+        "end": {
+          "name": "End",
+          "description": "Optional: until this time."
+        }
+      }
+    },
+    "export_intakes": {
+      "name": "Export intakes",
+      "description": "Writes the intakes of on-demand medications as CSV to /config/pill_reminder/.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Optional: only this person."
+        },
+        "entity_id": {
+          "name": "Medication",
+          "description": "Optional: only this on-demand medication."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Optional: from this time."
+        },
+        "end": {
+          "name": "End",
+          "description": "Optional: until this time."
         }
       }
     }

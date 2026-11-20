@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -11,7 +13,8 @@ from .body import BodyTracker
 from .const import DOMAIN, signal_update
 from .measurement_reminders import TrackedMetric
 from .metrics import MetricType, ValueField
-from .models import Medication
+from .models import Medication, OnDemandMedication
+from .on_demand import OnDemandTracker
 from .scheduler import ReminderManager
 
 
@@ -83,6 +86,30 @@ class MedicationEntity(PillReminderEntity):
             entry_type=DeviceEntryType.SERVICE,
             via_device_id=manager.person_device_id,
         )
+
+
+class OnDemandEntity(PillReminderEntity):
+    """Entity of a medication taken as needed (one device per subentry)."""
+
+    def __init__(self, manager: ReminderManager, med: OnDemandMedication, key: str) -> None:
+        """Initialize."""
+        super().__init__(manager)
+        self.med = med
+        self.tracker: OnDemandTracker = manager.on_demand
+        self._attr_translation_key = key
+        self._attr_unique_id = f"{med.id}_{key}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, med.id)},
+            name=med.name,
+            manufacturer="Pill Reminder",
+            model=med.dosage or None,
+            entry_type=DeviceEntryType.SERVICE,
+            via_device_id=manager.person_device_id,
+        )
+
+    def _filter_attributes(self) -> dict[str, Any]:
+        """Stable attributes for dashboard filters (auto-entities)."""
+        return {"person": self.manager.person, "medication": self.med.name, "on_demand": True}
 
 
 class BodyEntity(PersonEntity):

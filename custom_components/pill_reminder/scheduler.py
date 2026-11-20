@@ -79,6 +79,7 @@ from .const import (
 from .history import DoseHistory
 from .models import DoseRecord, DoseStatus, Medication, dose_id_for
 from .notifier import Notifier, parse_action
+from .on_demand import OnDemandTracker
 from .validation import validate_medication
 
 _LOGGER = logging.getLogger(__name__)
@@ -131,6 +132,8 @@ class ReminderManager:
         self.notifier = Notifier(hass, self.person)
         # Weight, waist, BMI, ... (config subentries of type "measurement")
         self.body = BodyTracker(hass, entry)
+        # Medications taken as needed (config subentries of type "on_demand")
+        self.on_demand = OnDemandTracker(self)
         # Config that needs a reload when changed (set by async_setup_entry)
         self.signature: tuple[Any, ...] = ()
         self.person_device_id: str | None = None
@@ -147,6 +150,7 @@ class ReminderManager:
         """Load history, catch up on missed time and start all timers."""
         await self.history.async_load()
         await self.body.async_start()
+        await self.on_demand.async_start()
         now = dt_util.utcnow()
         self.history.purge(self.retention_days, now)
         self.history.paused_medications &= set(self.medications)
@@ -182,6 +186,7 @@ class ReminderManager:
             self._cancel_dose_timers(dose_id)
         await self.history.async_save_now()
         await self.body.async_stop()
+        await self.on_demand.async_stop()
 
     async def _async_restore(self, med: Medication, now: datetime) -> None:
         """Resolve or resume doses that were due while HA was not running."""
@@ -740,7 +745,9 @@ class ReminderManager:
 
     @callback
     def _handle_midnight(self, now: datetime) -> None:
+        # Also rolls the on-demand counts over to the new day / month.
         self.history.purge(self.retention_days, dt_util.utcnow())
+        self.on_demand.purge(dt_util.utcnow())
         self.async_notify_entities()
 
     @callback

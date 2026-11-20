@@ -21,7 +21,7 @@ from .const import (
     NOTIFICATION_CHANNEL,
 )
 from .metrics import MetricType
-from .models import DoseRecord, Medication
+from .models import DoseRecord, Medication, OnDemandMedication
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +45,12 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "missed_title": "❌ {medication} verpasst",
         "missed_message": "{person} hat {medication} (geplant {time}) nicht eingenommen.",
+        "limit_title": "⚠️ {medication}: Grenze erreicht",
+        "limit_month": (
+            "{person} hat {medication} in diesem Monat an {days} Tagen genommen "
+            "(Grenze: {limit} Tage)."
+        ),
+        "limit_day": "{person} hat {medication} heute {count}× genommen (Grenze: {limit}×).",
     },
     "en": {
         "title": "💊 Time for {medication}",
@@ -58,6 +64,11 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "missed_title": "❌ {medication} missed",
         "missed_message": "{person} did not take {medication} (scheduled {time}).",
+        "limit_title": "⚠️ {medication}: limit reached",
+        "limit_month": (
+            "{person} took {medication} on {days} days this month (limit: {limit} days)."
+        ),
+        "limit_day": "{person} took {medication} {count}× today (limit: {limit}×).",
     },
 }
 
@@ -125,6 +136,31 @@ class Notifier:
                 )
             except (HomeAssistantError, ValueError) as err:
                 _LOGGER.warning("Sending notification via notify.%s failed: %s", service, err)
+
+    async def async_send_limit_warning(
+        self,
+        services: list[str],
+        med: OnDemandMedication,
+        *,
+        monthly: bool,
+        count: int,
+        limit: int,
+        persistent: bool,
+    ) -> None:
+        """Warn that an on-demand medication reached its monthly or daily limit."""
+        texts = self._texts()
+        title = texts["limit_title"].format(medication=med.name)
+        message = texts["limit_month" if monthly else "limit_day"].format(
+            person=self.person, medication=med.name, days=count, count=count, limit=limit
+        )
+        tag = f"{DOMAIN}_{med.id}_limit"
+        await self._async_notify(
+            services, title, message, {"tag": tag, "channel": NOTIFICATION_CHANNEL}
+        )
+        if persistent:
+            persistent_notification.async_create(
+                self.hass, message, title=title, notification_id=tag
+            )
 
     async def async_send_reminder(
         self,

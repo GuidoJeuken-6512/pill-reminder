@@ -150,6 +150,49 @@
         "all_tracked": "Alle verfügbaren Messwerte werden bereits erfasst.",
         "reconfigure_successful": "Erinnerung gespeichert."
       }
+    },
+    "on_demand": {
+      "entry_type": "Bedarfsmedikament",
+      "initiate_flow": {
+        "user": "Bedarfsmedikament hinzufügen",
+        "reconfigure": "Bedarfsmedikament bearbeiten"
+      },
+      "step": {
+        "user": {
+          "title": "Bedarfsmedikament hinzufügen",
+          "description": "Ein Medikament, das nach Bedarf genommen wird, z. B. gegen Migräne. Es gibt keine Einnahmezeiten und keine Erinnerungen: Nach jeder Einnahme 'Eingenommen' drücken, die Integration zählt die Einnahmen pro Tag und Monat.",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosierung / Hinweis",
+            "max_days_per_month": "Grenze: Tage pro Monat",
+            "max_per_day": "Grenze: Einnahmen pro Tag"
+          },
+          "data_description": {
+            "max_days_per_month": "Optional. Warnt einmal im Monat, wenn das Medikament an so vielen Tagen genommen wurde, z. B. 10 bei Triptanen. Leer oder 0 = keine Grenze.",
+            "max_per_day": "Optional. Warnt, wenn es an einem Tag so oft genommen wurde."
+          }
+        },
+        "reconfigure": {
+          "title": "Bedarfsmedikament bearbeiten",
+          "data": {
+            "name": "Name",
+            "dosage": "Dosierung / Hinweis",
+            "max_days_per_month": "Grenze: Tage pro Monat",
+            "max_per_day": "Grenze: Einnahmen pro Tag"
+          },
+          "data_description": {
+            "max_days_per_month": "Optional. Warnt einmal im Monat, wenn das Medikament an so vielen Tagen genommen wurde, z. B. 10 bei Triptanen. Leer oder 0 = keine Grenze.",
+            "max_per_day": "Optional. Warnt, wenn es an einem Tag so oft genommen wurde."
+          }
+        }
+      },
+      "error": {
+        "name_required": "Bitte einen Namen eingeben.",
+        "invalid_limit": "Bitte eine ganze Zahl eingeben (0 = keine Grenze)."
+      },
+      "abort": {
+        "reconfigure_successful": "Medikament gespeichert."
+      }
     }
   },
   "selector": {
@@ -203,6 +246,9 @@
       },
       "blood_pressure_due": {
         "name": "Fällig"
+      },
+      "limit_reached": {
+        "name": "Grenze erreicht"
       }
     },
     "button": {
@@ -229,6 +275,9 @@
       },
       "blood_pressure_save": {
         "name": "Speichern"
+      },
+      "add_on_demand": {
+        "name": "Bedarfsmedikament hinzufügen"
       }
     },
     "calendar": {
@@ -432,6 +481,28 @@
           "falling": "Fallend",
           "stable": "Stabil"
         }
+      },
+      "intakes_month": {
+        "name": "Einnahmen diesen Monat",
+        "unit_of_measurement": "Einnahmen"
+      },
+      "intake_days_month": {
+        "name": "Einnahmetage diesen Monat"
+      },
+      "intakes_previous_month": {
+        "name": "Einnahmen Vormonat",
+        "unit_of_measurement": "Einnahmen"
+      },
+      "intakes_30d": {
+        "name": "Einnahmen 30 Tage",
+        "unit_of_measurement": "Einnahmen"
+      },
+      "intakes_today": {
+        "name": "Einnahmen heute",
+        "unit_of_measurement": "Einnahmen"
+      },
+      "last_intake": {
+        "name": "Letzte Einnahme"
       }
     },
     "switch": {
@@ -487,6 +558,12 @@
       },
       "blood_pressure_reminder_weekdays": {
         "name": "Erinnerungstage"
+      },
+      "new_on_demand_name": {
+        "name": "Neues Bedarfsmedikament: Name"
+      },
+      "new_on_demand_dosage": {
+        "name": "Neues Bedarfsmedikament: Dosierung"
       }
     },
     "number": {
@@ -513,6 +590,12 @@
       },
       "pulse_input": {
         "name": "Puls"
+      },
+      "cfg_max_days_per_month": {
+        "name": "Grenze Tage pro Monat"
+      },
+      "cfg_max_per_day": {
+        "name": "Grenze Einnahmen pro Tag"
       }
     },
     "time": {
@@ -593,6 +676,15 @@
     },
     "systolic_not_above_diastolic": {
       "message": "Der systolische Wert muss höher sein als der diastolische."
+    },
+    "not_an_on_demand_medication": {
+      "message": "{entity_id} ist keine Entität eines Pill-Reminder-Bedarfsmedikaments."
+    },
+    "no_intake": {
+      "message": "Diese Einnahme gibt es nicht."
+    },
+    "invalid_limit": {
+      "message": "Bitte eine ganze Zahl als Grenze eingeben (0 = keine Grenze)."
     }
   },
   "services": {
@@ -795,6 +887,78 @@
         "end": {
           "name": "Ende",
           "description": "Nur Messwerte vor diesem Zeitpunkt."
+        }
+      }
+    },
+    "log_intake": {
+      "name": "Einnahme erfassen",
+      "description": "Erfasst eine Einnahme eines Bedarfsmedikaments (z. B. gegen Migräne). Mit Zeitpunkt lässt sich eine frühere Einnahme nachtragen.",
+      "fields": {
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Eine Entität des Bedarfsmedikaments, z. B. der Button 'Eingenommen'."
+        },
+        "taken_at": {
+          "name": "Eingenommen um",
+          "description": "Optional: wann es genommen wurde (Standard: jetzt)."
+        }
+      }
+    },
+    "delete_intake": {
+      "name": "Einnahme löschen",
+      "description": "Löscht eine versehentlich erfasste Einnahme (Standard: die letzte).",
+      "fields": {
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Eine Entität des Bedarfsmedikaments."
+        },
+        "intake_id": {
+          "name": "Einnahme-ID",
+          "description": "Optional: ID aus 'Einnahmen abrufen'."
+        }
+      }
+    },
+    "get_intakes": {
+      "name": "Einnahmen abrufen",
+      "description": "Liefert die erfassten Einnahmen der Bedarfsmedikamente.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Optional: nur diese Person."
+        },
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Optional: nur dieses Bedarfsmedikament."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Optional: ab diesem Zeitpunkt."
+        },
+        "end": {
+          "name": "Ende",
+          "description": "Optional: bis zu diesem Zeitpunkt."
+        }
+      }
+    },
+    "export_intakes": {
+      "name": "Einnahmen exportieren",
+      "description": "Schreibt die Einnahmen der Bedarfsmedikamente als CSV nach /config/pill_reminder/.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Person",
+          "description": "Optional: nur diese Person."
+        },
+        "entity_id": {
+          "name": "Medikament",
+          "description": "Optional: nur dieses Bedarfsmedikament."
+        },
+        "start": {
+          "name": "Start",
+          "description": "Optional: ab diesem Zeitpunkt."
+        },
+        "end": {
+          "name": "Ende",
+          "description": "Optional: bis zu diesem Zeitpunkt."
         }
       }
     }

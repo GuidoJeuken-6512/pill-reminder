@@ -143,6 +143,23 @@ SERVICE_EXPORT_MEASUREMENTS: Final = "export_measurements"
 MEASUREMENT_CHANNEL: Final = "Pill Reminder measurements"
 
 
+# ------------------------------------------------- on-demand medication
+# Subentry (medication taken as needed, e.g. for migraine; no schedule)
+SUBENTRY_ON_DEMAND: Final = "on_demand"
+CONF_MAX_DAYS_PER_MONTH: Final = "max_days_per_month"
+CONF_MAX_PER_DAY: Final = "max_per_day"
+
+EVENT_INTAKE_TAKEN: Final = f"{DOMAIN}_intake_taken"
+EVENT_INTAKE_LIMIT: Final = f"{DOMAIN}_intake_limit_reached"
+
+ATTR_INTAKE_ID: Final = "intake_id"
+
+SERVICE_LOG_INTAKE: Final = "log_intake"
+SERVICE_DELETE_INTAKE: Final = "delete_intake"
+SERVICE_GET_INTAKES: Final = "get_intakes"
+SERVICE_EXPORT_INTAKES: Final = "export_intakes"
+
+
 def signal_update(entry_id: str) -> str:
     """Dispatcher signal sent whenever a person's state changes."""
     return f"{DOMAIN}_{entry_id}_update"

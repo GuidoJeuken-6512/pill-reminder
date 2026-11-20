@@ -17,6 +17,7 @@ from homeassistant.helpers.typing import ConfigType
 from .const import CONF_HEIGHT, CONF_METRIC, CONF_PERSON_NAME, DOMAIN, SUBENTRY_MEASUREMENT
 from .dashboard import async_update_dashboard
 from .history import DoseHistory
+from .intakes import IntakeStore
 from .measurements import MeasurementStore
 from .scheduler import ReminderManager
 from .services import async_setup_services
@@ -124,8 +125,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: PillReminderConfigEntry
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: PillReminderConfigEntry) -> None:
-    """Delete stored doses and measurements when a person is removed."""
+    """Delete stored doses, measurements and intakes when a person is removed."""
     await DoseHistory(hass, entry.entry_id).async_remove()
     await MeasurementStore(hass, entry.entry_id).async_remove()
+    await IntakeStore(hass, entry.entry_id).async_remove()
     # Remove the dashboard together with the last person.
     async_update_dashboard(hass, removed_entry_id=entry.entry_id)

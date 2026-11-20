@@ -1,4 +1,4 @@
-"""Number entities: medication windows, measurement input, height."""
+"""Number entities: medication windows, on-demand limits, measurement input, height."""
 
 from __future__ import annotations
 
@@ -18,14 +18,17 @@ from . import PillReminderConfigEntry
 from .const import (
     CONF_EARLY_MINUTES,
     CONF_LATE_MINUTES,
+    CONF_MAX_DAYS_PER_MONTH,
+    CONF_MAX_PER_DAY,
     MAX_HEIGHT,
     MIN_HEIGHT,
 )
-from .entity import BodyEntity, MeasurementEntity, MedicationEntity
+from .entity import BodyEntity, MeasurementEntity, MedicationEntity, OnDemandEntity
 from .measurement_reminders import TrackedMetric
 from .metrics import ValueField
-from .models import Medication
+from .models import Medication, OnDemandMedication
 from .scheduler import ReminderManager
+from .validation import MAX_DAYS_PER_MONTH, MAX_PER_DAY
 
 PARALLEL_UPDATES = 0
 
@@ -63,6 +66,32 @@ WINDOW_NUMBERS: tuple[WindowNumberDescription, ...] = (
 )
 
 
+# Limits of an on-demand medication; 0 = no limit
+LIMIT_NUMBERS: tuple[WindowNumberDescription, ...] = (
+    WindowNumberDescription(
+        key="cfg_max_days_per_month",
+        translation_key="cfg_max_days_per_month",
+        field=CONF_MAX_DAYS_PER_MONTH,
+        native_min_value=0,
+        native_max_value=MAX_DAYS_PER_MONTH,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.DAYS,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    WindowNumberDescription(
+        key="cfg_max_per_day",
+        translation_key="cfg_max_per_day",
+        field=CONF_MAX_PER_DAY,
+        native_min_value=0,
+        native_max_value=MAX_PER_DAY,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+    ),
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: PillReminderConfigEntry,
@@ -73,6 +102,11 @@ async def async_setup_entry(
     for med in manager.medications.values():
         async_add_entities(
             (WindowNumber(manager, med, desc) for desc in WINDOW_NUMBERS),
+            config_subentry_id=med.id,
+        )
+    for med in manager.on_demand.medications.values():
+        async_add_entities(
+            (LimitNumber(manager, med, desc) for desc in LIMIT_NUMBERS),
             config_subentry_id=med.id,
         )
     if manager.body.enabled:
@@ -105,6 +139,33 @@ class WindowNumber(MedicationEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Validate and store; the person reloads with the new schedule."""
         self.manager.async_update_medication(
+            self.med.id, {self.entity_description.field: int(value)}
+        )
+
+
+class LimitNumber(OnDemandEntity, NumberEntity):
+    """Monthly limit (days with an intake) or daily limit (intakes); 0 = none."""
+
+    entity_description: WindowNumberDescription
+
+    def __init__(
+        self, manager: ReminderManager, med: OnDemandMedication, desc: WindowNumberDescription
+    ) -> None:
+        """Initialize."""
+        super().__init__(manager, med, desc.key)
+        self.entity_description = desc
+
+    def _update_from_manager(self) -> None:
+        limit = (
+            self.med.max_days_per_month
+            if self.entity_description.field == CONF_MAX_DAYS_PER_MONTH
+            else self.med.max_per_day
+        )
+        self._attr_native_value = limit or 0
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Store the limit (0 = none); the person reloads."""
+        self.tracker.async_update_medication(
             self.med.id, {self.entity_description.field: int(value)}
         )
 

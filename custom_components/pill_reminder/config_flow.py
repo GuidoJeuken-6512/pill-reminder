@@ -42,6 +42,8 @@ from .const import (
     CONF_ESCALATION_SERVICES,
     CONF_HEIGHT,
     CONF_LATE_MINUTES,
+    CONF_MAX_DAYS_PER_MONTH,
+    CONF_MAX_PER_DAY,
     CONF_MAX_REMINDERS,
     CONF_MEASUREMENT_REPEAT,
     CONF_METRIC,
@@ -78,10 +80,17 @@ from .const import (
     MIN_HEIGHT,
     SUBENTRY_MEASUREMENT,
     SUBENTRY_MEDICATION,
+    SUBENTRY_ON_DEMAND,
 )
 from .metrics import METRICS, metric_title
 from .notifier import UNSUPPORTED_NOTIFY_SERVICES
-from .validation import validate_measurement, validate_medication
+from .validation import (
+    MAX_DAYS_PER_MONTH,
+    MAX_PER_DAY,
+    validate_measurement,
+    validate_medication,
+    validate_on_demand,
+)
 
 NO_USER = "none"
 
@@ -256,10 +265,11 @@ class PillReminderConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_supported_subentry_types(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
-        """Medications and tracked measurements are subentries of a person."""
+        """Medications, on-demand medications and measurements are subentries of a person."""
         return {
             SUBENTRY_MEDICATION: MedicationSubentryFlow,
             SUBENTRY_MEASUREMENT: MeasurementSubentryFlow,
+            SUBENTRY_ON_DEMAND: OnDemandSubentryFlow,
         }
 
 
@@ -472,4 +482,59 @@ class MeasurementSubentryFlow(ConfigSubentryFlow):
             ),
             errors=errors,
             description_placeholders={"metric": subentry.title},
+        )
+
+
+def _on_demand_schema() -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_NAME): TextSelector(),
+            vol.Optional(CONF_DOSAGE, default=""): TextSelector(),
+            vol.Optional(CONF_MAX_DAYS_PER_MONTH): _minutes(0, MAX_DAYS_PER_MONTH, "d"),
+            vol.Optional(CONF_MAX_PER_DAY): _minutes(0, MAX_PER_DAY, "×"),
+        }
+    )
+
+
+def _on_demand_suggested(data: dict[str, Any]) -> dict[str, Any]:
+    """Limits that are not set stay empty in the form."""
+    return {k: v for k, v in data.items() if v is not None}
+
+
+class OnDemandSubentryFlow(ConfigSubentryFlow):
+    """Add or edit a medication taken as needed (e.g. for migraine)."""
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        """Add an on-demand medication."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            data, errors = validate_on_demand(user_input)
+            if not errors:
+                return self.async_create_entry(title=data[CONF_NAME], data=data)
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=self.add_suggested_values_to_schema(_on_demand_schema(), user_input),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Edit name, dosage and limits."""
+        subentry = self._get_reconfigure_subentry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            data, errors = validate_on_demand(user_input)
+            if not errors:
+                return self.async_update_and_abort(
+                    self._get_entry(), subentry, title=data[CONF_NAME], data=data
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                _on_demand_schema(), user_input or _on_demand_suggested(dict(subentry.data))
+            ),
+            errors=errors,
         )

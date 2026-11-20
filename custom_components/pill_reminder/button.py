@@ -1,4 +1,4 @@
-"""Buttons: taken / snooze / skip a dose, manage medications, save a measurement."""
+"""Buttons: taken / snooze / skip a dose, on-demand intake, manage, save a measurement."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from homeassistant.util import dt as dt_util
 
 from . import PillReminderConfigEntry
 from .const import SOURCE_BUTTON, SOURCE_DASHBOARD
-from .entity import MeasurementEntity, MedicationEntity, PersonEntity
+from .entity import MeasurementEntity, MedicationEntity, OnDemandEntity, PersonEntity
 
 PARALLEL_UPDATES = 0
 
@@ -30,6 +30,15 @@ async def async_setup_entry(
                 SnoozeButton(manager, med, "snooze"),
                 SkipButton(manager, med, "skip"),
                 DeleteMedicationButton(manager, med, "delete_medication"),
+            ],
+            config_subentry_id=med.id,
+        )
+    async_add_entities([AddOnDemandButton(manager, "add_on_demand")])
+    for med in manager.on_demand.medications.values():
+        async_add_entities(
+            [
+                OnDemandTakenButton(manager, med, "taken"),
+                DeleteOnDemandButton(manager, med, "delete_medication"),
             ],
             config_subentry_id=med.id,
         )
@@ -102,3 +111,37 @@ class SaveMeasurementButton(MeasurementEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Save the reading with the current time."""
         await self.body.async_save_drafts(self.metric.key, source=SOURCE_DASHBOARD)
+
+
+class OnDemandTakenButton(OnDemandEntity, ButtonEntity):
+    """Log an intake of an on-demand medication (counted per day and month)."""
+
+    def _update_from_manager(self) -> None:
+        self._attr_extra_state_attributes = {
+            **self._filter_attributes(),
+            "dosage": self.med.dosage,
+        }
+
+    async def async_press(self) -> None:
+        """Log the intake now."""
+        await self.tracker.async_take(self.med.id, source=SOURCE_BUTTON, user_id=self._user_id)
+
+
+class DeleteOnDemandButton(OnDemandEntity, ButtonEntity):
+    """Delete the on-demand medication (its intakes are kept)."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    async def async_press(self) -> None:
+        """Delete the medication."""
+        self.tracker.async_delete_medication(self.med.id)
+
+
+class AddOnDemandButton(PersonEntity, ButtonEntity):
+    """Create an on-demand medication from the dashboard input fields."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    async def async_press(self) -> None:
+        """Add the medication."""
+        self.manager.on_demand.async_add_medication()

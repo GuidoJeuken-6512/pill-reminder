@@ -82,6 +82,24 @@ TEXTS: dict[str, dict[str, str]] = {
         "delete": "Löschen",
         "confirm_delete": "{name} wirklich löschen? Die bisherige Historie bleibt erhalten.",
         "confirm_add": "Medikament mit diesen Angaben anlegen?",
+        # on-demand medication
+        "on_demand": "Bei Bedarf",
+        "intake": "eingenommen",
+        "confirm_intake": "Einnahme von {name} erfassen?",
+        "limit_warning": "⚠️ **{name}**: Grenze erreicht – bitte ärztlich abklären.",
+        "on_demand_chart": "Einnahmen pro Monat",
+        "manage_on_demand": "Bedarfsmedikamente verwalten",
+        "on_demand_hint": (
+            "Grenze 0 = keine Grenze. Richtwert (ICHD-3): Triptane und Kombinationspräparate "
+            "an 10 oder mehr, einfache Schmerzmittel an 15 oder mehr Tagen im Monat über mehr "
+            "als 3 Monate gelten als Risiko für Kopfschmerz durch Medikamentenübergebrauch. "
+            "Keine Diagnose."
+        ),
+        "new_on_demand": "Neues Bedarfsmedikament",
+        "confirm_add_on_demand": "Bedarfsmedikament mit diesen Angaben anlegen?",
+        "confirm_delete_on_demand": (
+            "{name} wirklich löschen? Die bisherigen Einnahmen bleiben erhalten."
+        ),
         # body measurements
         "body_tab": "Körper",
         "body_path": "koerper",
@@ -170,6 +188,21 @@ TEXTS: dict[str, dict[str, str]] = {
         "delete": "Delete",
         "confirm_delete": "Really delete {name}? Its history is kept.",
         "confirm_add": "Create a medication with these values?",
+        # on-demand medication
+        "on_demand": "As needed",
+        "intake": "taken",
+        "confirm_intake": "Log an intake of {name}?",
+        "limit_warning": "⚠️ **{name}**: limit reached – please talk to your doctor.",
+        "on_demand_chart": "Intakes per month",
+        "manage_on_demand": "Manage on-demand medication",
+        "on_demand_hint": (
+            "Limit 0 = no limit. Reference (ICHD-3): triptans and combination analgesics on "
+            "10 or more, simple analgesics on 15 or more days per month for more than 3 months "
+            "are a risk for medication-overuse headache. Not a diagnosis."
+        ),
+        "new_on_demand": "New on-demand medication",
+        "confirm_add_on_demand": "Create an on-demand medication with these values?",
+        "confirm_delete_on_demand": "Really delete {name}? Its intakes are kept.",
         # body measurements
         "body_tab": "Body",
         "body_path": "body",
@@ -502,6 +535,142 @@ def _manage_cards(ids: _Ids, manager: ReminderManager, texts: dict[str, str]) ->
     return cards
 
 
+def _on_demand_cards(
+    ids: _Ids, manager: ReminderManager, texts: dict[str, str]
+) -> tuple[list[dict], list[str]]:
+    """Cards of the on-demand medications: (cards, monthly count sensors)."""
+    cards: list[dict[str, Any]] = []
+    month_ids: list[str] = []
+    meds = sorted(manager.on_demand.medications.values(), key=lambda m: m.name.lower())
+    for med in meds:
+        uid = med.id
+        taken = ids.get("button", f"{uid}_taken")
+        limit = ids.get("binary_sensor", f"{uid}_limit_reached")
+        month = ids.get("sensor", f"{uid}_intakes_month")
+        title = f"{med.name} {med.dosage}".strip()
+
+        if limit:
+            cards.append(
+                {
+                    "type": "markdown",
+                    "content": texts["limit_warning"].format(name=med.name),
+                    "visibility": _state_is(limit, "on"),
+                }
+            )
+        if taken:
+            cards.append(
+                {
+                    "type": "tile",
+                    "entity": taken,
+                    "name": f"{title} {texts['intake']}",
+                    "icon": "mdi:check-circle",
+                    "color": "blue",
+                    "hide_state": True,
+                    "tap_action": _press(taken, texts["confirm_intake"].format(name=med.name)),
+                    "grid_options": {"columns": 12},
+                }
+            )
+        for key, columns in (
+            ("intakes_month", 4),
+            ("intake_days_month", 4),
+            ("intakes_previous_month", 4),
+            ("intakes_today", 6),
+            ("last_intake", 6),
+        ):
+            if entity_id := ids.get("sensor", f"{uid}_{key}"):
+                cards.append(
+                    {"type": "tile", "entity": entity_id, "grid_options": {"columns": columns}}
+                )
+        if month:
+            month_ids.append(month)
+
+    if month_ids:
+        cards.append(
+            {
+                "type": "statistics-graph",
+                "title": texts["on_demand_chart"],
+                "chart_type": "bar",
+                "period": "month",
+                "days_to_show": 365,
+                "stat_types": ["change"],
+                "entities": month_ids,
+                "grid_options": {"columns": "full"},
+            }
+        )
+    return cards, month_ids
+
+
+def _on_demand_manage_cards(
+    ids: _Ids, manager: ReminderManager, texts: dict[str, str]
+) -> list[dict]:
+    """Cards to edit, add and delete on-demand medications."""
+    cards: list[dict[str, Any]] = [
+        {"type": "heading", "heading": texts["manage_on_demand"], "icon": "mdi:pill-multiple"},
+        {"type": "markdown", "content": texts["on_demand_hint"]},
+    ]
+    meds = sorted(manager.on_demand.medications.values(), key=lambda m: m.name.lower())
+    for med in meds:
+        rows: list[Any] = [
+            entity_id
+            for entity_id in (
+                ids.get("text", f"{med.id}_cfg_name"),
+                ids.get("text", f"{med.id}_cfg_dosage"),
+                ids.get("number", f"{med.id}_cfg_max_days_per_month"),
+                ids.get("number", f"{med.id}_cfg_max_per_day"),
+            )
+            if entity_id
+        ]
+        if delete := ids.get("button", f"{med.id}_delete_medication"):
+            rows.append(
+                {
+                    "type": "button",
+                    "name": texts["delete"],
+                    "icon": "mdi:delete",
+                    "action_name": texts["delete"],
+                    "tap_action": _press(
+                        delete, texts["confirm_delete_on_demand"].format(name=med.name)
+                    ),
+                }
+            )
+        cards.append(
+            {
+                "type": "entities",
+                "title": med.name,
+                "entities": rows,
+                "grid_options": {"columns": 6},
+            }
+        )
+
+    eid = manager.entry_id
+    new_rows: list[Any] = [
+        entity_id
+        for entity_id in (
+            ids.get("text", f"{eid}_new_on_demand_name"),
+            ids.get("text", f"{eid}_new_on_demand_dosage"),
+        )
+        if entity_id
+    ]
+    if add := ids.get("button", f"{eid}_add_on_demand"):
+        new_rows.append(
+            {
+                "type": "button",
+                "name": texts["new_on_demand"],
+                "icon": "mdi:plus-circle",
+                "action_name": texts["add"],
+                "tap_action": _press(add, texts["confirm_add_on_demand"]),
+            }
+        )
+    cards.append(
+        {
+            "type": "entities",
+            "title": texts["new_on_demand"],
+            "entities": new_rows,
+            "grid_options": {"columns": 6},
+        }
+    )
+    return cards
+
+
 def _person_view(
     hass: HomeAssistant,
     ids: _Ids,
@@ -523,6 +692,7 @@ def _person_view(
     now_cards, today_cards, stats_rows, chart_ids, status_ids = _medication_cards(
         ids, manager, texts
     )
+    on_demand_cards, on_demand_ids = _on_demand_cards(ids, manager, texts)
     sections: list[dict[str, Any]] = []
 
     # 1) Take now - only while something is due
@@ -538,7 +708,7 @@ def _person_view(
             }
         )
 
-    # 2) Today
+    # 2) Today (scheduled medications; hidden if there are only on-demand ones)
     today: list[dict[str, Any]] = [
         {"type": "heading", "heading": texts["today"], "icon": "mdi:calendar-today"}
     ]
@@ -553,7 +723,20 @@ def _person_view(
             }
         )
     today.extend(today_cards)
-    sections.append({"type": "grid", "cards": today})
+    if manager.medications or not on_demand_cards:
+        sections.append({"type": "grid", "cards": today})
+
+    # 2b) As needed (on-demand medication: log an intake, counts per month)
+    if on_demand_cards:
+        sections.append(
+            {
+                "type": "grid",
+                "cards": [
+                    {"type": "heading", "heading": texts["on_demand"], "icon": "mdi:pill-multiple"},
+                    *on_demand_cards,
+                ],
+            }
+        )
 
     # 3) Summary
     summary: list[dict[str, Any]] = [
@@ -644,8 +827,8 @@ def _person_view(
             }
         )
 
-    # 6) Log
-    if status_ids:
+    # 6) Log (doses and on-demand intakes)
+    if log_ids := status_ids + on_demand_ids:
         sections.append(
             {
                 "type": "grid",
@@ -659,7 +842,7 @@ def _person_view(
                     {
                         "type": "logbook",
                         "hours_to_show": 168,
-                        "target": {"entity_id": status_ids},
+                        "target": {"entity_id": log_ids},
                         "grid_options": {"columns": "full"},
                     },
                 ],
@@ -701,7 +884,8 @@ def _manage_view(
 ) -> dict[str, Any]:
     """Separate tab to manage medications and measurement settings."""
     sections: list[dict[str, Any]] = [
-        {"type": "grid", "column_span": 3, "cards": _manage_cards(ids, manager, texts)}
+        {"type": "grid", "column_span": 3, "cards": _manage_cards(ids, manager, texts)},
+        {"type": "grid", "column_span": 3, "cards": _on_demand_manage_cards(ids, manager, texts)},
     ]
     sections.append(
         {

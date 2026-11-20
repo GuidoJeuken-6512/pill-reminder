@@ -16,6 +16,8 @@ from .const import (
     CONF_DOSAGE,
     CONF_EARLY_MINUTES,
     CONF_LATE_MINUTES,
+    CONF_MAX_DAYS_PER_MONTH,
+    CONF_MAX_PER_DAY,
     CONF_NAME,
     CONF_TIMES,
     CONF_WEEKDAYS,
@@ -107,6 +109,39 @@ class Medication:
                     return slot
             day += timedelta(days=1)
         return None
+
+
+def _limit(value: Any) -> int | None:
+    """A configured limit; empty or 0 means no limit."""
+    return int(value) if value else None
+
+
+@dataclass(slots=True)
+class OnDemandMedication:
+    """A medication taken as needed (e.g. for migraine), without a schedule."""
+
+    id: str
+    name: str
+    dosage: str
+    max_days_per_month: int | None
+    max_per_day: int | None
+
+    @classmethod
+    def from_subentry(cls, subentry: ConfigSubentry) -> OnDemandMedication:
+        """Build an on-demand medication from its config subentry."""
+        data = subentry.data
+        return cls(
+            id=subentry.subentry_id,
+            name=data.get(CONF_NAME) or subentry.title,
+            dosage=data.get(CONF_DOSAGE, ""),
+            max_days_per_month=_limit(data.get(CONF_MAX_DAYS_PER_MONTH)),
+            max_per_day=_limit(data.get(CONF_MAX_PER_DAY)),
+        )
+
+    @property
+    def has_limit(self) -> bool:
+        """A monthly or daily limit is set."""
+        return bool(self.max_days_per_month or self.max_per_day)
 
 
 def dose_id_for(medication_id: str, scheduled: datetime) -> str:

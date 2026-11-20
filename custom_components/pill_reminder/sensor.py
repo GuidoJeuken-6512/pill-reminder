@@ -20,10 +20,18 @@ from homeassistant.util import dt as dt_util
 
 from . import PillReminderConfigEntry
 from .body import BodyTracker
-from .entity import BodyEntity, MeasurementEntity, MedicationEntity, PersonEntity
+from .entity import (
+    BodyEntity,
+    MeasurementEntity,
+    MedicationEntity,
+    OnDemandEntity,
+    PersonEntity,
+)
+from .intakes import month_window
 from .measurement_reminders import TrackedMetric
 from .metrics import BLOOD_PRESSURE, ValueField
-from .models import DoseStatus, Medication
+from .models import DoseStatus, Medication, OnDemandMedication
+from .on_demand import OnDemandTracker
 from .scheduler import ReminderManager
 from .stats import BloodPressureCategory, BmiCategory, TrendDirection, WhtrCategory
 
@@ -158,6 +166,11 @@ async def async_setup_entry(
             (MedicationSensor(manager, med, desc) for desc in MEDICATION_SENSORS),
             config_subentry_id=med.id,
         )
+    for med in manager.on_demand.medications.values():
+        async_add_entities(
+            (OnDemandSensor(manager, med, desc) for desc in ON_DEMAND_SENSORS),
+            config_subentry_id=med.id,
+        )
     if manager.body.enabled:
         async_add_entities(BodySensor(manager, desc) for desc in BODY_SENSORS)
     for tracked in manager.body.tracked.values():
@@ -227,6 +240,92 @@ class PersonSensor(PersonEntity, SensorEntity):
 
     def _update_from_manager(self) -> None:
         self._attr_native_value = self.entity_description.value_fn(self.manager, dt_util.utcnow())
+
+
+# ------------------------------------------------- on-demand medication
+
+
+@dataclass(frozen=True, kw_only=True)
+class OnDemandSensorDescription(SensorEntityDescription):
+    """Describes a sensor of an on-demand medication."""
+
+    value_fn: Callable[[OnDemandTracker, OnDemandMedication, datetime], Any]
+
+
+# The unit ("intakes" / "Einnahmen") comes from the translations.
+ON_DEMAND_SENSORS: tuple[OnDemandSensorDescription, ...] = (
+    OnDemandSensorDescription(
+        key="intakes_month",
+        translation_key="intakes_month",
+        # Restarts at 0 every month: the statistics count the intakes per month.
+        state_class=SensorStateClass.TOTAL,
+        value_fn=lambda t, med, now: t.count_month(med.id, now),
+    ),
+    OnDemandSensorDescription(
+        key="intake_days_month",
+        translation_key="intake_days_month",
+        native_unit_of_measurement=UnitOfTime.DAYS,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda t, med, now: t.days_month(med.id, now),
+    ),
+    OnDemandSensorDescription(
+        key="intakes_previous_month",
+        translation_key="intakes_previous_month",
+        value_fn=lambda t, med, now: t.count_previous_month(med.id, now),
+    ),
+    OnDemandSensorDescription(
+        key="intakes_30d",
+        translation_key="intakes_30d",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda t, med, now: t.count_30d(med.id, now),
+    ),
+    OnDemandSensorDescription(
+        key="intakes_today",
+        translation_key="intakes_today",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda t, med, now: t.count_today(med.id, now),
+    ),
+    OnDemandSensorDescription(
+        key="last_intake",
+        translation_key="last_intake",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda t, med, _now: t.last_intake(med.id),
+    ),
+)
+
+
+class OnDemandSensor(OnDemandEntity, SensorEntity):
+    """Counts of an on-demand medication (today, month, previous month, 30 days)."""
+
+    entity_description: OnDemandSensorDescription
+
+    def __init__(
+        self, manager: ReminderManager, med: OnDemandMedication, desc: OnDemandSensorDescription
+    ) -> None:
+        """Initialize."""
+        super().__init__(manager, med, desc.key)
+        self.entity_description = desc
+
+    def _update_from_manager(self) -> None:
+        now = dt_util.utcnow()
+        key = self.entity_description.key
+        self._attr_native_value = self.entity_description.value_fn(self.tracker, self.med, now)
+        attributes = self._filter_attributes()
+        if key == "intakes_month":
+            self._attr_last_reset = month_window(now)[0]
+            days = self.tracker.days_month(self.med.id, now)
+            limit = self.med.max_days_per_month
+            attributes |= {
+                "dosage": self.med.dosage,
+                "days": days,
+                "max_days_per_month": limit,
+                "days_left": max(limit - days, 0) if limit else None,
+            }
+        elif key == "intakes_previous_month":
+            attributes["days"] = self.tracker.days_previous_month(self.med.id, now)
+        elif key == "intakes_today":
+            attributes["max_per_day"] = self.med.max_per_day
+        self._attr_extra_state_attributes = attributes
 
 
 # ---------------------------------------------------------------- measurements

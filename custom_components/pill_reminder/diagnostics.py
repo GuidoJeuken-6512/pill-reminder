@@ -72,6 +72,19 @@ async def async_get_config_entry_diagnostics(
             [r.as_dict() for r in manager.history.records()[-50:]], TO_REDACT
         ),
         "measurements": async_redact_data(_measurements(manager, now), TO_REDACT),
+        # Counts and limits only; no names, dosages or intake times.
+        "on_demand": {
+            med.id: {
+                "max_days_per_month": med.max_days_per_month,
+                "max_per_day": med.max_per_day,
+                "intakes_today": tracker.count_today(med.id, now),
+                "intakes_month": tracker.count_month(med.id, now),
+                "intake_days_month": tracker.days_month(med.id, now),
+                "intakes_stored": len(tracker.store.intakes(med.id)),
+            }
+            for tracker in (manager.on_demand,)
+            for med in tracker.medications.values()
+        },
     }
 
 

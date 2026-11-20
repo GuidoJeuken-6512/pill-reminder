@@ -93,6 +93,26 @@ There are two ways to add a medication:
 
 **Changing a medication** takes effect immediately. **Deleting** a medication removes its entities; its past doses stay in the history and the export.
 
+### On-demand medication (as needed)
+
+Some medication is not taken on a schedule but when needed – for example a triptan or a painkiller for migraine. What matters there is not *whether* it was taken, but **how often**. For this, add an **on-demand medication**:
+
+- **In the dashboard:** **Manage** tab → **New on-demand medication** → name and dosage → **Add**.
+- **In the integration entry:** **Settings → Devices & services → Pill Reminder → Add on-demand medication**.
+
+| Field | Default | Meaning |
+|---|---|---|
+| **Name** | – | For example "Sumatriptan". |
+| **Dosage / note** | empty | Free text, for example "50 mg". |
+| **Limit: days per month** | none | Optional. When the medication was taken on this many **days** in the current calendar month, `binary_sensor.<name>_limit_reached` turns on and the person's phones get one warning (once per month). |
+| **Limit: intakes per day** | none | Optional. Warns (once per day) when it was taken this often on one day. |
+
+An on-demand medication has no intake times, no reminders and no "missed": press **Taken** after every intake. The integration counts the intakes today, this month, last month and in the last 30 days, and the **days** with an intake this month. Several intakes on one day count as one intake day.
+
+Why days? Headache specialists count the days with an intake to judge the risk of medication-overuse headache. As a reference (ICHD-3), triptans and combination analgesics on 10 or more days, and simple analgesics on 15 or more days per month, for more than three months, count as overuse. The limit is a personal reminder, not a diagnosis – talk to your doctor about the right value for you.
+
+An intake that was forgotten can be added afterwards with [`pill_reminder.log_intake`](#on-demand-actions) and a time, and one logged by mistake can be removed with `pill_reminder.delete_intake`. Deleting an on-demand medication keeps its intakes.
+
 ## 5. Reminder settings
 
 Open the person's entry and click the gear icon (**Configure**). The settings apply to all medications of that person; the last one applies to the measurements.
@@ -242,6 +262,7 @@ The integration creates the dashboard **Health** in the sidebar (`/pill-reminder
 
 - **Take now** – appears only while something is due. It holds a large **Taken** button per due medication, plus **Later**.
 - **Today** – every medication with its status, the next dose, and the **Taken**, **Skip** and **Remind** buttons. **Remind** is the pause switch.
+- **As needed** – per on-demand medication a **Taken** button (with a confirmation), the intakes this month, the intake days, last month, today and the last intake, a warning while a limit is reached, and a bar chart with the intakes per month. With only on-demand medications the **Today** section is left out.
 - **Summary** – taken, missed and skipped today; adherence over 7 and 30 days as gauges; one row per medication.
 - **History** – adherence over 30 days and the status of the last 7 days as charts.
 - **Calendar** and **Log**.
@@ -260,6 +281,7 @@ Charts and gauges appear after the first resolved dose; before that the dashboar
 - Change name, intake times, weekdays, dosage and both time windows of each medication. Changes take effect immediately.
 - **Delete** removes a medication after a confirmation.
 - **New medication** with name, times and dosage, then **Add**.
+- **Manage on-demand medication:** name, dosage and both limits, **Delete**, and **New on-demand medication**.
 - **Measurements:** the height and, per measurement, reminder on/off, time and weekdays.
 
 The person can do all of this without administrator rights. Invalid input, for example an unknown weekday, is rejected with a message.
@@ -304,6 +326,23 @@ Settings (configuration entities, used by the **Manage** tab):
 | `number.ramipril_missed_after_minutes` | Counts as missed after. |
 | `button.ramipril_delete_medication` | Delete the medication. |
 
+### Per on-demand medication
+
+Example: the on-demand medication "Sumatriptan".
+
+| Entity | Meaning |
+|---|---|
+| `button.sumatriptan_taken` | Log an intake now. |
+| `sensor.sumatriptan_intakes_this_month` | Intakes in the current calendar month. Restarts at 0 on the 1st; in the long-term statistics the monthly change is the number of intakes per month. Attributes: `days`, `max_days_per_month`, `days_left`. |
+| `sensor.sumatriptan_intake_days_this_month` | Days with at least one intake this month. |
+| `sensor.sumatriptan_intakes_last_month` | Intakes in the previous calendar month (attribute `days`). |
+| `sensor.sumatriptan_intakes_30_days` | Intakes in the last 30 days (rolling). |
+| `sensor.sumatriptan_intakes_today` | Intakes today. |
+| `sensor.sumatriptan_last_intake` | Time of the last intake. |
+| `binary_sensor.sumatriptan_limit_reached` | On while the monthly or daily limit is reached (only with a limit). Attributes `monthly_limit_reached`, `daily_limit_reached`. |
+
+Settings: `text.sumatriptan_name`, `text.sumatriptan_dosage`, `number.sumatriptan_limit_days_per_month`, `number.sumatriptan_limit_intakes_per_day` (0 = no limit) and `button.sumatriptan_delete_medication`. All entities carry the attributes `person`, `medication` and `on_demand: true`.
+
 ### Per person
 
 | Entity | Meaning |
@@ -315,6 +354,7 @@ Settings (configuration entities, used by the **Manage** tab):
 | `sensor.anna_streak` | Streak over all medications. |
 | `calendar.anna_medication` | All doses as calendar events. |
 | `text.anna_new_medication_name`, `…_times`, `…_dosage`, `button.anna_add_medication` | Form for a new medication. |
+| `text.anna_new_on_demand_medication_name`, `text.anna_new_on_demand_medication_dosage`, `button.anna_add_on_demand_medication` | Form for a new on-demand medication. |
 
 ### Per measurement
 
@@ -477,6 +517,25 @@ Values entered with an older `measured_at` count for change and trend, but do no
 
 **`pill_reminder.export_measurements`** – the values as CSV in `/config/pill_reminder/<person>_measurements_<date>_<time>.csv`. Columns: `id`, `metric` (`weight`, `waist`, `systolic`, `diastolic`, `pulse`), `value`, `measured_at`, `source`.
 
+### On-demand actions
+
+`entity_id` is any entity of the on-demand medication, for example `button.sumatriptan_taken`.
+
+**`pill_reminder.log_intake`** – log an intake; with `taken_at` one that was forgotten. A time without a time zone is local time. The response contains the intake and the counts of today and this month. `pill_reminder.mark_taken` does the same for an on-demand medication.
+
+```yaml
+action: pill_reminder.log_intake
+data:
+  entity_id: button.sumatriptan_taken
+  taken_at: "2026-11-14 21:30:00"   # optional
+```
+
+**`pill_reminder.delete_intake`** – delete the most recent intake, or the one with `intake_id`.
+
+**`pill_reminder.get_intakes`** – the intakes as response data, filtered by person (`config_entry_id`), medication (`entity_id`), `start` and `end`.
+
+**`pill_reminder.export_intakes`** – the intakes as CSV in `/config/pill_reminder/<person>_intakes_<date>_<time>.csv`. Columns: `id`, `medication_id`, `medication_name`, `taken_at`, `source`, `user_id`.
+
 ## 13. Events and automation examples
 
 The integration fires these events:
@@ -492,6 +551,32 @@ The integration fires these events:
 | `pill_reminder_dose_skipped` | A dose was skipped. |
 
 Each dose event carries `entity_id` (the medication's status sensor), `entry_id`, `person`, `user_id`, `medication`, `medication_id`, `dose_id`, `scheduled`, `status`, `source` and `reminders_sent`. The dose events also appear in the logbook of the medication's status sensor.
+
+On-demand medications fire two events; both appear in the logbook of `sensor.<name>_intakes_this_month`:
+
+| Event | When | Data |
+|---|---|---|
+| `pill_reminder_intake_taken` | An intake was logged. | `person`, `medication`, `medication_id`, `intake_id`, `taken_at`, `source`, `today`, `month`, `days_month`, `max_days_per_month`, `max_per_day` |
+| `pill_reminder_intake_limit_reached` | The monthly or daily limit was reached (once per month / day). | the same, without the intake fields |
+
+Monthly summary on the 1st, for example to show the doctor:
+
+```yaml
+automation:
+  - alias: "Migraine medication last month"
+    triggers:
+      - trigger: time
+        at: "09:00:00"
+    conditions:
+      - condition: template
+        value_template: "{{ now().day == 1 }}"
+    actions:
+      - action: notify.mobile_app_anna_phone
+        data:
+          message: >
+            Sumatriptan last month: {{ states('sensor.sumatriptan_intakes_last_month') }}
+            intakes on {{ state_attr('sensor.sumatriptan_intakes_last_month', 'days') }} days.
+```
 
 Measurements fire two more events:
 
@@ -597,7 +682,8 @@ automation:
 - All data stays in your Home Assistant. Nothing is sent to external services, except the push notifications through the Companion App.
 - Doses are stored per person in `/config/.storage/pill_reminder.<entry_id>`. They are saved a few seconds after each change and are part of the Home Assistant backup.
 - Measurements are stored per person in `/config/.storage/pill_reminder.<entry_id>.measurements`, also part of the backup.
-- Removing a person deletes their doses and measurements. Deleting a medication or a measurement keeps its history.
+- Intakes of on-demand medications are stored per person in `/config/.storage/pill_reminder.<entry_id>.intakes`. Like doses, they are kept for the history retention (default 365 days).
+- Removing a person deletes their doses, measurements and intakes. Deleting a medication or a measurement keeps its history.
 - **Diagnostics** (Settings → Devices & services → Pill Reminder → ⋮ → Download diagnostics) are made to be attached to public GitHub issues. Names, Home Assistant user ids, phones, medication names, dosages, the height and all measured values are removed. What stays are the times, weekdays, statuses, counters and timestamps needed to find a bug.
 
 ## 15. Troubleshooting

@@ -30,6 +30,12 @@
         "state": {
           "on": "mdi:bell-ring"
         }
+      },
+      "limit_reached": {
+        "default": "mdi:check-circle-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
       }
     },
     "button": {
@@ -56,6 +62,9 @@
       },
       "blood_pressure_save": {
         "default": "mdi:content-save"
+      },
+      "add_on_demand": {
+        "default": "mdi:plus-circle"
       }
     },
     "calendar": {
@@ -233,6 +242,24 @@
           "rising": "mdi:trending-up",
           "falling": "mdi:trending-down"
         }
+      },
+      "intakes_month": {
+        "default": "mdi:calendar-month"
+      },
+      "intake_days_month": {
+        "default": "mdi:calendar-check"
+      },
+      "intakes_previous_month": {
+        "default": "mdi:calendar-arrow-left"
+      },
+      "intakes_30d": {
+        "default": "mdi:calendar-range"
+      },
+      "intakes_today": {
+        "default": "mdi:calendar-today"
+      },
+      "last_intake": {
+        "default": "mdi:history"
       }
     },
     "switch": {
@@ -300,6 +327,12 @@
       },
       "blood_pressure_reminder_weekdays": {
         "default": "mdi:calendar-week"
+      },
+      "new_on_demand_name": {
+        "default": "mdi:pill"
+      },
+      "new_on_demand_dosage": {
+        "default": "mdi:scale-balance"
       }
     },
     "number": {
@@ -326,6 +359,12 @@
       },
       "pulse_input": {
         "default": "mdi:heart-pulse"
+      },
+      "cfg_max_days_per_month": {
+        "default": "mdi:calendar-alert"
+      },
+      "cfg_max_per_day": {
+        "default": "mdi:alert-circle-outline"
       }
     },
     "time": {
@@ -367,6 +406,18 @@
     },
     "export_measurements": {
       "service": "mdi:file-export"
+    },
+    "log_intake": {
+      "service": "mdi:check-circle"
+    },
+    "delete_intake": {
+      "service": "mdi:delete"
+    },
+    "get_intakes": {
+      "service": "mdi:history"
+    },
+    "export_intakes": {
+      "service": "mdi:file-delimited"
     }
   }
 }

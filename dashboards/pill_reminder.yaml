@@ -5,7 +5,8 @@
 #
 # Use it as a starting point for your own dashboard. It shows what the
 # generated dashboard looks like for a person "Anna" with the medication
-# "Ramipril" who also tracks weight, waist and blood pressure (Home
+# "Ramipril", the on-demand medication "Sumatriptan" (limit: 10 days a
+# month) who also tracks weight, waist and blood pressure (Home
 # Assistant language: English). Replace the entity ids with yours and add
 # `visible: [{user: <user id>}]` to restrict a view.
 
@@ -131,6 +132,63 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: As needed
+      icon: mdi:pill-multiple
+    - type: markdown
+      content: '⚠️ **Sumatriptan**: limit reached – please talk to your doctor.'
+      visibility:
+      - condition: state
+        entity: binary_sensor.sumatriptan_limit_reached
+        state: 'on'
+    - type: tile
+      entity: button.sumatriptan_taken
+      name: Sumatriptan 50 mg taken
+      icon: mdi:check-circle
+      color: blue
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.sumatriptan_taken
+        confirmation:
+          text: Log an intake of Sumatriptan?
+      grid_options:
+        columns: 12
+    - type: tile
+      entity: sensor.sumatriptan_intakes_this_month
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sumatriptan_intake_days_this_month
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sumatriptan_intakes_last_month
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: sensor.sumatriptan_intakes_today
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.sumatriptan_last_intake
+      grid_options:
+        columns: 6
+    - type: statistics-graph
+      title: Intakes per month
+      chart_type: bar
+      period: month
+      days_to_show: 365
+      stat_types:
+      - change
+      entities:
+      - sensor.sumatriptan_intakes_this_month
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
       heading: Summary
       icon: mdi:chart-arc
     - type: tile
@@ -223,7 +281,7 @@ views:
     - type: history-graph
       title: Status (7 days)
       hours_to_show: 168
-      entities: &id001
+      entities:
       - sensor.ramipril_status
       grid_options:
         columns: full
@@ -248,7 +306,9 @@ views:
     - type: logbook
       hours_to_show: 168
       target:
-        entity_id: *id001
+        entity_id:
+        - sensor.ramipril_status
+        - sensor.sumatriptan_intakes_this_month
       grid_options:
         columns: full
 - title: Body
@@ -659,6 +719,54 @@ views:
             entity_id: button.anna_add_medication
           confirmation:
             text: Create a medication with these values?
+      grid_options:
+        columns: 6
+  - type: grid
+    column_span: 3
+    cards:
+    - type: heading
+      heading: Manage on-demand medication
+      icon: mdi:pill-multiple
+    - type: markdown
+      content: 'Limit 0 = no limit. Reference (ICHD-3): triptans and combination analgesics on 10 or more,
+        simple analgesics on 15 or more days per month for more than 3 months are a risk for medication-overuse
+        headache. Not a diagnosis.'
+    - type: entities
+      title: Sumatriptan
+      entities:
+      - text.sumatriptan_name
+      - text.sumatriptan_dosage
+      - number.sumatriptan_limit_days_per_month
+      - number.sumatriptan_limit_intakes_per_day
+      - type: button
+        name: Delete
+        icon: mdi:delete
+        action_name: Delete
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.sumatriptan_delete_medication
+          confirmation:
+            text: Really delete Sumatriptan? Its intakes are kept.
+      grid_options:
+        columns: 6
+    - type: entities
+      title: New on-demand medication
+      entities:
+      - text.anna_new_on_demand_medication_name
+      - text.anna_new_on_demand_medication_dosage
+      - type: button
+        name: New on-demand medication
+        icon: mdi:plus-circle
+        action_name: Add
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target:
+            entity_id: button.anna_add_on_demand_medication
+          confirmation:
+            text: Create an on-demand medication with these values?
       grid_options:
         columns: 6
   - type: grid

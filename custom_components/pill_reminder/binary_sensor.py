@@ -1,14 +1,17 @@
-"""'Due' binary sensor for the Pill Reminder integration."""
+"""'Due' and 'limit reached' binary sensors for the Pill Reminder integration."""
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from . import PillReminderConfigEntry
-from .entity import MeasurementEntity, MedicationEntity, PersonEntity
+from .entity import MeasurementEntity, MedicationEntity, OnDemandEntity, PersonEntity
 
 PARALLEL_UPDATES = 0
 
@@ -25,6 +28,12 @@ async def async_setup_entry(
         async_add_entities(
             [MedicationDueBinarySensor(manager, med, "due")], config_subentry_id=med.id
         )
+    for med in manager.on_demand.medications.values():
+        if med.has_limit:
+            async_add_entities(
+                [OnDemandLimitBinarySensor(manager, med, "limit_reached")],
+                config_subentry_id=med.id,
+            )
     for tracked in manager.body.tracked.values():
         async_add_entities(
             [MeasurementDueBinarySensor(manager, tracked, "due")],
@@ -77,4 +86,25 @@ class MeasurementDueBinarySensor(MeasurementEntity, BinarySensorEntity):
             "person": self.manager.person,
             "metric": self.metric.key,
             "reminder_time": slot.isoformat() if slot else None,
+        }
+
+
+class OnDemandLimitBinarySensor(OnDemandEntity, BinarySensorEntity):
+    """On while an on-demand medication reached its monthly or daily limit."""
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
+    def _update_from_manager(self) -> None:
+        now = dt_util.utcnow()
+        monthly = self.tracker.monthly_limit_reached(self.med.id, now)
+        daily = self.tracker.daily_limit_reached(self.med.id, now)
+        self._attr_is_on = monthly or daily
+        self._attr_extra_state_attributes = {
+            **self._filter_attributes(),
+            "monthly_limit_reached": monthly,
+            "daily_limit_reached": daily,
+            "max_days_per_month": self.med.max_days_per_month,
+            "max_per_day": self.med.max_per_day,
+            "days_month": self.tracker.days_month(self.med.id, now),
+            "today": self.tracker.count_today(self.med.id, now),
         }

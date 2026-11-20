@@ -13,8 +13,8 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import PillReminderConfigEntry
 from .const import CONF_DOSAGE, CONF_NAME, CONF_TIMES, CONF_WEEKDAYS
-from .entity import MeasurementEntity, MedicationEntity, PersonEntity
-from .models import Medication
+from .entity import MeasurementEntity, MedicationEntity, OnDemandEntity, PersonEntity
+from .models import Medication, OnDemandMedication
 from .scheduler import ReminderManager
 from .validation import format_times, format_weekdays
 
@@ -67,6 +67,16 @@ DRAFT_TEXTS = (
     ("new_times", CONF_TIMES, 120),
     ("new_dosage", CONF_DOSAGE, 60),
 )
+# Input fields for a new on-demand medication
+ON_DEMAND_DRAFT_TEXTS = (
+    ("new_on_demand_name", CONF_NAME, 60),
+    ("new_on_demand_dosage", CONF_DOSAGE, 60),
+)
+# Settings of an on-demand medication: (key, field, min length, max length)
+ON_DEMAND_TEXTS = (
+    ("cfg_name", CONF_NAME, 1, 60),
+    ("cfg_dosage", CONF_DOSAGE, 0, 60),
+)
 
 
 async def async_setup_entry(
@@ -79,6 +89,18 @@ async def async_setup_entry(
     async_add_entities(
         DraftText(manager, key, field, max_len) for key, field, max_len in DRAFT_TEXTS
     )
+    async_add_entities(
+        DraftText(manager, key, field, max_len, manager.on_demand.draft)
+        for key, field, max_len in ON_DEMAND_DRAFT_TEXTS
+    )
+    for med in manager.on_demand.medications.values():
+        async_add_entities(
+            (
+                OnDemandText(manager, med, key, field, min_len, max_len)
+                for key, field, min_len, max_len in ON_DEMAND_TEXTS
+            ),
+            config_subentry_id=med.id,
+        )
     for med in manager.medications.values():
         async_add_entities(
             (MedicationText(manager, med, desc) for desc in MEDICATION_TEXTS),
@@ -114,22 +136,30 @@ class MedicationText(MedicationEntity, TextEntity):
 
 
 class DraftText(PersonEntity, TextEntity):
-    """Input field for a new medication."""
+    """Input field for a new (scheduled or on-demand) medication."""
 
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, manager: ReminderManager, key: str, field: str, max_len: int) -> None:
-        """Initialize."""
+    def __init__(
+        self,
+        manager: ReminderManager,
+        key: str,
+        field: str,
+        max_len: int,
+        draft: dict[str, str] | None = None,
+    ) -> None:
+        """Initialize; the inputs are kept in `draft` (default: scheduled medication)."""
         super().__init__(manager, key)
         self._field = field
+        self._draft = draft if draft is not None else manager.draft
         self._attr_native_max = max_len
 
     def _update_from_manager(self) -> None:
-        self._attr_native_value = self.manager.draft[self._field]
+        self._attr_native_value = self._draft[self._field]
 
     async def async_set_value(self, value: str) -> None:
-        """Remember the input until 'add medication' is pressed."""
-        self.manager.draft[self._field] = value.strip()
+        """Remember the input until 'add' is pressed."""
+        self._draft[self._field] = value.strip()
         self._update_from_manager()
         self.async_write_ha_state()
 
@@ -137,6 +167,34 @@ class DraftText(PersonEntity, TextEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributes for dashboard filters."""
         return {"person": self.manager.person}
+
+
+class OnDemandText(OnDemandEntity, TextEntity):
+    """Name or dosage of an on-demand medication."""
+
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(
+        self,
+        manager: ReminderManager,
+        med: OnDemandMedication,
+        key: str,
+        field: str,
+        min_len: int,
+        max_len: int,
+    ) -> None:
+        """Initialize."""
+        super().__init__(manager, med, key)
+        self._field = field
+        self._attr_native_min = min_len
+        self._attr_native_max = max_len
+
+    def _update_from_manager(self) -> None:
+        self._attr_native_value = self.med.name if self._field == CONF_NAME else self.med.dosage
+
+    async def async_set_value(self, value: str) -> None:
+        """Validate and store; the person reloads."""
+        self.tracker.async_update_medication(self.med.id, {self._field: value})
 
 
 class ReminderWeekdaysText(MeasurementEntity, TextEntity):

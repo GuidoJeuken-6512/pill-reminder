@@ -12,6 +12,8 @@ from .const import (
     CONF_DOSAGE,
     CONF_EARLY_MINUTES,
     CONF_LATE_MINUTES,
+    CONF_MAX_DAYS_PER_MONTH,
+    CONF_MAX_PER_DAY,
     CONF_METRIC,
     CONF_NAME,
     CONF_REMINDER_ENABLED,
@@ -168,6 +170,47 @@ def validate_medication(user_input: dict[str, Any]) -> tuple[dict[str, Any], dic
         CONF_EARLY_MINUTES: early,
         CONF_LATE_MINUTES: late,
     }
+    return data, errors
+
+
+# ------------------------------------------------- on-demand medication
+
+# Highest values accepted for the limits of an on-demand medication
+MAX_DAYS_PER_MONTH = 31
+MAX_PER_DAY = 24
+
+
+def _parse_limit(value: Any, maximum: int) -> int | None:
+    """Empty or 0 = no limit; otherwise a whole number from 1 to `maximum`."""
+    if value in (None, ""):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as err:
+        raise MedicationInvalid("invalid_limit") from err
+    if number != int(number) or not 0 <= number <= maximum:
+        raise MedicationInvalid("invalid_limit")
+    return int(number) or None
+
+
+def validate_on_demand(user_input: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str]]:
+    """Validate an on-demand medication; return (clean data, errors per field)."""
+    errors: dict[str, str] = {}
+    name = str(user_input.get(CONF_NAME, "")).strip()
+    if not name:
+        errors[CONF_NAME] = "name_required"
+    data: dict[str, Any] = {
+        CONF_NAME: name,
+        CONF_DOSAGE: str(user_input.get(CONF_DOSAGE, "") or "").strip(),
+    }
+    for key, maximum in (
+        (CONF_MAX_DAYS_PER_MONTH, MAX_DAYS_PER_MONTH),
+        (CONF_MAX_PER_DAY, MAX_PER_DAY),
+    ):
+        try:
+            data[key] = _parse_limit(user_input.get(key), maximum)
+        except MedicationInvalid as err:
+            errors[key] = err.key
     return data, errors
 
 

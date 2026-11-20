@@ -1,4 +1,4 @@
-"""Service actions of the Pill Reminder integration (doses and measurements)."""
+"""Service actions of the Pill Reminder integration (doses, intakes, measurements)."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from .const import (
     ATTR_CONFIG_ENTRY_ID,
     ATTR_DATE,
     ATTR_END,
+    ATTR_INTAKE_ID,
     ATTR_MEASURED_AT,
     ATTR_METRIC,
     ATTR_START,
@@ -31,11 +32,15 @@ from .const import (
     CONF_METRIC,
     DOMAIN,
     SERVICE_ADD_MEASUREMENT,
+    SERVICE_DELETE_INTAKE,
     SERVICE_DELETE_MEASUREMENT,
     SERVICE_EXPORT_HISTORY,
+    SERVICE_EXPORT_INTAKES,
     SERVICE_EXPORT_MEASUREMENTS,
     SERVICE_GET_HISTORY,
+    SERVICE_GET_INTAKES,
     SERVICE_GET_MEASUREMENTS,
+    SERVICE_LOG_INTAKE,
     SERVICE_MARK_TAKEN,
     SERVICE_SKIP,
     SERVICE_SNOOZE,
@@ -47,7 +52,9 @@ from .models import DoseRecord, DoseStatus
 
 if TYPE_CHECKING:
     from .body import BodyTracker
+    from .intakes import Intake
     from .measurements import Measurement
+    from .on_demand import OnDemandTracker
     from .scheduler import ReminderManager
 
 ATTR_MINUTES = "minutes"
@@ -101,6 +108,33 @@ def _resolve_medication(hass: HomeAssistant, entity_id: str) -> tuple[ReminderMa
     return manager, entity.config_subentry_id
 
 
+def _on_demand_of(hass: HomeAssistant, entity_id: str) -> tuple[OnDemandTracker, str] | None:
+    """(tracker, medication id) if the entity belongs to an on-demand medication."""
+    entity = er.async_get(hass).async_get(entity_id)
+    if (
+        entity is None
+        or entity.platform != DOMAIN
+        or entity.config_entry_id is None
+        or entity.config_subentry_id is None
+    ):
+        return None
+    tracker = _manager_for_entry(hass, entity.config_entry_id).on_demand
+    if entity.config_subentry_id not in tracker.medications:
+        return None
+    return tracker, entity.config_subentry_id
+
+
+def _resolve_on_demand(hass: HomeAssistant, entity_id: str) -> tuple[OnDemandTracker, str]:
+    """Map any entity of an on-demand medication to (tracker, medication id)."""
+    if (resolved := _on_demand_of(hass, entity_id)) is None:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="not_an_on_demand_medication",
+            translation_placeholders={"entity_id": entity_id},
+        )
+    return resolved
+
+
 def _managers(hass: HomeAssistant, call: ServiceCall) -> list[tuple[ReminderManager, str | None]]:
     """Managers (and optional medication filter) selected by a history call."""
     if entity_id := call.data.get(ATTR_ENTITY_ID):
@@ -122,6 +156,119 @@ def _filtered(call: ServiceCall, manager: ReminderManager, med_id: str | None) -
         end=dt_util.as_utc(end) if end else None,
         medication_id=med_id,
         statuses={DoseStatus(s) for s in statuses} if statuses else None,
+    )
+
+
+# ------------------------------------------------- on-demand medication
+
+LOG_INTAKE_SCHEMA = MARK_TAKEN_SCHEMA
+DELETE_INTAKE_SCHEMA = MEDICATION_SCHEMA.extend({vol.Optional(ATTR_INTAKE_ID): cv.string})
+INTAKES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Optional(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Optional(ATTR_START): cv.datetime,
+        vol.Optional(ATTR_END): cv.datetime,
+    }
+)
+
+
+def _trackers(hass: HomeAssistant, call: ServiceCall) -> list[tuple[OnDemandTracker, str | None]]:
+    """Persons (and optional medication filter) selected by an intake history call."""
+    if entity_id := call.data.get(ATTR_ENTITY_ID):
+        return [_resolve_on_demand(hass, entity_id)]
+    if entry_id := call.data.get(ATTR_CONFIG_ENTRY_ID):
+        return [(_manager_for_entry(hass, entry_id).on_demand, None)]
+    return [
+        (entry.runtime_data.on_demand, None)
+        for entry in hass.config_entries.async_loaded_entries(DOMAIN)
+    ]
+
+
+def _intakes(call: ServiceCall, tracker: OnDemandTracker, med_id: str | None) -> list[Intake]:
+    start = call.data.get(ATTR_START)
+    end = call.data.get(ATTR_END)
+    return tracker.store.intakes(
+        med_id,
+        start=dt_util.as_utc(start) if start else None,
+        end=dt_util.as_utc(end) if end else None,
+    )
+
+
+@callback
+def _async_setup_on_demand_services(hass: HomeAssistant) -> None:
+    """Register the actions of on-demand medications."""
+
+    async def log_intake(call: ServiceCall) -> ServiceResponse:
+        tracker, med_id = _resolve_on_demand(hass, call.data[ATTR_ENTITY_ID])
+        intake = await tracker.async_take(
+            med_id,
+            source=SOURCE_SERVICE,
+            user_id=call.context.user_id,
+            taken_at=call.data.get(ATTR_TAKEN_AT),
+        )
+        now = dt_util.utcnow()
+        return {
+            "intake": intake.as_dict(),
+            "today": tracker.count_today(med_id, now),
+            "month": tracker.count_month(med_id, now),
+            "days_month": tracker.days_month(med_id, now),
+        }
+
+    async def delete_intake(call: ServiceCall) -> ServiceResponse:
+        tracker, med_id = _resolve_on_demand(hass, call.data[ATTR_ENTITY_ID])
+        removed = tracker.delete_intake(med_id, call.data.get(ATTR_INTAKE_ID))
+        return {"deleted": removed.as_dict()}
+
+    async def get_intakes(call: ServiceCall) -> ServiceResponse:
+        people: list[dict[str, Any]] = [
+            {
+                "config_entry_id": tracker.entry.entry_id,
+                "person": tracker.manager.person,
+                "intakes": [i.as_dict() for i in _intakes(call, tracker, med_id)],
+            }
+            for tracker, med_id in _trackers(hass, call)
+        ]
+        return {"people": people}
+
+    async def export_intakes(call: ServiceCall) -> ServiceResponse:
+        stamp = dt_util.now().strftime("%Y%m%d_%H%M%S")
+        files = []
+        for tracker, med_id in _trackers(hass, call):
+            intakes = _intakes(call, tracker, med_id)
+            person = tracker.manager.person
+            slug = "".join(c if c.isalnum() else "_" for c in person.lower())
+            path = await tracker.store.async_export_csv(f"{slug}_intakes_{stamp}.csv", intakes)
+            files.append({"person": person, "path": path, "count": len(intakes)})
+        return {"files": files}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_LOG_INTAKE,
+        log_intake,
+        LOG_INTAKE_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_INTAKE,
+        delete_intake,
+        DELETE_INTAKE_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_INTAKES,
+        get_intakes,
+        INTAKES_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_EXPORT_INTAKES,
+        export_intakes,
+        INTAKES_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
     )
 
 
@@ -300,8 +447,19 @@ def _async_setup_measurement_services(hass: HomeAssistant) -> None:
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register services (once, independent of config entries)."""
     _async_setup_measurement_services(hass)
+    _async_setup_on_demand_services(hass)
 
     async def mark_taken(call: ServiceCall) -> None:
+        if on_demand := _on_demand_of(hass, call.data[ATTR_ENTITY_ID]):
+            # "Taken" of an on-demand medication logs an intake.
+            tracker, med_id = on_demand
+            await tracker.async_take(
+                med_id,
+                source=SOURCE_SERVICE,
+                user_id=call.context.user_id,
+                taken_at=call.data.get(ATTR_TAKEN_AT),
+            )
+            return
         manager, med_id = _resolve_medication(hass, call.data[ATTR_ENTITY_ID])
         await manager.async_take(
             med_id,
