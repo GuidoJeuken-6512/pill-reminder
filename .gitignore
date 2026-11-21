@@ -6,3 +6,6 @@ __pycache__/
 .claude/
 site/
 .cache/
+
+# Local drafts, not part of the repository
+facebook-post.md
