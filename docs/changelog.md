@@ -2,6 +2,30 @@
 
 All releases of Health Tracker (formerly Pill Reminder). Each release is also on [GitHub](https://github.com/GuidoJeuken-6512/pill-reminder/releases).
 
+## v1.0.0 – First stable release
+
+*Released 2026-11-21* · [GitHub release](https://github.com/GuidoJeuken-6512/pill-reminder/releases/tag/v1.0.0)
+
+### Health Tracker 1.0 – first stable release
+
+Health Tracker (formerly Pill Reminder) reaches 1.0. The configuration, entity ids, actions and events are now considered stable; existing installations update without changes.
+
+#### What's in it
+
+- **Medication reminders** – several intake times and weekdays per medication, phone notifications with **Taken** and **Later**, repeats, escalation to another person, missed-dose messages, pause, a log of every dose, adherence over 7 and 30 days, streak and calendar.
+- **On-demand medication** – for medication taken as needed, e.g. for migraine: **Log intake** button, intakes per day and month, intake days, optional monthly and daily limits with a warning.
+- **Body measurements** – weight, waist and blood pressure with reminders, BMI, waist-to-height ratio, blood pressure class (ESC/ESH), 7-day averages and trends.
+- **Dashboard** – created automatically, laid out for phones, visible only to the person and administrators; medications and measurements can be managed there without admin rights.
+- **Actions and events** for your own automations, CSV export, diagnostics without personal data.
+- English and German.
+
+#### New since 0.7.1
+
+- **Documentation site:** https://guidojeuken-6512.github.io/pill-reminder/ – with screenshots, user guide and changelog.
+- Health Tracker is in the **HACS default store**: search for *Health Tracker* in HACS, no custom repository needed.
+
+Requires Home Assistant 2026.8 or newer.
+
 ## v0.7.1 – Dashboard made for phones
 
 *Released 2026-11-21* · [GitHub release](https://github.com/GuidoJeuken-6512/pill-reminder/releases/tag/v0.7.1)

@@ -70,7 +70,7 @@ On a large screen the same sections sit side by side:
 
 ## Quick start
 
-1. **Install** with HACS: add `https://github.com/GuidoJeuken-6512/pill-reminder` as a custom repository (type *Integration*), install **Health Tracker** and restart Home Assistant. Requires Home Assistant 2026.8 or newer.
+1. **Install** with HACS: Health Tracker is in the HACS default store. Search for **Health Tracker**, install it and restart Home Assistant. Requires Home Assistant 2026.8 or newer.
 
     [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GuidoJeuken-6512&repository=pill-reminder&category=integration)
 

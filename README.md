@@ -2,7 +2,7 @@
 
 # Health Tracker
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
 [![Release](https://img.shields.io/github/v/release/GuidoJeuken-6512/pill-reminder)](https://github.com/GuidoJeuken-6512/pill-reminder/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/GuidoJeuken-6512/pill-reminder/total?label=downloads)](https://github.com/GuidoJeuken-6512/pill-reminder/releases)
 ![Usage](https://img.shields.io/badge/dynamic/json?color=9932CC&logo=home-assistant&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.pill_reminder.total)
@@ -54,7 +54,7 @@ Home Assistant integration that reminds people to take their medication and to e
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GuidoJeuken-6512&repository=pill-reminder&category=integration)
 
-or manually: HACS → ⋮ → Custom repositories → add `https://github.com/GuidoJeuken-6512/pill-reminder` (type "Integration"), install "Health Tracker", restart Home Assistant.
+or search for **Health Tracker** in HACS (it is in the HACS default store), install it and restart Home Assistant.
 **Manual**: copy `custom_components/pill_reminder` to `/config/custom_components/`, restart Home Assistant.
 
 Requires Home Assistant 2026.8 or newer.

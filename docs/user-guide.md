@@ -44,7 +44,7 @@ Requires Home Assistant **2026.8** or newer.
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GuidoJeuken-6512&repository=pill-reminder&category=integration)
 
-1. Click the button above, or open HACS → ⋮ → **Custom repositories** and add `https://github.com/GuidoJeuken-6512/pill-reminder` with the type **Integration**.
+1. Click the button above, or open HACS and search for **Health Tracker** (it is in the HACS default store, no custom repository needed).
 2. Install **Health Tracker**.
 3. Restart Home Assistant.
 
