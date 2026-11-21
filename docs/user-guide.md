@@ -255,6 +255,8 @@ A reminder looks like this (Home Assistant language English):
 
 The integration creates the dashboard **Health** in the sidebar (`/pill-reminder`) automatically. It always shows the current medications and measurements; there is nothing to maintain.
 
+It uses only Home Assistant's own cards and is laid out for phones: every card takes the full or half width of its section, and each medication or measurement has its own heading. On a large screen the same sections are shown side by side.
+
 **Who can see what**
 
 - Each person has up to three tabs: their **medication** tab (named after the person), **Body** (only when the person tracks measurements) and **Manage**. With several persons the tabs are called "Body (Anna)" and "Manage (Anna)".
@@ -262,10 +264,10 @@ The integration creates the dashboard **Health** in the sidebar (`/pill-reminder
 
 **The person's tab**
 
-- **Take now** – appears only while something is due. It holds a large **Taken** button per due medication, plus **Later**.
-- **Today** – every medication with its status, the next dose, and the **Taken**, **Skip** and **Remind** buttons. **Remind** is the pause switch.
-- **As needed** – per on-demand medication a **Taken** button (with a confirmation), the intakes this month, the intake days, last month, today and the last intake, a warning while a limit is reached, and a bar chart with the intakes per month. With only on-demand medications the **Today** section is left out.
-- **Summary** – taken, missed and skipped today; adherence over 7 and 30 days as gauges; one row per medication.
+- **Take now** – appears only while something is due: per due medication **Confirm** and **Later**.
+- **Today** – one block per medication: its name with the next dose on the right, then **Status**, **Confirm**, **Skip** and **Remind**. **Remind** is the pause switch.
+- **As needed** – per on-demand medication a **Log intake** button (with a confirmation), the intakes this month, last month, today and in 30 days, and a warning while a limit is reached. With a monthly limit, a gauge shows the intake days against the limit (amber from 70 %, red at the limit); without one, the intake days and the last intake are shown as tiles. Below: a bar chart with the intakes per month. With only on-demand medications the **Today** section is left out.
+- **Summary** – taken, missed and skipped today next to the heading; adherence over 7 and 30 days as gauges; one row per medication.
 - **History** – adherence over 30 days and the status of the last 7 days as charts.
 - **Calendar** and **Log**.
 
@@ -274,8 +276,8 @@ Charts and gauges appear after the first resolved dose; before that the dashboar
 **Body tab**
 
 - **Enter today** – one card per measurement with its input fields and a **Save** button, plus a hint while today's value is still missing.
-- One section per measurement: last value, when it was measured, change over 7 and 30 days, trend direction. For blood pressure: last reading, class, 7-day averages and trend directions.
-- **BMI & waist-to-height** – gauges with colour bands and the class. They appear once there is a value and a height; before that a hint explains what is missing.
+- One section per measurement, with the time of the last reading next to the heading: current value, trend direction, change over 7 and 30 days. For blood pressure: last reading, class, 7-day averages, trend directions and pulse.
+- **BMI & waist-to-height** – gauges with colour bands; the class is shown in the gauge. They appear once there is a value and a height; before that a hint explains what is missing.
 - **History (90 days)** – mean, minimum and maximum per day.
 
 **Manage tab**

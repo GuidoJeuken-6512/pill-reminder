@@ -21,15 +21,19 @@ views:
   - type: entity
     entity: sensor.anna_open_today
     show_name: true
+    name: Open
   - type: entity
     entity: sensor.anna_taken_today
     show_name: true
+    name: Taken
   - type: entity
     entity: sensor.anna_missed_today
     show_name: true
+    name: Missed
   - type: entity
     entity: sensor.anna_adherence_7_days
     show_name: true
+    name: Adherence 7 d
   sections:
   - type: grid
     visibility:
@@ -40,9 +44,19 @@ views:
     - type: heading
       heading: Take now
       icon: mdi:bell-ring
+    - type: heading
+      heading: Ramipril 5 mg
+      icon: mdi:pill
+      heading_style: subtitle
+      visibility: &id001
+      - condition: state
+        entity: binary_sensor.ramipril_due
+        state: 'on'
     - type: tile
       entity: button.ramipril_taken
-      name: Ramipril 5 mg taken
+      grid_options:
+        columns: 6
+      name: Confirm
       icon: mdi:check-circle
       color: green
       hide_state: true
@@ -51,14 +65,11 @@ views:
         perform_action: button.press
         target:
           entity_id: button.ramipril_taken
-      grid_options:
-        columns: 8
-      visibility:
-      - condition: state
-        entity: binary_sensor.ramipril_due
-        state: 'on'
+      visibility: *id001
     - type: tile
       entity: button.ramipril_snooze
+      grid_options:
+        columns: 6
       name: Later
       icon: mdi:alarm-snooze
       color: amber
@@ -68,12 +79,7 @@ views:
         perform_action: button.press
         target:
           entity_id: button.ramipril_snooze
-      grid_options:
-        columns: 4
-      visibility:
-      - condition: state
-        entity: binary_sensor.ramipril_due
-        state: 'on'
+      visibility: *id001
   - type: grid
     cards:
     - type: heading
@@ -85,20 +91,26 @@ views:
       - condition: state
         entity: binary_sensor.anna_medication_due
         state: 'off'
+    - type: heading
+      heading: Ramipril 5 mg
+      icon: mdi:pill
+      heading_style: subtitle
+      badges:
+      - type: entity
+        entity: sensor.ramipril_next_dose
+        show_state: true
+        show_icon: true
     - type: tile
       entity: sensor.ramipril_status
-      name: Ramipril 5 mg
-      icon: mdi:pill
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.ramipril_next_dose
-      name: Next
-      grid_options:
-        columns: 6
+      name: Status
     - type: tile
       entity: button.ramipril_taken
-      name: Taken
+      grid_options:
+        columns: 6
+      name: Confirm
+      icon: mdi:check-circle
       color: green
       hide_state: true
       tap_action:
@@ -108,11 +120,12 @@ views:
           entity_id: button.ramipril_taken
         confirmation:
           text: Mark Ramipril as taken?
-      grid_options:
-        columns: 4
     - type: tile
       entity: button.ramipril_skip
+      grid_options:
+        columns: 6
       name: Skip
+      icon: mdi:skip-next-circle
       color: grey
       hide_state: true
       tap_action:
@@ -122,18 +135,26 @@ views:
           entity_id: button.ramipril_skip
         confirmation:
           text: Skip Ramipril on purpose?
-      grid_options:
-        columns: 4
     - type: tile
       entity: switch.ramipril_reminders
-      name: Remind
       grid_options:
-        columns: 4
+        columns: 6
+      name: Remind
+      color: blue
   - type: grid
     cards:
     - type: heading
       heading: As needed
       icon: mdi:pill-multiple
+    - type: heading
+      heading: Sumatriptan 50 mg
+      icon: mdi:pill-multiple
+      heading_style: subtitle
+      badges:
+      - type: entity
+        entity: sensor.sumatriptan_last_intake
+        show_state: true
+        show_icon: true
     - type: markdown
       content: '⚠️ **Sumatriptan**: limit reached – please talk to your doctor.'
       visibility:
@@ -142,8 +163,10 @@ views:
         state: 'on'
     - type: tile
       entity: button.sumatriptan_taken
-      name: Sumatriptan 50 mg taken
-      icon: mdi:check-circle
+      grid_options:
+        columns: 12
+      name: Log intake
+      icon: mdi:plus-circle
       color: blue
       hide_state: true
       tap_action:
@@ -153,28 +176,42 @@ views:
           entity_id: button.sumatriptan_taken
         confirmation:
           text: Log an intake of Sumatriptan?
+    - type: gauge
+      entity: sensor.sumatriptan_intake_days_this_month
+      name: Days (limit 10)
+      min: 0
+      max: 10
+      needle: true
+      segments:
+      - from: 0
+        color: '#43a047'
+      - from: 7
+        color: '#ffa600'
+      - from: 10
+        color: '#db4437'
       grid_options:
-        columns: 12
+        columns: 6
+        rows: 2
     - type: tile
       entity: sensor.sumatriptan_intakes_this_month
       grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.sumatriptan_intake_days_this_month
-      grid_options:
-        columns: 4
+        columns: 6
+      name: This month
     - type: tile
       entity: sensor.sumatriptan_intakes_last_month
       grid_options:
-        columns: 4
+        columns: 6
+      name: Last month
     - type: tile
       entity: sensor.sumatriptan_intakes_today
       grid_options:
         columns: 6
+      name: Today
     - type: tile
-      entity: sensor.sumatriptan_last_intake
+      entity: sensor.sumatriptan_intakes_30_days
       grid_options:
         columns: 6
+      name: 30 days
     - type: statistics-graph
       title: Intakes per month
       chart_type: bar
@@ -191,21 +228,22 @@ views:
     - type: heading
       heading: Summary
       icon: mdi:chart-arc
-    - type: tile
-      entity: sensor.anna_taken_today
-      color: green
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.anna_missed_today
-      color: red
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.anna_skipped_today
-      color: grey
-      grid_options:
-        columns: 4
+      badges:
+      - type: entity
+        entity: sensor.anna_taken_today
+        show_state: true
+        show_icon: true
+        color: green
+      - type: entity
+        entity: sensor.anna_missed_today
+        show_state: true
+        show_icon: true
+        color: red
+      - type: entity
+        entity: sensor.anna_skipped_today
+        show_state: true
+        show_icon: true
+        color: grey
     - type: markdown
       content: No adherence data yet – it appears after the first dose.
       visibility:
@@ -247,14 +285,18 @@ views:
         entity: sensor.anna_adherence_30_days
         above: -1
     - type: entities
-      title: Per medication
       entities:
       - entity: sensor.ramipril_adherence_7_days
         name: Ramipril · 7 days
       - entity: sensor.ramipril_adherence_30_days
         name: Ramipril · 30 days
       - entity: sensor.ramipril_streak
+        name: Ramipril · Streak
       - entity: sensor.ramipril_last_taken
+        name: Ramipril · Last taken
+      grid_options:
+        columns: 12
+      title: Per medication
   - type: grid
     column_span: 2
     cards:
@@ -320,15 +362,19 @@ views:
   - type: entity
     entity: sensor.anna_weight
     show_name: true
+    name: Weight
   - type: entity
     entity: sensor.anna_waist
     show_name: true
+    name: Waist circumference
   - type: entity
     entity: sensor.anna_blood_pressure
     show_name: true
+    name: Blood pressure
   - type: entity
     entity: sensor.anna_bmi
     show_name: true
+    name: BMI
   sections:
   - type: grid
     cards:
@@ -342,9 +388,9 @@ views:
         entity: binary_sensor.anna_weight_due
         state: 'on'
     - type: entities
-      title: Weight
       entities:
       - entity: number.anna_weight_enter
+        name: Weight
         icon: mdi:scale-bathroom
       - type: button
         name: Enter the values, then save
@@ -356,7 +402,8 @@ views:
           target:
             entity_id: button.anna_weight_save
       grid_options:
-        columns: 6
+        columns: 12
+      title: Weight
     - type: markdown
       content: ⏰ Today's **Waist circumference** is still missing.
       visibility:
@@ -364,9 +411,9 @@ views:
         entity: binary_sensor.anna_waist_due
         state: 'on'
     - type: entities
-      title: Waist circumference
       entities:
       - entity: number.anna_waist_enter
+        name: Waist circumference
         icon: mdi:tape-measure
       - type: button
         name: Enter the values, then save
@@ -378,7 +425,8 @@ views:
           target:
             entity_id: button.anna_waist_save
       grid_options:
-        columns: 6
+        columns: 12
+      title: Waist circumference
     - type: markdown
       content: ⏰ Today's **Blood pressure** is still missing.
       visibility:
@@ -386,7 +434,6 @@ views:
         entity: binary_sensor.anna_blood_pressure_due
         state: 'on'
     - type: entities
-      title: Blood pressure
       entities:
       - entity: number.anna_blood_pressure_systolic
         name: Systolic
@@ -404,94 +451,118 @@ views:
           target:
             entity_id: button.anna_blood_pressure_save
       grid_options:
-        columns: 6
+        columns: 12
+      title: Blood pressure
   - type: grid
     cards:
     - type: heading
       heading: Weight
       icon: mdi:scale-bathroom
+      badges:
+      - type: entity
+        entity: sensor.anna_weight_measured
+        show_state: true
+        show_icon: true
     - type: tile
       entity: sensor.anna_weight
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anna_weight_measured
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.anna_weight_change_7_days
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.anna_weight_change_30_days
-      grid_options:
-        columns: 4
+      name: Current
     - type: tile
       entity: sensor.anna_weight_trend_direction
       grid_options:
-        columns: 4
+        columns: 6
+      name: Trend
+    - type: tile
+      entity: sensor.anna_weight_change_7_days
+      grid_options:
+        columns: 6
+      name: 7 days
+    - type: tile
+      entity: sensor.anna_weight_change_30_days
+      grid_options:
+        columns: 6
+      name: 30 days
   - type: grid
     cards:
     - type: heading
       heading: Waist circumference
       icon: mdi:tape-measure
+      badges:
+      - type: entity
+        entity: sensor.anna_waist_measured
+        show_state: true
+        show_icon: true
     - type: tile
       entity: sensor.anna_waist
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anna_waist_measured
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.anna_waist_change_7_days
-      grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.anna_waist_change_30_days
-      grid_options:
-        columns: 4
+      name: Current
     - type: tile
       entity: sensor.anna_waist_trend_direction
       grid_options:
-        columns: 4
+        columns: 6
+      name: Trend
+    - type: tile
+      entity: sensor.anna_waist_change_7_days
+      grid_options:
+        columns: 6
+      name: 7 days
+    - type: tile
+      entity: sensor.anna_waist_change_30_days
+      grid_options:
+        columns: 6
+      name: 30 days
   - type: grid
     cards:
     - type: heading
       heading: Blood pressure
       icon: mdi:heart-pulse
+      badges:
+      - type: entity
+        entity: sensor.anna_blood_pressure_measured
+        show_state: true
+        show_icon: true
     - type: tile
       entity: sensor.anna_blood_pressure
       grid_options:
         columns: 6
+      name: Current
     - type: tile
       entity: sensor.anna_blood_pressure_category
       grid_options:
         columns: 6
-    - type: tile
-      entity: sensor.anna_blood_pressure_measured
-      grid_options:
-        columns: 6
+      name: Class
     - type: tile
       entity: sensor.anna_blood_pressure_systolic_7_day_average
       grid_options:
-        columns: 4
+        columns: 6
+      name: Systolic 7-d avg
     - type: tile
       entity: sensor.anna_blood_pressure_diastolic_7_day_average
       grid_options:
-        columns: 4
-    - type: tile
-      entity: sensor.anna_blood_pressure_pulse_7_day_average
-      grid_options:
-        columns: 4
+        columns: 6
+      name: Diastolic 7-d avg
     - type: tile
       entity: sensor.anna_blood_pressure_systolic_trend_direction
       grid_options:
         columns: 6
+      name: Systolic Trend
     - type: tile
       entity: sensor.anna_blood_pressure_diastolic_trend_direction
       grid_options:
         columns: 6
+      name: Diastolic Trend
+    - type: tile
+      entity: sensor.anna_blood_pressure_pulse
+      grid_options:
+        columns: 6
+      name: Pulse
+    - type: tile
+      entity: sensor.anna_blood_pressure_pulse_7_day_average
+      grid_options:
+        columns: 6
+      name: Pulse 7-d avg
     - type: markdown
       content: <small>Class of the last reading per ESC/ESH (office values). At home, averages from 135/85
         count as high. Not a diagnosis.</small>
@@ -505,6 +576,15 @@ views:
       visibility:
       - condition: state
         entity: sensor.anna_bmi
+        state:
+        - unknown
+        - unavailable
+    - type: markdown
+      content: The waist-to-height ratio appears after the first waist value and needs the height (Manage
+        tab).
+      visibility:
+      - condition: state
+        entity: sensor.anna_waist_to_height_ratio
         state:
         - unknown
         - unavailable
@@ -527,29 +607,12 @@ views:
       - from: 30
         color: '#db4437'
         label: Obese
-      grid_options:
-        columns: 6
       visibility:
       - condition: numeric_state
         entity: sensor.anna_bmi
         above: 0
-    - type: tile
-      entity: sensor.anna_bmi_category
       grid_options:
         columns: 6
-      visibility:
-      - condition: numeric_state
-        entity: sensor.anna_bmi
-        above: 0
-    - type: markdown
-      content: The waist-to-height ratio appears after the first waist value and needs the height (Manage
-        tab).
-      visibility:
-      - condition: state
-        entity: sensor.anna_waist_to_height_ratio
-        state:
-        - unknown
-        - unavailable
     - type: gauge
       entity: sensor.anna_waist_to_height_ratio
       name: Waist-to-height ratio
@@ -566,20 +629,12 @@ views:
       - from: 0.6
         color: '#db4437'
         label: High
-      grid_options:
-        columns: 6
       visibility:
       - condition: numeric_state
         entity: sensor.anna_waist_to_height_ratio
         above: 0
-    - type: tile
-      entity: sensor.anna_waist_to_height_category
       grid_options:
         columns: 6
-      visibility:
-      - condition: numeric_state
-        entity: sensor.anna_waist_to_height_ratio
-        above: 0
     - type: markdown
       content: <small>BMI and WHtR are reference values for adults, not a diagnosis. Not a medical device.</small>
   - type: grid
@@ -678,17 +733,24 @@ views:
     - type: markdown
       content: 'Changes apply immediately. Times: `08:00, 20:00` · Weekdays: `daily`, `Mon-Fri` or `Mon,
         Wed, Fri`.'
+  - type: grid
+    cards:
     - type: entities
-      title: Ramipril
-      state_color: true
       entities:
-      - text.ramipril_name
-      - text.ramipril_intake_times
-      - text.ramipril_weekdays
-      - text.ramipril_dosage
-      - number.ramipril_confirm_early_minutes_before
-      - number.ramipril_missed_after_minutes
-      - switch.ramipril_reminders
+      - entity: text.ramipril_name
+        name: Name
+      - entity: text.ramipril_intake_times
+        name: Intake times
+      - entity: text.ramipril_weekdays
+        name: Weekdays
+      - entity: text.ramipril_dosage
+        name: Dosage
+      - entity: number.ramipril_confirm_early_minutes_before
+        name: Confirm early
+      - entity: number.ramipril_missed_after_minutes
+        name: Missed after
+      - entity: switch.ramipril_reminders
+        name: Reminders
       - type: button
         name: Delete
         icon: mdi:delete
@@ -701,13 +763,19 @@ views:
           confirmation:
             text: Really delete Ramipril? Its history is kept.
       grid_options:
-        columns: 6
+        columns: 12
+      title: Ramipril
+      state_color: true
+  - type: grid
+    cards:
     - type: entities
-      title: New medication
       entities:
-      - text.anna_new_medication_name
-      - text.anna_new_medication_times
-      - text.anna_new_medication_dosage
+      - entity: text.anna_new_medication_name
+        name: Name
+      - entity: text.anna_new_medication_times
+        name: Intake times
+      - entity: text.anna_new_medication_dosage
+        name: Dosage
       - type: button
         name: New medication
         icon: mdi:plus-circle
@@ -720,7 +788,8 @@ views:
           confirmation:
             text: Create a medication with these values?
       grid_options:
-        columns: 6
+        columns: 12
+      title: New medication
   - type: grid
     column_span: 3
     cards:
@@ -731,13 +800,18 @@ views:
       content: 'Limit 0 = no limit. Reference (ICHD-3): triptans and combination analgesics on 10 or more,
         simple analgesics on 15 or more days per month for more than 3 months are a risk for medication-overuse
         headache. Not a diagnosis.'
+  - type: grid
+    cards:
     - type: entities
-      title: Sumatriptan
       entities:
-      - text.sumatriptan_name
-      - text.sumatriptan_dosage
-      - number.sumatriptan_limit_days_per_month
-      - number.sumatriptan_limit_intakes_per_day
+      - entity: text.sumatriptan_name
+        name: Name
+      - entity: text.sumatriptan_dosage
+        name: Dosage
+      - entity: number.sumatriptan_limit_days_per_month
+        name: Limit days/month
+      - entity: number.sumatriptan_limit_intakes_per_day
+        name: Limit per day
       - type: button
         name: Delete
         icon: mdi:delete
@@ -750,12 +824,16 @@ views:
           confirmation:
             text: Really delete Sumatriptan? Its intakes are kept.
       grid_options:
-        columns: 6
+        columns: 12
+      title: Sumatriptan
+  - type: grid
+    cards:
     - type: entities
-      title: New on-demand medication
       entities:
-      - text.anna_new_on_demand_medication_name
-      - text.anna_new_on_demand_medication_dosage
+      - entity: text.anna_new_on_demand_medication_name
+        name: Name
+      - entity: text.anna_new_on_demand_medication_dosage
+        name: Dosage
       - type: button
         name: New on-demand medication
         icon: mdi:plus-circle
@@ -768,58 +846,82 @@ views:
           confirmation:
             text: Create an on-demand medication with these values?
       grid_options:
-        columns: 6
+        columns: 12
+      title: New on-demand medication
   - type: grid
     column_span: 3
     cards:
     - type: heading
       heading: Measurements
       icon: mdi:heart-pulse
-    - type: entities
-      title: Track
-      state_color: true
-      entities:
-      - switch.anna_track_weight
-      - switch.anna_track_waist_circumference
-      - switch.anna_track_blood_pressure
-      grid_options:
-        columns: 6
     - type: markdown
       content: Switching off removes the measurement from the dashboard; the stored values are kept and
         come back when it is switched on again.
     - type: markdown
       content: 'Reminder per measurement: time and weekdays, e.g. `daily`, `Mon` or `Mon-Fri`. The height
         is needed for BMI and waist-to-height ratio.'
+  - type: grid
+    cards:
     - type: entities
-      title: Person
       entities:
-      - number.anna_height
+      - entity: switch.anna_track_weight
+        name: Weight
+      - entity: switch.anna_track_waist_circumference
+        name: Waist circumference
+      - entity: switch.anna_track_blood_pressure
+        name: Blood pressure
       grid_options:
-        columns: 6
+        columns: 12
+      title: Track
+      state_color: true
+  - type: grid
+    cards:
     - type: entities
+      entities:
+      - entity: number.anna_height
+        name: Height
+      grid_options:
+        columns: 12
+      title: Person
+  - type: grid
+    cards:
+    - type: entities
+      entities:
+      - entity: switch.anna_weight_reminder
+        name: Reminder
+      - entity: time.anna_weight_reminder_time
+        name: Time
+      - entity: text.anna_weight_reminder_weekdays
+        name: Weekdays
+      grid_options:
+        columns: 12
       title: Weight
       state_color: true
-      entities:
-      - switch.anna_weight_reminder
-      - time.anna_weight_reminder_time
-      - text.anna_weight_reminder_weekdays
-      grid_options:
-        columns: 6
+  - type: grid
+    cards:
     - type: entities
+      entities:
+      - entity: switch.anna_waist_reminder
+        name: Reminder
+      - entity: time.anna_waist_reminder_time
+        name: Time
+      - entity: text.anna_waist_reminder_weekdays
+        name: Weekdays
+      grid_options:
+        columns: 12
       title: Waist circumference
       state_color: true
-      entities:
-      - switch.anna_waist_reminder
-      - time.anna_waist_reminder_time
-      - text.anna_waist_reminder_weekdays
-      grid_options:
-        columns: 6
+  - type: grid
+    cards:
     - type: entities
+      entities:
+      - entity: switch.anna_blood_pressure_reminder
+        name: Reminder
+      - entity: time.anna_blood_pressure_reminder_time
+        name: Time
+      - entity: text.anna_blood_pressure_reminder_weekdays
+        name: Weekdays
+      grid_options:
+        columns: 12
       title: Blood pressure
       state_color: true
-      entities:
-      - switch.anna_blood_pressure_reminder
-      - time.anna_blood_pressure_reminder_time
-      - text.anna_blood_pressure_reminder_weekdays
-      grid_options:
-        columns: 6

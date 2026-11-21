@@ -41,6 +41,40 @@ METRIC_ICONS = {
 TEXTS: dict[str, dict[str, str]] = {
     "de": {
         "title": "Gesundheit",
+        # short labels (cards are narrow on phones)
+        "confirm": "Bestätigen",
+        "status": "Status",
+        "streak": "Serie",
+        "last_taken": "Zuletzt",
+        "open_short": "Offen",
+        "taken_short": "Eingenommen",
+        "missed_short": "Verpasst",
+        "adherence_short": "Treue 7 T.",
+        "log_intake": "Einnahme erfassen",
+        "this_month": "Diesen Monat",
+        "intake_days": "Einnahmetage",
+        "last_month": "Vormonat",
+        "last_intake": "Zuletzt",
+        "limit_days": "Tage (Grenze {limit})",
+        "current": "Aktuell",
+        "trend": "Trend",
+        "category": "Einstufung",
+        "avg_7d": "Ø 7 T.",
+        "f_name": "Name",
+        "f_times": "Einnahmezeiten",
+        "f_weekdays": "Wochentage",
+        "f_dosage": "Dosierung",
+        "f_early": "Früher bestätigbar",
+        "f_late": "Verpasst nach",
+        "f_remind": "Erinnerungen",
+        "f_limit_month": "Grenze Tage/Monat",
+        "f_limit_day": "Grenze pro Tag",
+        "f_reminder": "Erinnerung",
+        "f_time": "Uhrzeit",
+        "f_height": "Größe",
+        "f_systolic": "Systolisch",
+        "f_diastolic": "Diastolisch",
+        "f_pulse": "Puls",
         "now": "Jetzt einnehmen",
         "today": "Heute",
         "nothing_due": "✅ Gerade ist nichts fällig.",
@@ -147,6 +181,40 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "en": {
         "title": "Health",
+        # short labels (cards are narrow on phones)
+        "confirm": "Confirm",
+        "status": "Status",
+        "streak": "Streak",
+        "last_taken": "Last taken",
+        "open_short": "Open",
+        "taken_short": "Taken",
+        "missed_short": "Missed",
+        "adherence_short": "Adherence 7 d",
+        "log_intake": "Log intake",
+        "this_month": "This month",
+        "intake_days": "Intake days",
+        "last_month": "Last month",
+        "last_intake": "Last",
+        "limit_days": "Days (limit {limit})",
+        "current": "Current",
+        "trend": "Trend",
+        "category": "Class",
+        "avg_7d": "7-d avg",
+        "f_name": "Name",
+        "f_times": "Intake times",
+        "f_weekdays": "Weekdays",
+        "f_dosage": "Dosage",
+        "f_early": "Confirm early",
+        "f_late": "Missed after",
+        "f_remind": "Reminders",
+        "f_limit_month": "Limit days/month",
+        "f_limit_day": "Limit per day",
+        "f_reminder": "Reminder",
+        "f_time": "Time",
+        "f_height": "Height",
+        "f_systolic": "Systolic",
+        "f_diastolic": "Diastolic",
+        "f_pulse": "Pulse",
         "now": "Take now",
         "today": "Today",
         "nothing_due": "✅ Nothing is due right now.",
@@ -339,10 +407,110 @@ class _Ids:
         return self._registry.async_get_entity_id(domain, DOMAIN, unique_id)
 
 
+# --------------------------------------------------------------- layout helpers
+#
+# A section is about as wide as a phone, also on a desktop. Cards therefore
+# use the full section width (12 columns) or half of it (6), never less, and
+# get short names: the medication or measurement is in the heading above.
+
+FULL = 12
+HALF = 6
+
+
+def _tile(entity_id: str, columns: int = HALF, **extra: Any) -> dict[str, Any]:
+    return {"type": "tile", "entity": entity_id, "grid_options": {"columns": columns}, **extra}
+
+
+def _button(
+    entity_id: str,
+    name: str,
+    icon: str,
+    color: str,
+    confirmation: str | None = None,
+    columns: int = HALF,
+    **extra: Any,
+) -> dict[str, Any]:
+    """A tile that presses a button entity."""
+    return _tile(
+        entity_id,
+        columns,
+        name=name,
+        icon=icon,
+        color=color,
+        hide_state=True,
+        tap_action=_press(entity_id, confirmation),
+        **extra,
+    )
+
+
+def _chip(entity_id: str, **extra: Any) -> dict[str, Any]:
+    """Small badge in a heading, e.g. the time of the next dose."""
+    return {"type": "entity", "entity": entity_id, "show_state": True, "show_icon": True, **extra}
+
+
+def _heading(
+    text: str,
+    icon: str | None = None,
+    *,
+    badges: list[dict[str, Any]] | None = None,
+    sub: bool = False,
+    **extra: Any,
+) -> dict[str, Any]:
+    card: dict[str, Any] = {"type": "heading", "heading": text}
+    if icon:
+        card["icon"] = icon
+    if sub:
+        card["heading_style"] = "subtitle"
+    if badges:
+        card["badges"] = badges
+    return card | extra
+
+
+def _row(entity_id: str | None, name: str) -> dict[str, Any] | None:
+    return {"entity": entity_id, "name": name} if entity_id else None
+
+
+def _entities(title: str | None, rows: list[Any], **extra: Any) -> dict[str, Any]:
+    card: dict[str, Any] = {
+        "type": "entities",
+        "entities": [r for r in rows if r],
+        "grid_options": {"columns": FULL},
+    }
+    if title:
+        card["title"] = title
+    return card | extra
+
+
+def _form_button(
+    entity_id: str, name: str, icon: str, action: str, confirmation: str | None
+) -> dict:
+    """Button row at the end of an entities card (save, add, delete)."""
+    return {
+        "type": "button",
+        "name": name,
+        "icon": icon,
+        "action_name": action,
+        "tap_action": _press(entity_id, confirmation),
+    }
+
+
+def _view_badge(entity_id: str | None, name: str) -> dict[str, Any] | None:
+    if not entity_id:
+        return None
+    return {"type": "entity", "entity": entity_id, "show_name": True, "name": name}
+
+
+def _med_title(name: str, dosage: str) -> str:
+    return f"{name} {dosage}".strip()
+
+
+# ------------------------------------------------------------ medication cards
+
+
 def _medication_cards(
     ids: _Ids, manager: ReminderManager, texts: dict[str, str]
 ) -> tuple[list[dict], list[dict], list[dict], list[str], list[str]]:
-    """Cards per medication: (take now, today, per-medication entities, charts, logbook)."""
+    """Cards per medication: (take now, today, per-medication rows, charts, logbook)."""
     now_cards: list[dict] = []
     today_cards: list[dict] = []
     stats_rows: list[dict] = []
@@ -362,177 +530,119 @@ def _medication_cards(
         adherence_30 = ids.get("sensor", f"{uid}_adherence_30d")
         streak = ids.get("sensor", f"{uid}_streak")
         reminders = ids.get("switch", f"{uid}_reminders")
-        title = f"{med.name} {med.dosage}".strip()
+        title = _med_title(med.name, med.dosage)
 
+        # Take now: per due medication a heading and two large buttons
         if due and taken:
+            visible = _state_is(due, "on")
+            now_cards.append(_heading(title, "mdi:pill", sub=True, visibility=visible))
             now_cards.append(
-                {
-                    "type": "tile",
-                    "entity": taken,
-                    "name": f"{title} {texts['taken']}",
-                    "icon": "mdi:check-circle",
-                    "color": "green",
-                    "hide_state": True,
-                    "tap_action": _press(taken),
-                    "grid_options": {"columns": 8},
-                    "visibility": _state_is(due, "on"),
-                }
+                _button(taken, texts["confirm"], "mdi:check-circle", "green", visibility=visible)
             )
-        if due and snooze:
-            now_cards.append(
-                {
-                    "type": "tile",
-                    "entity": snooze,
-                    "name": texts["later"],
-                    "icon": "mdi:alarm-snooze",
-                    "color": "amber",
-                    "hide_state": True,
-                    "tap_action": _press(snooze),
-                    "grid_options": {"columns": 4},
-                    "visibility": _state_is(due, "on"),
-                }
-            )
+            if snooze:
+                now_cards.append(
+                    _button(snooze, texts["later"], "mdi:alarm-snooze", "amber", visibility=visible)
+                )
 
+        # Today: heading with the next dose, then status and actions two by two
+        today_cards.append(
+            _heading(
+                title,
+                "mdi:pill",
+                sub=True,
+                badges=[_chip(next_dose)] if next_dose else None,
+            )
+        )
         if status:
-            today_cards.append(
-                {
-                    "type": "tile",
-                    "entity": status,
-                    "name": title,
-                    "icon": "mdi:pill",
-                    "grid_options": {"columns": 6},
-                }
-            )
+            today_cards.append(_tile(status, name=texts["status"]))
             status_ids.append(status)
-        if next_dose:
-            today_cards.append(
-                {
-                    "type": "tile",
-                    "entity": next_dose,
-                    "name": texts["next"],
-                    "grid_options": {"columns": 6},
-                }
-            )
         if taken:
             today_cards.append(
-                {
-                    "type": "tile",
-                    "entity": taken,
-                    "name": texts["taken"].capitalize(),
-                    "color": "green",
-                    "hide_state": True,
-                    "tap_action": _press(taken, texts["confirm_taken"].format(name=med.name)),
-                    "grid_options": {"columns": 4},
-                }
+                _button(
+                    taken,
+                    texts["confirm"],
+                    "mdi:check-circle",
+                    "green",
+                    texts["confirm_taken"].format(name=med.name),
+                )
             )
         if skip:
             today_cards.append(
-                {
-                    "type": "tile",
-                    "entity": skip,
-                    "name": texts["skip"],
-                    "color": "grey",
-                    "hide_state": True,
-                    "tap_action": _press(skip, texts["confirm_skip"].format(name=med.name)),
-                    "grid_options": {"columns": 4},
-                }
+                _button(
+                    skip,
+                    texts["skip"],
+                    "mdi:skip-next-circle",
+                    "grey",
+                    texts["confirm_skip"].format(name=med.name),
+                )
             )
         if reminders:
-            today_cards.append(
-                {
-                    "type": "tile",
-                    "entity": reminders,
-                    "name": texts["remind"],
-                    "grid_options": {"columns": 4},
-                }
-            )
+            today_cards.append(_tile(reminders, name=texts["remind"], color="blue"))
 
         for entity_id, label in (
             (adherence_7, texts["days_7"]),
             (adherence_30, texts["days_30"]),
-            (streak, None),  # entity name is already "<medication> Serie"
-            (last_taken, None),
+            (streak, texts["streak"]),
+            (last_taken, texts["last_taken"]),
         ):
             if entity_id:
-                row: dict[str, Any] = {"entity": entity_id}
-                if label:
-                    row["name"] = f"{med.name} · {label}"
-                stats_rows.append(row)
+                stats_rows.append({"entity": entity_id, "name": f"{med.name} · {label}"})
         if adherence_7:
             chart_ids.append(adherence_7)
 
     return now_cards, today_cards, stats_rows, chart_ids, status_ids
 
 
-def _manage_cards(ids: _Ids, manager: ReminderManager, texts: dict[str, str]) -> list[dict]:
-    """Cards to edit, add and delete medications."""
-    cards: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["manage"], "icon": "mdi:cog"},
-        {"type": "markdown", "content": texts["manage_hint"]},
+def _manage_sections(
+    ids: _Ids, manager: ReminderManager, texts: dict[str, str]
+) -> list[dict[str, Any]]:
+    """Edit, add and delete medications: one card per medication in its own section."""
+    sections: list[dict[str, Any]] = [
+        {
+            "type": "grid",
+            "column_span": 3,
+            "cards": [
+                _heading(texts["manage"], "mdi:cog"),
+                {"type": "markdown", "content": texts["manage_hint"]},
+            ],
+        }
     ]
     for med in sorted(manager.medications.values(), key=lambda m: m.name.lower()):
         rows: list[Any] = [
-            entity_id
-            for entity_id in (
-                ids.get("text", f"{med.id}_cfg_name"),
-                ids.get("text", f"{med.id}_cfg_times"),
-                ids.get("text", f"{med.id}_cfg_weekdays"),
-                ids.get("text", f"{med.id}_cfg_dosage"),
-                ids.get("number", f"{med.id}_cfg_early_minutes"),
-                ids.get("number", f"{med.id}_cfg_late_minutes"),
-                ids.get("switch", f"{med.id}_reminders"),
-            )
-            if entity_id
+            _row(ids.get("text", f"{med.id}_cfg_name"), texts["f_name"]),
+            _row(ids.get("text", f"{med.id}_cfg_times"), texts["f_times"]),
+            _row(ids.get("text", f"{med.id}_cfg_weekdays"), texts["f_weekdays"]),
+            _row(ids.get("text", f"{med.id}_cfg_dosage"), texts["f_dosage"]),
+            _row(ids.get("number", f"{med.id}_cfg_early_minutes"), texts["f_early"]),
+            _row(ids.get("number", f"{med.id}_cfg_late_minutes"), texts["f_late"]),
+            _row(ids.get("switch", f"{med.id}_reminders"), texts["f_remind"]),
         ]
         if delete := ids.get("button", f"{med.id}_delete_medication"):
             rows.append(
-                {
-                    "type": "button",
-                    "name": texts["delete"],
-                    "icon": "mdi:delete",
-                    "action_name": texts["delete"],
-                    "tap_action": _press(delete, texts["confirm_delete"].format(name=med.name)),
-                }
+                _form_button(
+                    delete,
+                    texts["delete"],
+                    "mdi:delete",
+                    texts["delete"],
+                    texts["confirm_delete"].format(name=med.name),
+                )
             )
-        cards.append(
-            {
-                "type": "entities",
-                "title": med.name,
-                "state_color": True,
-                "entities": rows,
-                "grid_options": {"columns": 6},
-            }
-        )
+        sections.append({"type": "grid", "cards": [_entities(med.name, rows, state_color=True)]})
 
     eid = manager.entry_id
     new_rows: list[Any] = [
-        entity_id
-        for entity_id in (
-            ids.get("text", f"{eid}_new_name"),
-            ids.get("text", f"{eid}_new_times"),
-            ids.get("text", f"{eid}_new_dosage"),
-        )
-        if entity_id
+        _row(ids.get("text", f"{eid}_new_name"), texts["f_name"]),
+        _row(ids.get("text", f"{eid}_new_times"), texts["f_times"]),
+        _row(ids.get("text", f"{eid}_new_dosage"), texts["f_dosage"]),
     ]
     if add := ids.get("button", f"{eid}_add_medication"):
         new_rows.append(
-            {
-                "type": "button",
-                "name": texts["new_medication"],
-                "icon": "mdi:plus-circle",
-                "action_name": texts["add"],
-                "tap_action": _press(add, texts["confirm_add"]),
-            }
+            _form_button(
+                add, texts["new_medication"], "mdi:plus-circle", texts["add"], texts["confirm_add"]
+            )
         )
-    cards.append(
-        {
-            "type": "entities",
-            "title": texts["new_medication"],
-            "entities": new_rows,
-            "grid_options": {"columns": 6},
-        }
-    )
-    return cards
+    sections.append({"type": "grid", "cards": [_entities(texts["new_medication"], new_rows)]})
+    return sections
 
 
 def _on_demand_cards(
@@ -544,11 +654,25 @@ def _on_demand_cards(
     meds = sorted(manager.on_demand.medications.values(), key=lambda m: m.name.lower())
     for med in meds:
         uid = med.id
+
+        def sensor(key: str, _uid: str = uid) -> str | None:
+            return ids.get("sensor", f"{_uid}_{key}")
+
         taken = ids.get("button", f"{uid}_taken")
         limit = ids.get("binary_sensor", f"{uid}_limit_reached")
-        month = ids.get("sensor", f"{uid}_intakes_month")
-        title = f"{med.name} {med.dosage}".strip()
+        month = sensor("intakes_month")
+        days = sensor("intake_days_month")
+        last = sensor("last_intake")
+        gauge = bool(med.max_days_per_month and days)
 
+        cards.append(
+            _heading(
+                _med_title(med.name, med.dosage),
+                "mdi:pill-multiple",
+                sub=True,
+                badges=[_chip(last)] if gauge and last else None,
+            )
+        )
         if limit:
             cards.append(
                 {
@@ -559,28 +683,53 @@ def _on_demand_cards(
             )
         if taken:
             cards.append(
+                _button(
+                    taken,
+                    texts["log_intake"],
+                    "mdi:plus-circle",
+                    "blue",
+                    texts["confirm_intake"].format(name=med.name),
+                    columns=FULL,
+                )
+            )
+        if gauge and days and med.max_days_per_month:
+            # Intake days against the limit: a meter that turns amber at 70 %
+            # and red at the limit (left), with two counts beside it.
+            limit_days = med.max_days_per_month
+            cards.append(
                 {
-                    "type": "tile",
-                    "entity": taken,
-                    "name": f"{title} {texts['intake']}",
-                    "icon": "mdi:check-circle",
-                    "color": "blue",
-                    "hide_state": True,
-                    "tap_action": _press(taken, texts["confirm_intake"].format(name=med.name)),
-                    "grid_options": {"columns": 12},
+                    "type": "gauge",
+                    "entity": days,
+                    "name": texts["limit_days"].format(limit=limit_days),
+                    "min": 0,
+                    "max": limit_days,
+                    "needle": True,
+                    "segments": [
+                        {"from": 0, "color": "#43a047"},
+                        {"from": max(round(limit_days * 0.7), 1), "color": "#ffa600"},
+                        {"from": limit_days, "color": "#db4437"},
+                    ],
+                    "grid_options": {"columns": HALF, "rows": 2},
                 }
             )
-        for key, columns in (
-            ("intakes_month", 4),
-            ("intake_days_month", 4),
-            ("intakes_previous_month", 4),
-            ("intakes_today", 6),
-            ("last_intake", 6),
-        ):
-            if entity_id := ids.get("sensor", f"{uid}_{key}"):
-                cards.append(
-                    {"type": "tile", "entity": entity_id, "grid_options": {"columns": columns}}
-                )
+            tiles = (
+                ("intakes_month", texts["this_month"]),
+                ("intakes_previous_month", texts["last_month"]),
+                ("intakes_today", texts["today"]),
+                ("intakes_30d", texts["days_30"]),
+            )
+        else:
+            tiles = (
+                ("intakes_month", texts["this_month"]),
+                ("intake_days_month", texts["intake_days"]),
+                ("intakes_previous_month", texts["last_month"]),
+                ("intakes_30d", texts["days_30"]),
+                ("intakes_today", texts["today"]),
+                ("last_intake", texts["last_intake"]),
+            )
+        for key, name in tiles:
+            if entity_id := sensor(key):
+                cards.append(_tile(entity_id, name=name))
         if month:
             month_ids.append(month)
 
@@ -600,75 +749,57 @@ def _on_demand_cards(
     return cards, month_ids
 
 
-def _on_demand_manage_cards(
+def _on_demand_manage_sections(
     ids: _Ids, manager: ReminderManager, texts: dict[str, str]
-) -> list[dict]:
-    """Cards to edit, add and delete on-demand medications."""
-    cards: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["manage_on_demand"], "icon": "mdi:pill-multiple"},
-        {"type": "markdown", "content": texts["on_demand_hint"]},
+) -> list[dict[str, Any]]:
+    """Edit, add and delete on-demand medications."""
+    sections: list[dict[str, Any]] = [
+        {
+            "type": "grid",
+            "column_span": 3,
+            "cards": [
+                _heading(texts["manage_on_demand"], "mdi:pill-multiple"),
+                {"type": "markdown", "content": texts["on_demand_hint"]},
+            ],
+        }
     ]
     meds = sorted(manager.on_demand.medications.values(), key=lambda m: m.name.lower())
     for med in meds:
         rows: list[Any] = [
-            entity_id
-            for entity_id in (
-                ids.get("text", f"{med.id}_cfg_name"),
-                ids.get("text", f"{med.id}_cfg_dosage"),
-                ids.get("number", f"{med.id}_cfg_max_days_per_month"),
-                ids.get("number", f"{med.id}_cfg_max_per_day"),
-            )
-            if entity_id
+            _row(ids.get("text", f"{med.id}_cfg_name"), texts["f_name"]),
+            _row(ids.get("text", f"{med.id}_cfg_dosage"), texts["f_dosage"]),
+            _row(ids.get("number", f"{med.id}_cfg_max_days_per_month"), texts["f_limit_month"]),
+            _row(ids.get("number", f"{med.id}_cfg_max_per_day"), texts["f_limit_day"]),
         ]
         if delete := ids.get("button", f"{med.id}_delete_medication"):
             rows.append(
-                {
-                    "type": "button",
-                    "name": texts["delete"],
-                    "icon": "mdi:delete",
-                    "action_name": texts["delete"],
-                    "tap_action": _press(
-                        delete, texts["confirm_delete_on_demand"].format(name=med.name)
-                    ),
-                }
+                _form_button(
+                    delete,
+                    texts["delete"],
+                    "mdi:delete",
+                    texts["delete"],
+                    texts["confirm_delete_on_demand"].format(name=med.name),
+                )
             )
-        cards.append(
-            {
-                "type": "entities",
-                "title": med.name,
-                "entities": rows,
-                "grid_options": {"columns": 6},
-            }
-        )
+        sections.append({"type": "grid", "cards": [_entities(med.name, rows)]})
 
     eid = manager.entry_id
     new_rows: list[Any] = [
-        entity_id
-        for entity_id in (
-            ids.get("text", f"{eid}_new_on_demand_name"),
-            ids.get("text", f"{eid}_new_on_demand_dosage"),
-        )
-        if entity_id
+        _row(ids.get("text", f"{eid}_new_on_demand_name"), texts["f_name"]),
+        _row(ids.get("text", f"{eid}_new_on_demand_dosage"), texts["f_dosage"]),
     ]
     if add := ids.get("button", f"{eid}_add_on_demand"):
         new_rows.append(
-            {
-                "type": "button",
-                "name": texts["new_on_demand"],
-                "icon": "mdi:plus-circle",
-                "action_name": texts["add"],
-                "tap_action": _press(add, texts["confirm_add_on_demand"]),
-            }
+            _form_button(
+                add,
+                texts["new_on_demand"],
+                "mdi:plus-circle",
+                texts["add"],
+                texts["confirm_add_on_demand"],
+            )
         )
-    cards.append(
-        {
-            "type": "entities",
-            "title": texts["new_on_demand"],
-            "entities": new_rows,
-            "grid_options": {"columns": 6},
-        }
-    )
-    return cards
+    sections.append({"type": "grid", "cards": [_entities(texts["new_on_demand"], new_rows)]})
+    return sections
 
 
 def _person_view(
@@ -701,76 +832,63 @@ def _person_view(
             {
                 "type": "grid",
                 "visibility": _state_is(any_due, "on"),
-                "cards": [
-                    {"type": "heading", "heading": texts["now"], "icon": "mdi:bell-ring"},
-                    *now_cards,
-                ],
+                "cards": [_heading(texts["now"], "mdi:bell-ring"), *now_cards],
             }
         )
 
-    # 2) Today (scheduled medications; hidden if there are only on-demand ones)
-    today: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["today"], "icon": "mdi:calendar-today"}
-    ]
-    if not manager.medications:
-        today.append({"type": "markdown", "content": texts["no_medication"]})
-    elif any_due:
-        today.append(
-            {
-                "type": "markdown",
-                "content": texts["nothing_due"],
-                "visibility": _state_is(any_due, "off"),
-            }
-        )
-    today.extend(today_cards)
+    # 2) Today (scheduled medications; left out if there are only on-demand ones)
     if manager.medications or not on_demand_cards:
+        today: list[dict[str, Any]] = [_heading(texts["today"], "mdi:calendar-today")]
+        if not manager.medications:
+            today.append({"type": "markdown", "content": texts["no_medication"]})
+        elif any_due:
+            today.append(
+                {
+                    "type": "markdown",
+                    "content": texts["nothing_due"],
+                    "visibility": _state_is(any_due, "off"),
+                }
+            )
+        today.extend(today_cards)
         sections.append({"type": "grid", "cards": today})
 
-    # 2b) As needed (on-demand medication: log an intake, counts per month)
+    # 3) As needed (on-demand medication: log an intake, counts per month)
     if on_demand_cards:
         sections.append(
             {
                 "type": "grid",
-                "cards": [
-                    {"type": "heading", "heading": texts["on_demand"], "icon": "mdi:pill-multiple"},
-                    *on_demand_cards,
-                ],
+                "cards": [_heading(texts["on_demand"], "mdi:pill-multiple"), *on_demand_cards],
             }
         )
 
-    # 3) Summary
-    summary: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["balance"], "icon": "mdi:chart-arc"}
-    ]
-    for entity_id, color in (
-        (taken_today, "green"),
-        (missed_today, "red"),
-        (skipped_today, "grey"),
-    ):
-        if entity_id:
-            summary.append(
-                {
-                    "type": "tile",
-                    "entity": entity_id,
-                    "color": color,
-                    "grid_options": {"columns": 4},
-                }
+    # 4) Summary: today's counts as badges, adherence as gauges
+    if manager.medications:
+        summary: list[dict[str, Any]] = [
+            _heading(
+                texts["balance"],
+                "mdi:chart-arc",
+                badges=[
+                    _chip(entity_id, color=color)
+                    for entity_id, color in (
+                        (taken_today, "green"),
+                        (missed_today, "red"),
+                        (skipped_today, "grey"),
+                    )
+                    if entity_id
+                ],
             )
-    if adherence_7:
-        summary.append(_no_data(adherence_7, texts["no_data"]))
-        summary.append(_gauge(adherence_7, texts["days_7"]))
-    if adherence_30:
-        summary.append(_gauge(adherence_30, texts["days_30"]))
-    if stats_rows:
-        summary.append(
-            {"type": "entities", "title": texts["per_medication"], "entities": stats_rows}
-        )
-    sections.append({"type": "grid", "cards": summary})
+        ]
+        if adherence_7:
+            summary.append(_no_data(adherence_7, texts["no_data"]))
+            summary.append(_gauge(adherence_7, texts["days_7"]))
+        if adherence_30:
+            summary.append(_gauge(adherence_30, texts["days_30"]))
+        if stats_rows:
+            summary.append(_entities(texts["per_medication"], stats_rows))
+        sections.append({"type": "grid", "cards": summary})
 
-    # 4) History
-    history: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["history"], "icon": "mdi:chart-line"}
-    ]
+    # 5) History
+    history: list[dict[str, Any]] = [_heading(texts["history"], "mdi:chart-line")]
     chart_entities = ([{"entity": adherence_7, "name": texts["total"]}] if adherence_7 else []) + [
         {"entity": entity_id} for entity_id in chart_ids
     ]
@@ -809,14 +927,14 @@ def _person_view(
     if len(history) > 1:
         sections.append({"type": "grid", "column_span": 2, "cards": history})
 
-    # 5) Calendar
-    if calendar:
+    # 6) Calendar
+    if calendar and manager.medications:
         sections.append(
             {
                 "type": "grid",
                 "column_span": 3,
                 "cards": [
-                    {"type": "heading", "heading": texts["calendar"], "icon": "mdi:calendar-check"},
+                    _heading(texts["calendar"], "mdi:calendar-check"),
                     {
                         "type": "calendar",
                         "initial_view": "listWeek",
@@ -827,18 +945,14 @@ def _person_view(
             }
         )
 
-    # 6) Log (doses and on-demand intakes)
+    # 7) Log (doses and on-demand intakes)
     if log_ids := status_ids + on_demand_ids:
         sections.append(
             {
                 "type": "grid",
                 "column_span": 3,
                 "cards": [
-                    {
-                        "type": "heading",
-                        "heading": texts["log"],
-                        "icon": "mdi:format-list-bulleted",
-                    },
+                    _heading(texts["log"], "mdi:format-list-bulleted"),
                     {
                         "type": "logbook",
                         "hours_to_show": 168,
@@ -849,17 +963,23 @@ def _person_view(
             }
         )
 
+    badges = [
+        badge
+        for entity_id, name in (
+            (open_today, texts["open_short"]),
+            (taken_today, texts["taken_short"]),
+            (missed_today, texts["missed_short"]),
+            (adherence_7, texts["adherence_short"]),
+        )
+        if manager.medications and (badge := _view_badge(entity_id, name))
+    ]
     view: dict[str, Any] = {
         "title": manager.person,
         "path": path,
         "icon": DASHBOARD_ICON,
         "type": "sections",
         "max_columns": 3,
-        "badges": [
-            {"type": "entity", "entity": entity_id, "show_name": True}
-            for entity_id in (open_today, taken_today, missed_today, adherence_7)
-            if entity_id
-        ],
+        "badges": badges,
         "sections": sections,
     }
     _restrict(view, manager, admin_ids)
@@ -883,17 +1003,11 @@ def _manage_view(
     title: str,
 ) -> dict[str, Any]:
     """Separate tab to manage medications and measurement settings."""
-    sections: list[dict[str, Any]] = [
-        {"type": "grid", "column_span": 3, "cards": _manage_cards(ids, manager, texts)},
-        {"type": "grid", "column_span": 3, "cards": _on_demand_manage_cards(ids, manager, texts)},
+    sections = [
+        *_manage_sections(ids, manager, texts),
+        *_on_demand_manage_sections(ids, manager, texts),
+        *_measurement_settings_sections(hass, ids, manager.body, texts),
     ]
-    sections.append(
-        {
-            "type": "grid",
-            "column_span": 3,
-            "cards": _measurement_settings_cards(hass, ids, manager.body, texts),
-        }
-    )
     view: dict[str, Any] = {
         "title": title,
         "path": path,
@@ -927,10 +1041,6 @@ def _hint(entity_id: str, text: str) -> dict[str, Any]:
     }
 
 
-def _tile(entity_id: str, columns: int = 6, **extra: Any) -> dict[str, Any]:
-    return {"type": "tile", "entity": entity_id, "grid_options": {"columns": columns}, **extra}
-
-
 def _body_view(
     hass: HomeAssistant,
     ids: _Ids,
@@ -944,10 +1054,15 @@ def _body_view(
     metrics = body.tracked_keys()
     sections: list[dict[str, Any]] = []
 
-    # 1) Enter today's values: one card per measurement with a "Save" button
-    enter: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["enter"], "icon": "mdi:pencil-plus"}
-    ]
+    def sensor(key: str) -> str | None:
+        return ids.get("sensor", f"{eid}_{key}")
+
+    def short(field_key: str) -> str:
+        """Short field name for half-width tiles, e.g. 'Systolisch'."""
+        return texts.get(f"f_{field_key}", field_title(field_key, lang))
+
+    # 1) Enter today's values: one full-width form per measurement with "Save"
+    enter: list[dict[str, Any]] = [_heading(texts["enter"], "mdi:pencil-plus")]
     for key in metrics:
         metric = METRICS[key]
         if due := ids.get("binary_sensor", f"{eid}_{key}_due"):
@@ -959,75 +1074,81 @@ def _body_view(
                 }
             )
         rows: list[Any] = [
-            {"entity": entity_id, "name": field_title(field.key, lang)}
-            if not metric.single
-            else {"entity": entity_id, "icon": METRIC_ICONS.get(key, "mdi:pencil")}
+            {
+                "entity": entity_id,
+                "name": field_title(field.key, lang)
+                if not metric.single
+                else metric_title(key, lang),
+                "icon": METRIC_ICONS.get(key, "mdi:pencil") if metric.single else None,
+            }
             for field in metric.fields
             if (entity_id := ids.get("number", f"{eid}_{field.key}_input"))
         ]
+        for row in rows:
+            if row["icon"] is None:
+                del row["icon"]
         if save := ids.get("button", f"{eid}_{key}_save"):
             rows.append(
-                {
-                    "type": "button",
-                    "name": texts["save_hint"],
-                    "icon": "mdi:content-save",
-                    "action_name": texts["save"],
-                    "tap_action": _press(save),
-                }
+                _form_button(save, texts["save_hint"], "mdi:content-save", texts["save"], None)
             )
         if rows:
-            enter.append(
-                {
-                    "type": "entities",
-                    "title": metric_title(key, lang),
-                    "entities": rows,
-                    "grid_options": {"columns": 6},
-                }
-            )
+            enter.append(_entities(metric_title(key, lang), rows))
     sections.append({"type": "grid", "cards": enter})
 
-    # 2) One section per measurement type
+    # 2) One section per measurement: heading with the time, values two by two
     for key in metrics:
         metric = METRICS[key]
+        measured = sensor(f"{key}_last_measured")
         cards: list[dict[str, Any]] = [
-            {
-                "type": "heading",
-                "heading": metric_title(key, lang),
-                "icon": METRIC_ICONS.get(key, "mdi:chart-line"),
-            }
+            _heading(
+                metric_title(key, lang),
+                METRIC_ICONS.get(key, "mdi:chart-line"),
+                badges=[_chip(measured)] if measured else None,
+            )
         ]
         if metric.single:
-            tiles = (
-                ("sensor", f"{key}_last", 6),
-                ("sensor", f"{key}_last_measured", 6),
-                ("sensor", f"{key}_change_7d", 4),
-                ("sensor", f"{key}_change_30d", 4),
-                ("sensor", f"{key}_trend_direction", 4),
-            )
+            tiles: list[tuple[str, str]] = [
+                (f"{key}_last", texts["current"]),
+                (f"{key}_trend_direction", texts["trend"]),
+                (f"{key}_change_7d", texts["days_7"]),
+                (f"{key}_change_30d", texts["days_30"]),
+            ]
         else:
-            tiles = (
-                ("sensor", f"{key}_last", 6),
-                ("sensor", f"{key}_category", 6),
-                ("sensor", f"{key}_last_measured", 6),
-                *(("sensor", f"{f.key}_average_7d", 4) for f in metric.fields if f.average),
-                *(("sensor", f"{f.key}_trend_direction", 6) for f in metric.fields if f.required),
-            )
-        for domain, sensor_key, columns in tiles:
-            if entity_id := ids.get(domain, f"{eid}_{sensor_key}"):
-                cards.append(_tile(entity_id, columns))
+            tiles = [
+                (f"{key}_last", texts["current"]),
+                (f"{key}_category", texts["category"]),
+                *(
+                    (f"{f.key}_average_7d", f"{short(f.key)} {texts['avg_7d']}")
+                    for f in metric.fields
+                    if f.average and f.required
+                ),
+                *(
+                    (f"{f.key}_trend_direction", f"{short(f.key)} {texts['trend']}")
+                    for f in metric.fields
+                    if f.required
+                ),
+                *(
+                    (f"{f.key}{suffix}", f"{short(f.key)} {label}")
+                    for f in metric.fields
+                    if not f.required
+                    for suffix, label in (("_last", ""), ("_average_7d", texts["avg_7d"]))
+                ),
+            ]
+        for sensor_key, name in tiles:
+            if entity_id := sensor(sensor_key):
+                cards.append(_tile(entity_id, name=name.strip()))
         if key == BLOOD_PRESSURE.key:
             cards.append(
                 {"type": "markdown", "content": f"<small>{texts['bp_disclaimer']}</small>"}
             )
         sections.append({"type": "grid", "cards": cards})
 
-    # 3) BMI and waist-to-height ratio
-    derived: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["body"], "icon": "mdi:human"}
-    ]
-    if WEIGHT.key in metrics and (bmi := ids.get("sensor", f"{eid}_bmi")):
+    # 3) BMI and waist-to-height ratio: the gauges show the class themselves
+    derived: list[dict[str, Any]] = [_heading(texts["body"], "mdi:human")]
+    gauges: list[dict[str, Any]] = []
+    if WEIGHT.key in metrics and (bmi := sensor("bmi")):
         derived.append(_hint(bmi, texts["no_bmi"]))
-        derived.append(
+        gauges.append(
             {
                 "type": "gauge",
                 "entity": bmi,
@@ -1041,15 +1162,12 @@ def _body_view(
                     {"from": 25, "color": "#ffa600", "label": texts["overweight"]},
                     {"from": 30, "color": "#db4437", "label": texts["obese"]},
                 ],
-                "grid_options": {"columns": 6},
                 "visibility": _has_number(bmi),
             }
         )
-        if category := ids.get("sensor", f"{eid}_bmi_category"):
-            derived.append(_tile(category, 6, visibility=_has_number(bmi)))
-    if WAIST.key in metrics and (whtr := ids.get("sensor", f"{eid}_whtr")):
+    if WAIST.key in metrics and (whtr := sensor("whtr")):
         derived.append(_hint(whtr, texts["no_whtr"]))
-        derived.append(
+        gauges.append(
             {
                 "type": "gauge",
                 "entity": whtr,
@@ -1062,27 +1180,21 @@ def _body_view(
                     {"from": 0.5, "color": "#ffa600", "label": texts["increased"]},
                     {"from": 0.6, "color": "#db4437", "label": texts["high"]},
                 ],
-                "grid_options": {"columns": 6},
                 "visibility": _has_number(whtr),
             }
         )
-        if category := ids.get("sensor", f"{eid}_whtr_category"):
-            derived.append(_tile(category, 6, visibility=_has_number(whtr)))
-    if len(derived) > 1:
+    for gauge in gauges:
+        gauge["grid_options"] = {"columns": HALF if len(gauges) > 1 else FULL}
+    derived.extend(gauges)
+    if gauges:
         derived.append({"type": "markdown", "content": f"<small>{texts['disclaimer']}</small>"})
         sections.append({"type": "grid", "cards": derived})
 
     # 4) History graphs (long-term statistics: mean, min, max per day)
-    history: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["body_history"], "icon": "mdi:chart-line"}
-    ]
+    history: list[dict[str, Any]] = [_heading(texts["body_history"], "mdi:chart-line")]
     for key in metrics:
         metric = METRICS[key]
-        lasts = [
-            entity_id
-            for field in metric.fields
-            if (entity_id := ids.get("sensor", f"{eid}_{field.key}_last"))
-        ]
+        lasts = [entity_id for field in metric.fields if (entity_id := sensor(f"{field.key}_last"))]
         if lasts:
             main = lasts[0]
             history.append(_hint(main, f"{metric_title(key, lang)}: {texts['no_history']}"))
@@ -1103,12 +1215,12 @@ def _body_view(
         sections.append({"type": "grid", "column_span": 3, "cards": history})
 
     badges = [
-        {"type": "entity", "entity": entity_id, "show_name": True}
-        for entity_id in (
-            *(ids.get("sensor", f"{eid}_{key}_last") for key in metrics),  # 81.2 kg, 128/82
-            ids.get("sensor", f"{eid}_bmi") if WEIGHT.key in metrics else None,
+        badge
+        for entity_id, name in (
+            *((sensor(f"{key}_last"), metric_title(key, lang)) for key in metrics),
+            (sensor("bmi") if WEIGHT.key in metrics else None, texts["bmi"]),
         )
-        if entity_id
+        if (badge := _view_badge(entity_id, name))
     ]
     return {
         "title": texts["body_tab"],
@@ -1121,62 +1233,48 @@ def _body_view(
     }
 
 
-def _measurement_settings_cards(
+def _measurement_settings_sections(
     hass: HomeAssistant, ids: _Ids, body: BodyTracker, texts: dict[str, str]
 ) -> list[dict[str, Any]]:
     """Which measurements are tracked, height and reminders (Manage tab)."""
     eid = body.entry_id
     lang = _language(hass)
-    cards: list[dict[str, Any]] = [
-        {"type": "heading", "heading": texts["measurements"], "icon": BODY_ICON},
-    ]
+    head: list[dict[str, Any]] = [_heading(texts["measurements"], BODY_ICON)]
+    sections: list[dict[str, Any]] = [{"type": "grid", "column_span": 3, "cards": head}]
     switches = [
-        entity_id for key in METRICS if (entity_id := ids.get("switch", f"{eid}_track_{key}"))
+        _row(entity_id, metric_title(key, lang))
+        for key in METRICS
+        if (entity_id := ids.get("switch", f"{eid}_track_{key}"))
     ]
     if switches:
-        cards.append(
-            {
-                "type": "entities",
-                "title": texts["track"],
-                "state_color": True,
-                "entities": switches,
-                "grid_options": {"columns": 6},
-            }
+        head.append({"type": "markdown", "content": texts["track_hint"]})
+        sections.append(
+            {"type": "grid", "cards": [_entities(texts["track"], switches, state_color=True)]}
         )
-        cards.append({"type": "markdown", "content": texts["track_hint"]})
     if not body.enabled:
-        return cards
-    cards.append({"type": "markdown", "content": texts["measurements_hint"]})
+        return sections
+    head.append({"type": "markdown", "content": texts["measurements_hint"]})
     if height := ids.get("number", f"{eid}_height"):
-        cards.append(
+        sections.append(
             {
-                "type": "entities",
-                "title": texts["person"],
-                "entities": [height],
-                "grid_options": {"columns": 6},
+                "type": "grid",
+                "cards": [_entities(texts["person"], [_row(height, texts["f_height"])])],
             }
         )
     for key in body.tracked_keys():
         rows = [
-            entity_id
-            for entity_id in (
-                ids.get("switch", f"{eid}_{key}_reminder"),
-                ids.get("time", f"{eid}_{key}_reminder_time"),
-                ids.get("text", f"{eid}_{key}_reminder_weekdays"),
-            )
-            if entity_id
+            _row(ids.get("switch", f"{eid}_{key}_reminder"), texts["f_reminder"]),
+            _row(ids.get("time", f"{eid}_{key}_reminder_time"), texts["f_time"]),
+            _row(ids.get("text", f"{eid}_{key}_reminder_weekdays"), texts["f_weekdays"]),
         ]
-        if rows:
-            cards.append(
+        if any(rows):
+            sections.append(
                 {
-                    "type": "entities",
-                    "title": metric_title(key, lang),
-                    "state_color": True,
-                    "entities": rows,
-                    "grid_options": {"columns": 6},
+                    "type": "grid",
+                    "cards": [_entities(metric_title(key, lang), rows, state_color=True)],
                 }
             )
-    return cards
+    return sections
 
 
 async def async_build_dashboard(hass: HomeAssistant) -> dict[str, Any]:

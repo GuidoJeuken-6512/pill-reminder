@@ -109,7 +109,7 @@ async def test_view_per_person(
     # "Take now" section only while something is due, button presses the right entity
     now_section = view["sections"][0]
     assert now_section["visibility"][0]["entity"] == "binary_sensor.anna_medikament_fallig"
-    taken_tile = now_section["cards"][1]
+    taken_tile = next(c for c in now_section["cards"] if "tap_action" in c)
     assert taken_tile["tap_action"]["target"]["entity_id"] == "button.ramipril_eingenommen"
     assert taken_tile["visibility"][0]["entity"] == "binary_sensor.ramipril_fallig"
 
@@ -186,8 +186,8 @@ async def test_person_without_medication(hass: HomeAssistant, berlin, phone_call
     for card in cards:
         if card["type"] in ("gauge", "statistics-graph"):
             assert card["visibility"][0]["condition"] == "numeric_state", card
-    # ... a hint is shown instead
-    assert any(c["type"] == "markdown" and "No adherence data yet" in c["content"] for c in cards)
+    # ... the summary is left out without medication, the hint says how to add one
+    assert not any(c["type"] == "gauge" for c in cards)
     assert any(c["type"] == "markdown" and "No medication yet" in c["content"] for c in cards)
     # no card refers to an entity that does not exist
     missing = sorted(e for e in _entity_ids(config) if hass.states.get(e) is None)
