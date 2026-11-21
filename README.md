@@ -8,13 +8,14 @@
 ![Usage](https://img.shields.io/badge/dynamic/json?color=9932CC&logo=home-assistant&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.pill_reminder.total)
 [![Stars](https://img.shields.io/github/stars/GuidoJeuken-6512/pill-reminder?style=flat)](https://github.com/GuidoJeuken-6512/pill-reminder/stargazers)
 [![License](https://img.shields.io/github/license/GuidoJeuken-6512/pill-reminder.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-online-teal.svg)](https://guidojeuken-6512.github.io/pill-reminder/)
 [![Validate](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml/badge.svg)](https://github.com/GuidoJeuken-6512/pill-reminder/actions/workflows/validate.yaml)
 
 Home Assistant integration that reminds people to take their medication and to enter their **weight**, **waist circumference** and **blood pressure**. It logs every intake (or missed intake), keeps the measurements and shows adherence, **BMI**, **waist-to-height ratio**, **blood pressure class** and the **trend** – one app, one dashboard.
 
 > **Formerly "Pill Reminder".** Since 0.7.0 the integration is called **Health Tracker**. Only the name changed: the domain stays `pill_reminder`, so updating keeps all persons, medications, doses, measurements, entity ids, actions (`pill_reminder.*`) and events (`pill_reminder_*`). Nothing needs to be set up again.
 
-📖 **[User guide](docs/user-guide.md)** – setup, every setting, the life of a dose, body measurements, dashboard, entities, actions, automation examples, troubleshooting.
+📖 **[Documentation](https://guidojeuken-6512.github.io/pill-reminder/)** · **[User guide](https://guidojeuken-6512.github.io/pill-reminder/user-guide/)** – setup, every setting, the life of a dose, body measurements, dashboard, entities, actions, automation examples, troubleshooting.
 
 ## Features
 

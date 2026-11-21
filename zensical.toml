@@ -1,0 +1,80 @@
+# Documentation site, built with Zensical (https://zensical.org) and published
+# to GitHub Pages by .github/workflows/docs.yaml on every push to main.
+#
+# Preview locally:  pip install zensical  &&  zensical serve
+
+[project]
+site_name = "Health Tracker"
+site_description = "Home Assistant integration for medication reminders, on-demand medication and body measurements."
+site_url = "https://guidojeuken-6512.github.io/pill-reminder/"
+site_author = "Guido Jeuken"
+copyright = "Health Tracker (formerly Pill Reminder) · MIT License"
+repo_url = "https://github.com/GuidoJeuken-6512/pill-reminder"
+repo_name = "GuidoJeuken-6512/pill-reminder"
+edit_uri = "edit/main/docs/"
+docs_dir = "docs"
+site_dir = "site"
+nav = [
+  { "Home" = "index.md" },
+  { "User guide" = "user-guide.md" },
+  { "Changelog" = "changelog.md" },
+]
+
+[project.theme]
+language = "en"
+logo = "assets/icon.png"
+favicon = "assets/icon.png"
+features = [
+  "navigation.instant",
+  "navigation.instant.progress",
+  "navigation.tracking",
+  "navigation.tabs",
+  "navigation.top",
+  "toc.follow",
+  "search.highlight",
+  "content.code.copy",
+  "content.action.edit",
+]
+
+[project.theme.icon]
+repo = "fontawesome/brands/github"
+
+# Light and dark mode, following the system setting until the reader toggles
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "teal"
+accent = "teal"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "teal"
+accent = "teal"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.superfences = {}
+pymdownx.inlinehilite = {}
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"

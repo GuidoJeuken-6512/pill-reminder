@@ -264,6 +264,9 @@ It uses only Home Assistant's own cards and is laid out for phones: every card t
 
 **The person's tab**
 
+<img src="assets/screenshots/phone-today.png" alt="The person's tab on a phone: today's medication" width="300">
+<img src="assets/screenshots/phone-as-needed.png" alt="As needed: log an intake, counts and the limit gauge" width="300">
+
 - **Take now** – appears only while something is due: per due medication **Confirm** and **Later**.
 - **Today** – one block per medication: its name with the next dose on the right, then **Status**, **Confirm**, **Skip** and **Remind**. **Remind** is the pause switch.
 - **As needed** – per on-demand medication a **Log intake** button (with a confirmation), the intakes this month, last month, today and in 30 days, and a warning while a limit is reached. With a monthly limit, a gauge shows the intake days against the limit (amber from 70 %, red at the limit); without one, the intake days and the last intake are shown as tiles. Below: a bar chart with the intakes per month. With only on-demand medications the **Today** section is left out.
@@ -275,12 +278,16 @@ Charts and gauges appear after the first resolved dose; before that the dashboar
 
 **Body tab**
 
+<img src="assets/screenshots/phone-body.png" alt="Body tab on a phone" width="300">
+
 - **Enter today** – one card per measurement with its input fields and a **Save** button, plus a hint while today's value is still missing.
 - One section per measurement, with the time of the last reading next to the heading: current value, trend direction, change over 7 and 30 days. For blood pressure: last reading, class, 7-day averages, trend directions and pulse.
 - **BMI & waist-to-height** – gauges with colour bands; the class is shown in the gauge. They appear once there is a value and a height; before that a hint explains what is missing.
 - **History (90 days)** – mean, minimum and maximum per day.
 
 **Manage tab**
+
+<img src="assets/screenshots/phone-manage.png" alt="Manage tab on a phone" width="300">
 
 - Change name, intake times, weekdays, dosage and both time windows of each medication. Changes take effect immediately.
 - **Delete** removes a medication after a confirmation.
@@ -292,7 +299,7 @@ The person can do all of this without administrator rights. Invalid input, for e
 
 **Own dashboards**
 
-The generated dashboard cannot be edited in the dashboard editor. To build your own, start from the examples in [`dashboards/`](../dashboards/):
+The generated dashboard cannot be edited in the dashboard editor. To build your own, start from the examples in [`dashboards/`](https://github.com/GuidoJeuken-6512/pill-reminder/tree/main/dashboards):
 
 - `pill_reminder.yaml` – standard cards only; exactly what the generated dashboard looks like for a person with one medication, weight and waist.
 - `pill_reminder_plus.yaml` – with [Mushroom](https://github.com/piitaya/lovelace-mushroom) and [ApexCharts](https://github.com/RomRider/apexcharts-card).
